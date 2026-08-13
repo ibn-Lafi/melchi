@@ -24,7 +24,12 @@ export default async function RoutePage() {
     <div>
       <AppNav />
       <main className="p-4">
-        <h1 className="mb-4 text-xl font-bold">خط السير</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-xl font-bold">خط السير</h1>
+          <Link href="/route/new-customer" className="text-sm text-primary underline">
+            + إضافة عميل جديد
+          </Link>
+        </div>
         <div className="grid gap-3">
           {(customers ?? []).map((customer) => (
             <Card key={customer.id}>
