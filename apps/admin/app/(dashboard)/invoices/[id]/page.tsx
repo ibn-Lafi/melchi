@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Card } from "@system2026/ui";
 import { formatCurrency, renderQrCodeDataUrl } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { PrintButton } from "../../../../components/print-button";
 
 type InvoiceDetail = {
   id: string;
@@ -78,6 +79,9 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="mx-auto max-w-xl">
+      <div className="no-print mb-3 flex justify-end">
+        <PrintButton />
+      </div>
       <Card>
         <div className="flex items-start justify-between">
           <div>

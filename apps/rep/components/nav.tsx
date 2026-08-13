@@ -4,6 +4,7 @@ const NAV_ITEMS = [
   { href: "/route", label: "خط السير" },
   { href: "/invoice/new", label: "فاتورة جديدة" },
   { href: "/collections", label: "التحصيلات" },
+  { href: "/returns", label: "المرتجعات" },
 ];
 
 export function AppNav() {

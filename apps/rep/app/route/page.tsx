@@ -47,6 +47,9 @@ export default async function RoutePage() {
                 <Link href={`/collections?customerId=${customer.id}`} className="text-sm text-primary underline">
                   تسجيل تحصيل
                 </Link>
+                <Link href={`/returns?customerId=${customer.id}`} className="text-sm text-primary underline">
+                  تسجيل مرتجع
+                </Link>
               </div>
             </Card>
           ))}
