@@ -13,7 +13,17 @@
   - `20260813120005_rpc_functions.sql` — العمليات الحرجة (فاتورة بيع، فاتورة شراء، نقل مخزون، تحصيل، مرتجع، إلغاء/تعديل فاتورة)
   - `20260813120006_seed_system_settings.sql` — صف `system_settings` الوحيد
 - `policies/` — نسخة قابلة للقراءة (Markdown) من RLS Policies، لمن لا يريد قراءة SQL مباشرة.
-- `types.ts` — أنواع TypeScript تُولَّد تلقائيًا من قاعدة البيانات، **لا تُعدَّل يدويًا أبدًا**.
+- `types.ts` — أنواع TypeScript مطابقة للمخطط (مكتوبة يدويًا حاليًا لعدم وجود مشروع
+  Supabase حقيقي مربوط بعد؛ يجب استبدالها بالمولَّدة فعليًا `supabase gen types`
+  فور توفر مشروع، وستُطابق نفس البنية لأنها تعكس نفس migrations هنا).
+- `client.ts` / `server.ts` / `middleware.ts` — عملاء Supabase مشتركون (Browser/Server
+  Components/middleware) تستوردهم التطبيقات الثلاث بدل تكرار إعداد `@supabase/ssr`.
+- `tests/` — اختبار تكامل حقيقي (وليس Mock): يطبّق `migrations/` على Postgres
+  فعليًا (محليًا أو عبر CI) ويتحقق من المسارات الحرجة بـ CLAUDE.md §9 (المتوسط
+  المرجّح، نقل المخزون، VAT، رفض تجاوز الرصيد، تحصيل جزئي/كامل، مرتجع
+  سليم/تالف، إلغاء بفترة السماح، RLS لكل دور). شغّله محليًا بـ:
+  `PGHOST=localhost PGUSER=postgres pnpm --filter @system2026/database test`
+  (يتخطّى تلقائيًا إن لم يوجد اتصال Postgres — CI يوفّره دائمًا).
 
 ## قرار تقني: أين يُخزَّن دور المستخدم بالـ JWT؟
 

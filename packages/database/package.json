@@ -11,7 +11,8 @@
     "./middleware": "./middleware.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bash tests/run.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
