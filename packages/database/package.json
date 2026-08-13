@@ -1,0 +1,28 @@
+{
+  "name": "@system2026/database",
+  "private": true,
+  "version": "0.0.0",
+  "main": "types.ts",
+  "types": "types.ts",
+  "exports": {
+    ".": "./types.ts",
+    "./client": "./client.ts",
+    "./server": "./server.ts",
+    "./middleware": "./middleware.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.111.0"
+  },
+  "peerDependencies": {
+    "next": "^14.2.0"
+  },
+  "devDependencies": {
+    "next": "^14.2.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}
