@@ -575,13 +575,16 @@ begin
         'rep', p_rep_id, v_quantity, v_rep_qty, auth.uid()
       );
     else
-      -- تالف/منتهي الصلاحية: خسارة موثّقة بدون أي إضافة لمخزون قابل للبيع
+      -- تالف/منتهي الصلاحية: خسارة موثّقة بدون أي إضافة لمخزون قابل للبيع.
+      -- quantity_change هنا سالبة توثّق حجم الخسارة فعليًا (لأغراض تقرير
+      -- الخسائر)، رغم أنها لا تُطرح من أي رصيد فعلي — البضاعة أصلًا لم
+      -- تُضف لـ rep_inventory عند الإرجاع.
       insert into public.stock_movements (
         movement_type, reference_table, reference_id, product_id,
         location_type, location_id, quantity_change, balance_after, performed_by
       ) values (
         'write_off', 'return_records', v_return_id, v_product_id,
-        'rep', p_rep_id, 0, coalesce((
+        'rep', p_rep_id, -v_quantity, coalesce((
           select quantity_available from public.rep_inventory
           where rep_id = p_rep_id and product_id = v_product_id
         ), 0), auth.uid()
