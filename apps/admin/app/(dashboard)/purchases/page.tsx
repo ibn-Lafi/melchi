@@ -2,6 +2,7 @@ import { Card } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProductCatalog } from "../../../lib/get-product-catalog";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { PurchaseForm } from "./purchase-form";
 
 type PurchaseInvoiceRow = {
@@ -14,6 +15,7 @@ type PurchaseInvoiceRow = {
 
 export default async function PurchasesPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: purchaseInvoices }, { data: suppliers }, catalog] = await Promise.all([
     supabase
@@ -61,14 +63,16 @@ export default async function PurchasesPage() {
         ) : null}
       </Card>
 
-      <Card>
-        <h2 className="mb-3 font-semibold">فاتورة شراء جديدة</h2>
-        {(suppliers?.length ?? 0) === 0 || catalog.length === 0 ? (
-          <p className="text-foreground/60">أضف مورد ومنتج واحد على الأقل أولًا</p>
-        ) : (
-          <PurchaseForm suppliers={suppliers ?? []} catalog={catalog} />
-        )}
-      </Card>
+      {role === "admin" ? (
+        <Card>
+          <h2 className="mb-3 font-semibold">فاتورة شراء جديدة</h2>
+          {(suppliers?.length ?? 0) === 0 || catalog.length === 0 ? (
+            <p className="text-foreground/60">أضف مورد ومنتج واحد على الأقل أولًا</p>
+          ) : (
+            <PurchaseForm suppliers={suppliers ?? []} catalog={catalog} />
+          )}
+        </Card>
+      ) : null}
     </div>
   );
 }

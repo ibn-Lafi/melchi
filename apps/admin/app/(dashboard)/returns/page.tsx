@@ -1,6 +1,7 @@
 import { Card } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { ReturnForm } from "./return-form";
 
 type ReturnRecordRow = {
@@ -13,6 +14,7 @@ type ReturnRecordRow = {
 
 export default async function ReturnsPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: returns }, { data: customers }, { data: reps }, { data: products }] = await Promise.all([
     supabase
@@ -68,14 +70,16 @@ export default async function ReturnsPage() {
         {(returns?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مرتجعات بعد</p> : null}
       </Card>
 
-      <Card>
-        <h2 className="mb-3 font-semibold">تسجيل مرتجع جديد</h2>
-        {(customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (
-          <p className="text-foreground/60">أضف عميل ومنتج واحد على الأقل أولًا</p>
-        ) : (
-          <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
-        )}
-      </Card>
+      {role === "admin" ? (
+        <Card>
+          <h2 className="mb-3 font-semibold">تسجيل مرتجع جديد</h2>
+          {(customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (
+            <p className="text-foreground/60">أضف عميل ومنتج واحد على الأقل أولًا</p>
+          ) : (
+            <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
+          )}
+        </Card>
+      ) : null}
     </div>
   );
 }

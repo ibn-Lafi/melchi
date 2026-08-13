@@ -3,6 +3,7 @@ import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getProfitSummary } from "../../../lib/get-profitability";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createRepAction } from "./actions";
 
 type Rep = { id: string; name: string; phone: string | null; is_active: boolean };
@@ -10,6 +11,7 @@ type InventoryRow = { rep_id: string; product_id: string; quantity_available: nu
 
 export default async function RepsPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: reps }, { data: inventory }, profitSummary] = await Promise.all([
     supabase
@@ -65,23 +67,25 @@ export default async function RepsPage() {
         {(reps?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد مناديب بعد</p> : null}
       </Card>
 
-      <Card className="max-w-md">
-        <h2 className="mb-3 font-semibold">إضافة مندوب</h2>
-        <ActionForm action={createRepAction} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-sm">الاسم</label>
-            <Input name="name" required />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">رقم الجوال</label>
-            <Input name="phone" dir="ltr" required />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">كلمة المرور</label>
-            <Input name="password" type="password" required minLength={6} />
-          </div>
-        </ActionForm>
-      </Card>
+      {role === "admin" ? (
+        <Card className="max-w-md">
+          <h2 className="mb-3 font-semibold">إضافة مندوب</h2>
+          <ActionForm action={createRepAction} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm">الاسم</label>
+              <Input name="name" required />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">رقم الجوال</label>
+              <Input name="phone" dir="ltr" required />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">كلمة المرور</label>
+              <Input name="password" type="password" required minLength={6} />
+            </div>
+          </ActionForm>
+        </Card>
+      ) : null}
     </div>
   );
 }

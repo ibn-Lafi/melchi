@@ -1,5 +1,6 @@
 import { Card } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { TransferForm } from "./transfer-form";
 
 type TransferRow = { id: string; rep_id: string; transfer_date: string };
@@ -7,6 +8,7 @@ type TransferItemRow = { transfer_id: string; product_id: string; quantity: numb
 
 export default async function TransfersPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: transfers }, { data: transferItems }, { data: reps }, { data: products }] =
     await Promise.all([
@@ -61,14 +63,16 @@ export default async function TransfersPage() {
         </div>
       </Card>
 
-      <Card>
-        <h2 className="mb-3 font-semibold">عملية نقل جديدة</h2>
-        {(reps?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (
-          <p className="text-foreground/60">أضف مندوب ومنتج واحد على الأقل أولًا</p>
-        ) : (
-          <TransferForm reps={reps ?? []} products={products ?? []} />
-        )}
-      </Card>
+      {role === "admin" ? (
+        <Card>
+          <h2 className="mb-3 font-semibold">عملية نقل جديدة</h2>
+          {(reps?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (
+            <p className="text-foreground/60">أضف مندوب ومنتج واحد على الأقل أولًا</p>
+          ) : (
+            <TransferForm reps={reps ?? []} products={products ?? []} />
+          )}
+        </Card>
+      ) : null}
     </div>
   );
 }

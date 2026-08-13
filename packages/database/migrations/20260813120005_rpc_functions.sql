@@ -630,6 +630,12 @@ begin
   if v_invoice.status = 'cancelled' then
     raise exception 'الفاتورة ملغاة مسبقًا';
   end if;
+  -- منع الإلغاء الكامل لفاتورة سبق تسجيل مرتجع عليها: الإلغاء يعيد كامل
+  -- كمية invoice_items للرصيد بدون علم بما أُرجع مسبقًا عبر process_return،
+  -- ما يسبب ازدواج إضافة نفس الكمية لرصيد المندوب (Double-counting).
+  if exists (select 1 from public.return_records where invoice_id = p_invoice_id) then
+    raise exception 'لا يمكن إلغاء فاتورة سبق تسجيل مرتجع عليها — التصحيح يتم عبر طلب تعديل للأدمن';
+  end if;
 
   select * into v_settings from public.system_settings where id = 1;
   if now() > v_invoice.invoice_date + make_interval(mins => v_settings.invoice_edit_grace_period_minutes) then
@@ -734,6 +740,14 @@ begin
 
   if p_decision = 'approved' and (v_request.requested_changes ->> 'action') = 'cancel' then
     select * into v_invoice from public.invoices where id = v_request.invoice_id;
+
+    if v_invoice.status = 'cancelled' then
+      raise exception 'الفاتورة ملغاة مسبقًا';
+    end if;
+    -- نفس منع الازدواج بـ cancel_invoice_within_grace_period أعلاه
+    if exists (select 1 from public.return_records where invoice_id = v_invoice.id) then
+      raise exception 'لا يمكن إلغاء فاتورة سبق تسجيل مرتجع عليها';
+    end if;
 
     for v_item in
       select product_id, quantity_in_base_unit

@@ -4,6 +4,7 @@ import { formatCurrency, renderQrCodeDataUrl } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AppNav } from "../../../components/nav";
 import { PrintButton } from "../../../components/print-button";
+import { InvoiceActions } from "./invoice-actions";
 
 type InvoiceDetail = {
   id: string;
@@ -51,26 +52,44 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
 
   if (!invoice) notFound();
 
-  const [{ data: items }, { data: customer }, { data: products }, { data: units }] = await Promise.all([
-    supabase
-      .from("invoice_items")
-      .select<
-        "id, product_id, unit_id, quantity_in_unit, unit_price, subtotal",
-        InvoiceItemRow
-      >("id, product_id, unit_id, quantity_in_unit, unit_price, subtotal")
-      .eq("invoice_id", invoice.id),
-    supabase
-      .from("customers")
-      .select<"name, shop_name", { name: string; shop_name: string | null }>("name, shop_name")
-      .eq("id", invoice.customer_id)
-      .single(),
-    supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
-    supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
-  ]);
+  const [{ data: items }, { data: customer }, { data: products }, { data: units }, { data: settings }, { data: pendingRequests }] =
+    await Promise.all([
+      supabase
+        .from("invoice_items")
+        .select<
+          "id, product_id, unit_id, quantity_in_unit, unit_price, subtotal",
+          InvoiceItemRow
+        >("id, product_id, unit_id, quantity_in_unit, unit_price, subtotal")
+        .eq("invoice_id", invoice.id),
+      supabase
+        .from("customers")
+        .select<"name, shop_name", { name: string; shop_name: string | null }>("name, shop_name")
+        .eq("id", invoice.customer_id)
+        .single(),
+      supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
+      supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
+      supabase
+        .from("system_settings")
+        .select<"invoice_edit_grace_period_minutes", { invoice_edit_grace_period_minutes: number }>(
+          "invoice_edit_grace_period_minutes",
+        )
+        .eq("id", 1)
+        .single(),
+      supabase
+        .from("invoice_edit_requests")
+        .select<"id", { id: string }>("id")
+        .eq("invoice_id", invoice.id)
+        .eq("status", "pending"),
+    ]);
 
   const productNameById = new Map((products ?? []).map((p) => [p.id, p.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
   const qrCodeImage = await renderQrCodeDataUrl(invoice.qr_code_data);
+
+  const graceMinutes = settings?.invoice_edit_grace_period_minutes ?? 30;
+  const deadline = new Date(invoice.invoice_date).getTime() + graceMinutes * 60_000;
+  const withinGracePeriod = Date.now() <= deadline;
+  const hasPendingRequest = (pendingRequests?.length ?? 0) > 0;
 
   return (
     <div>
@@ -140,6 +159,16 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
             </div>
           </div>
         </Card>
+
+        {invoice.status !== "cancelled" ? (
+          <div className="mt-4">
+            <InvoiceActions
+              invoiceId={invoice.id}
+              withinGracePeriod={withinGracePeriod}
+              hasPendingRequest={hasPendingRequest}
+            />
+          </div>
+        ) : null}
       </main>
     </div>
   );

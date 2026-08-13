@@ -2,12 +2,14 @@ import { Card, Input } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createSupplierAction } from "./actions";
 
 type Supplier = { id: string; name: string; phone: string | null };
 
 export default async function SuppliersPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: suppliers }, { data: purchaseInvoices }, { data: payments }] = await Promise.all([
     supabase.from("suppliers").select<"id, name, phone", Supplier>("id, name, phone").order("name"),
@@ -68,27 +70,29 @@ export default async function SuppliersPage() {
         {(suppliers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد موردين بعد</p> : null}
       </Card>
 
-      <Card className="max-w-md">
-        <h2 className="mb-3 font-semibold">إضافة مورد</h2>
-        <ActionForm action={createSupplierAction} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-sm">الاسم</label>
-            <Input name="name" required />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">الجوال</label>
-            <Input name="phone" dir="ltr" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">العنوان</label>
-            <Input name="address" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">ملاحظات</label>
-            <Input name="notes" />
-          </div>
-        </ActionForm>
-      </Card>
+      {role === "admin" ? (
+        <Card className="max-w-md">
+          <h2 className="mb-3 font-semibold">إضافة مورد</h2>
+          <ActionForm action={createSupplierAction} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm">الاسم</label>
+              <Input name="name" required />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">الجوال</label>
+              <Input name="phone" dir="ltr" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">العنوان</label>
+              <Input name="address" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">ملاحظات</label>
+              <Input name="notes" />
+            </div>
+          </ActionForm>
+        </Card>
+      ) : null}
     </div>
   );
 }

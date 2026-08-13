@@ -1,6 +1,7 @@
 import { Card, Input } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createCustomerAction } from "./actions";
 
 type Customer = {
@@ -15,6 +16,7 @@ type Rep = { id: string; name: string };
 
 export default async function CustomersPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: customers }, { data: customerReps }, { data: reps }] = await Promise.all([
     supabase
@@ -72,44 +74,46 @@ export default async function CustomersPage() {
         {(customers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد عملاء بعد</p> : null}
       </Card>
 
-      <Card className="max-w-md">
-        <h2 className="mb-3 font-semibold">إضافة عميل</h2>
-        <ActionForm action={createCustomerAction} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-sm">الاسم</label>
-            <Input name="name" required />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">اسم المحل</label>
-            <Input name="shopName" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">الجوال</label>
-            <Input name="phone" dir="ltr" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">العنوان</label>
-            <Input name="address" />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm">رابط جوجل ماب</label>
-            <Input name="googleMapsLink" dir="ltr" placeholder="https://maps.google.com/..." />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="showInStore" /> ظاهر بصفحة نقاط البيع العامة
-          </label>
-          <div>
-            <p className="mb-1 text-sm">ربط بمندوب/مناديب</p>
-            <div className="flex flex-col gap-1">
-              {(reps ?? []).map((r) => (
-                <label key={r.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="repIds" value={r.id} /> {r.name}
-                </label>
-              ))}
+      {role === "admin" ? (
+        <Card className="max-w-md">
+          <h2 className="mb-3 font-semibold">إضافة عميل</h2>
+          <ActionForm action={createCustomerAction} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm">الاسم</label>
+              <Input name="name" required />
             </div>
-          </div>
-        </ActionForm>
-      </Card>
+            <div>
+              <label className="mb-1 block text-sm">اسم المحل</label>
+              <Input name="shopName" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">الجوال</label>
+              <Input name="phone" dir="ltr" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">العنوان</label>
+              <Input name="address" />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">رابط جوجل ماب</label>
+              <Input name="googleMapsLink" dir="ltr" placeholder="https://maps.google.com/..." />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="showInStore" /> ظاهر بصفحة نقاط البيع العامة
+            </label>
+            <div>
+              <p className="mb-1 text-sm">ربط بمندوب/مناديب</p>
+              <div className="flex flex-col gap-1">
+                {(reps ?? []).map((r) => (
+                  <label key={r.id} className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="repIds" value={r.id} /> {r.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </ActionForm>
+        </Card>
+      ) : null}
     </div>
   );
 }

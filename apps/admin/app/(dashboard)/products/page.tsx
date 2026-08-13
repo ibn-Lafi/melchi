@@ -2,6 +2,7 @@ import { Card, Input } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createCategoryAction, createProductAction, createUnitAction } from "./actions";
 
 type ProductRow = {
@@ -18,6 +19,8 @@ type UnitRow = { id: string; name: string };
 
 export default async function ProductsPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
+  const canManage = role === "admin";
 
   const [{ data: products }, { data: categories }, { data: units }] = await Promise.all([
     supabase
@@ -71,72 +74,74 @@ export default async function ProductsPage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <h2 className="mb-3 font-semibold">إضافة منتج</h2>
-          <ActionForm action={createProductAction} className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm">الاسم</label>
-              <Input name="name" required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">الوصف</label>
-              <Input name="description" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">سعر البيع</label>
-              <Input name="price" type="number" step="0.01" min="0" required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">الفئة</label>
-              <select name="categoryId" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
-                <option value="">بدون فئة</option>
-                {(categories ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">الوحدة الأساسية</label>
-              <select name="baseUnitId" required className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
-                <option value="">اختر وحدة</option>
-                {(units ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="visibleInStore" defaultChecked /> ظاهر بالمتجر
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="hasExpiry" /> له تاريخ صلاحية
-            </label>
-            <div>
-              <label className="mb-1 block text-sm">تاريخ الصلاحية (إن وُجد)</label>
-              <Input name="expiryDate" type="date" />
-            </div>
-          </ActionForm>
-        </Card>
+      {canManage ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <h2 className="mb-3 font-semibold">إضافة منتج</h2>
+            <ActionForm action={createProductAction} className="space-y-3">
+              <div>
+                <label className="mb-1 block text-sm">الاسم</label>
+                <Input name="name" required />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm">الوصف</label>
+                <Input name="description" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm">سعر البيع</label>
+                <Input name="price" type="number" step="0.01" min="0" required />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm">الفئة</label>
+                <select name="categoryId" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+                  <option value="">بدون فئة</option>
+                  {(categories ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm">الوحدة الأساسية</label>
+                <select name="baseUnitId" required className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+                  <option value="">اختر وحدة</option>
+                  {(units ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="visibleInStore" defaultChecked /> ظاهر بالمتجر
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="hasExpiry" /> له تاريخ صلاحية
+              </label>
+              <div>
+                <label className="mb-1 block text-sm">تاريخ الصلاحية (إن وُجد)</label>
+                <Input name="expiryDate" type="date" />
+              </div>
+            </ActionForm>
+          </Card>
 
-        <div className="space-y-4">
-          <Card>
-            <h2 className="mb-3 font-semibold">إضافة فئة</h2>
-            <ActionForm action={createCategoryAction} className="space-y-3">
-              <Input name="name" placeholder="اسم الفئة" required />
-            </ActionForm>
-          </Card>
-          <Card>
-            <h2 className="mb-3 font-semibold">إضافة وحدة قياس</h2>
-            <ActionForm action={createUnitAction} className="space-y-3">
-              <Input name="name" placeholder="مثال: كرتون" required />
-            </ActionForm>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <h2 className="mb-3 font-semibold">إضافة فئة</h2>
+              <ActionForm action={createCategoryAction} className="space-y-3">
+                <Input name="name" placeholder="اسم الفئة" required />
+              </ActionForm>
+            </Card>
+            <Card>
+              <h2 className="mb-3 font-semibold">إضافة وحدة قياس</h2>
+              <ActionForm action={createUnitAction} className="space-y-3">
+                <Input name="name" placeholder="مثال: كرتون" required />
+              </ActionForm>
+            </Card>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

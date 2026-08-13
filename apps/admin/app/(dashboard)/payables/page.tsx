@@ -1,6 +1,7 @@
 import { Card } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { SupplierPaymentForm } from "./payment-form";
 
 type Supplier = { id: string; name: string };
@@ -9,6 +10,7 @@ type SupplierPaymentRow = { purchase_invoice_id: string | null; amount: number }
 
 export default async function PayablesPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
 
   const [{ data: suppliers }, { data: unpaidInvoices }, { data: payments }] = await Promise.all([
     supabase.from("suppliers").select<"id, name", Supplier>("id, name").order("name"),
@@ -69,14 +71,16 @@ export default async function PayablesPage() {
         ) : null}
       </Card>
 
-      <Card>
-        <h2 className="mb-3 font-semibold">تسجيل دفعة لمورد</h2>
-        {(suppliers?.length ?? 0) === 0 ? (
-          <p className="text-foreground/60">لا يوجد موردين بعد</p>
-        ) : (
-          <SupplierPaymentForm suppliers={suppliers ?? []} invoicesBySupplier={invoicesBySupplier} />
-        )}
-      </Card>
+      {role === "admin" ? (
+        <Card>
+          <h2 className="mb-3 font-semibold">تسجيل دفعة لمورد</h2>
+          {(suppliers?.length ?? 0) === 0 ? (
+            <p className="text-foreground/60">لا يوجد موردين بعد</p>
+          ) : (
+            <SupplierPaymentForm suppliers={suppliers ?? []} invoicesBySupplier={invoicesBySupplier} />
+          )}
+        </Card>
+      ) : null}
     </div>
   );
 }
