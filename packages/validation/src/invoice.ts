@@ -1,0 +1,34 @@
+import { z } from "zod";
+
+export const invoiceItemSchema = z.object({
+  productId: z.string().uuid(),
+  unitId: z.string().uuid(),
+  quantityInUnit: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+});
+
+export const createInvoiceSchema = z.object({
+  repId: z.string().uuid(),
+  customerId: z.string().uuid(),
+  items: z.array(invoiceItemSchema).min(1, "يجب إضافة بند واحد على الأقل"),
+  paymentMethod: z.enum(["cash", "credit", "check", "transfer"]),
+});
+
+export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;
+
+export const cancelInvoiceSchema = z.object({
+  invoiceId: z.string().uuid(),
+  reason: z.string().min(1, "سبب الإلغاء مطلوب"),
+});
+
+export const requestInvoiceEditSchema = z.object({
+  invoiceId: z.string().uuid(),
+  reason: z.string().min(1, "سبب طلب التعديل مطلوب"),
+  requestedChanges: z.record(z.string(), z.unknown()),
+});
+
+export const reviewInvoiceEditRequestSchema = z.object({
+  requestId: z.string().uuid(),
+  decision: z.enum(["approved", "rejected"]),
+  adminNotes: z.string().optional(),
+});

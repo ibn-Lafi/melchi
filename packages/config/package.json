@@ -1,0 +1,16 @@
+{
+  "name": "@system2026/config",
+  "private": true,
+  "version": "0.0.0",
+  "main": "index.js",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tailwind.preset": "./tailwind.preset.js",
+    "./eslint": "./eslint.config.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@eslint/js": "^9.9.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
