@@ -6,42 +6,12 @@ import {
   createProductSchema,
   updateProductSchema,
   createCategorySchema,
+  updateCategorySchema,
   createUnitSchema,
 } from "@system2026/validation";
+import { uploadImage } from "../../../lib/upload-image";
 
 export type ActionState = { error?: string; success?: boolean };
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
-// يرفع صورة المنتج (إن وُجدت) لـ Supabase Storage (bucket: product-images —
-// عام بالقراءة، أدمن فقط بالكتابة عبر RLS، راجع migration
-// 20260813150000). يُرجع الرابط العام، أو undefined إن لم تُرفق صورة.
-async function uploadProductImage(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
-  formData: FormData,
-): Promise<{ url?: string; error?: string }> {
-  const file = formData.get("image");
-  if (!(file instanceof File) || file.size === 0) return {};
-
-  if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت" };
-  }
-  if (!file.type.startsWith("image/")) {
-    return { error: "الملف المرفوع يجب أن يكون صورة" };
-  }
-
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${crypto.randomUUID()}.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("product-images")
-    .upload(path, file, { contentType: file.type, upsert: true });
-
-  if (uploadError) return { error: uploadError.message };
-
-  const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-  return { url: data.publicUrl };
-}
 
 export async function createProductAction(
   _prevState: ActionState,
@@ -65,7 +35,12 @@ export async function createProductAction(
 
   const supabase = createSupabaseServerClient();
 
-  const { url: imageUrl, error: imageError } = await uploadProductImage(supabase, formData);
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "product-images",
+  );
   if (imageError) return { error: imageError };
 
   const { data: product, error } = await supabase
@@ -124,7 +99,12 @@ export async function updateProductAction(
 
   const supabase = createSupabaseServerClient();
 
-  const { url: imageUrl, error: imageError } = await uploadProductImage(supabase, formData);
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "product-images",
+  );
   if (imageError) return { error: imageError };
 
   const { error } = await supabase
@@ -166,7 +146,48 @@ export async function createCategoryAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
 
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from("categories").insert({ name: parsed.data.name });
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "category-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { error } = await supabase
+    .from("categories")
+    .insert({ name: parsed.data.name, image_url: imageUrl ?? null });
+  if (error) return { error: error.message };
+
+  revalidatePath("/products");
+  return { success: true };
+}
+
+export async function updateCategoryAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = updateCategorySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
+
+  const supabase = createSupabaseServerClient();
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "category-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { error } = await supabase
+    .from("categories")
+    .update({ name: parsed.data.name, ...(imageUrl ? { image_url: imageUrl } : {}) })
+    .eq("id", parsed.data.id);
   if (error) return { error: error.message };
 
   revalidatePath("/products");

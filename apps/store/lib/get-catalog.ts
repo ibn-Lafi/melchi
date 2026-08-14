@@ -11,7 +11,9 @@ export type StoreProduct = {
   base_unit_name: string;
 };
 
-export type StoreCategory = { id: string; name: string };
+export type StoreCategory = { id: string; name: string; image_url: string | null };
+
+export type StorePointOfSale = { id: string; shop_name: string | null; google_maps_link: string | null };
 
 export async function getStoreProducts(categoryId?: string): Promise<StoreProduct[]> {
   const supabase = createSupabaseServerClient();
@@ -34,5 +36,16 @@ export async function getStoreProduct(productId: string): Promise<StoreProduct |
 export async function getStoreCategories(): Promise<StoreCategory[]> {
   const supabase = createSupabaseServerClient();
   const { data } = await supabase.from("public_categories").select("*").order("name");
+  return data ?? [];
+}
+
+// راجع requirements.md §3.1 — عرض فقط: اسم المحل + رابط الموقع، بدون أي
+// بيانات تشغيلية. المصدر public_store_locations (View مخصص).
+export async function getStorePointsOfSale(): Promise<StorePointOfSale[]> {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase
+    .from("public_store_locations")
+    .select("*")
+    .not("shop_name", "is", null);
   return data ?? [];
 }

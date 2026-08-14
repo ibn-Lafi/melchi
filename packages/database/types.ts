@@ -40,8 +40,14 @@ export type Database = {
         }
       >;
       categories: Table<
-        { id: string; name: string; created_at: string; updated_at: string },
-        { id?: string; name: string }
+        {
+          id: string;
+          name: string;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        { id?: string; name: string; image_url?: string | null }
       >;
       units: Table<
         { id: string; name: string; created_at: string; updated_at: string },
@@ -405,7 +411,7 @@ export type Database = {
         Relationships: [];
       };
       public_categories: {
-        Row: { id: string; name: string };
+        Row: { id: string; name: string; image_url: string | null };
         Relationships: [];
       };
     };

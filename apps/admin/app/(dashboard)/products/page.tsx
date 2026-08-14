@@ -7,6 +7,7 @@ import {
   createCategoryAction,
   createProductAction,
   createUnitAction,
+  updateCategoryAction,
   updateProductAction,
 } from "./actions";
 
@@ -23,7 +24,7 @@ type ProductRow = {
   category_id: string | null;
   base_unit_id: string;
 };
-type CategoryRow = { id: string; name: string };
+type CategoryRow = { id: string; name: string; image_url: string | null };
 type UnitRow = { id: string; name: string };
 type StockRow = { product_id: string; quantity_available: number };
 
@@ -45,7 +46,10 @@ export default async function ProductsPage() {
           "id, name, description, price, average_cost, image_url, visible_in_store, has_expiry, expiry_date, category_id, base_unit_id",
         )
         .order("name"),
-      supabase.from("categories").select<"id, name", CategoryRow>("id, name").order("name"),
+      supabase
+        .from("categories")
+        .select<"id, name, image_url", CategoryRow>("id, name, image_url")
+        .order("name"),
       supabase.from("units").select<"id, name", UnitRow>("id, name").order("name"),
       supabase
         .from("warehouse_stock")
@@ -68,6 +72,12 @@ export default async function ProductsPage() {
               <ModalTrigger label="+ فئة" title="إضافة فئة" variant="outline">
                 <ActionForm action={createCategoryAction} className="space-y-3">
                   <Input name="name" placeholder="اسم الفئة" required />
+                  <div>
+                    <label className="mb-1 block text-sm">
+                      صورة الفئة (تظهر بدائرة اختيار الفئة بالمتجر)
+                    </label>
+                    <Input name="image" type="file" accept="image/*" />
+                  </div>
                 </ActionForm>
               </ModalTrigger>
               <ModalTrigger label="+ وحدة قياس" title="إضافة وحدة قياس" variant="outline">
@@ -284,6 +294,59 @@ export default async function ProductsPage() {
             <p className="py-4 text-foreground/60">لا توجد منتجات بعد</p>
           ) : null}
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">الفئات</h2>
+        <p className="mb-3 text-sm text-foreground/60">
+          صورة الفئة تظهر بدائرة اختيار الفئة أعلى صفحة المتجر — أضف صورة لكل فئة لأفضل تجربة.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {(categories ?? []).map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center gap-3 rounded-xl border border-border p-3"
+            >
+              {c.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={c.image_url}
+                  alt={c.name}
+                  className="h-12 w-12 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
+              )}
+              <p className="font-medium">{c.name}</p>
+              {canManage ? (
+                <ModalTrigger label="تعديل" title={`تعديل فئة: ${c.name}`} variant="outline">
+                  <ActionForm action={updateCategoryAction} className="space-y-3">
+                    <input type="hidden" name="id" value={c.id} />
+                    <div>
+                      <label className="mb-1 block text-sm">الاسم</label>
+                      <Input name="name" defaultValue={c.name} required />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm">الصورة</label>
+                      {c.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.image_url}
+                          alt={c.name}
+                          className="mb-2 h-16 w-16 rounded-full object-cover"
+                        />
+                      ) : null}
+                      <Input name="image" type="file" accept="image/*" />
+                    </div>
+                  </ActionForm>
+                </ModalTrigger>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {(categories?.length ?? 0) === 0 ? (
+          <p className="py-4 text-foreground/60">لا توجد فئات بعد</p>
+        ) : null}
       </Card>
     </div>
   );
