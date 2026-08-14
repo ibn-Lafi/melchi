@@ -6,21 +6,21 @@ import type { StoreProduct } from "../lib/get-catalog";
 export function ProductCard({ product }: { product: StoreProduct }) {
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="h-full">
+      <Card className="h-full p-3 hover:shadow-card-hover">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
             alt={product.name}
-            className="mb-3 aspect-square w-full rounded-md object-cover"
+            className="mb-3 aspect-square w-full rounded-xl object-cover"
           />
         ) : (
-          <div className="mb-3 aspect-square w-full rounded-md bg-black/5" />
+          <div className="mb-3 aspect-square w-full rounded-xl bg-muted" />
         )}
-        <p className="font-semibold">{product.name}</p>
-        <p className="mt-1 text-sm text-foreground/60">{product.category_name}</p>
-        <p className="mt-2 font-bold text-primary">
-          {formatCurrency(product.price)} / {product.base_unit_name}
+        <p className="px-0.5 font-semibold">{product.name}</p>
+        <p className="px-0.5 text-sm text-muted-foreground">{product.category_name}</p>
+        <p className="px-0.5 pt-2 font-bold">
+          {formatCurrency(product.price)} <span className="font-normal text-muted-foreground">/ {product.base_unit_name}</span>
         </p>
       </Card>
     </Link>
