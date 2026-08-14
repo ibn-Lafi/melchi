@@ -1,4 +1,4 @@
-import { Badge, Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -38,6 +38,30 @@ export default async function RepsPage() {
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "المناديب"]} />}
         title="المناديب"
         subtitle="إدارة حسابات المناديب ومتابعة أدائهم ورصيد مخزونهم"
+        actions={
+          role === "admin" ? (
+            <ModalTrigger label="+ إضافة مندوب" title="إضافة مندوب">
+              <ActionForm action={createRepAction} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm">الاسم</label>
+                  <Input name="name" required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">البريد الإلكتروني (لتسجيل الدخول)</label>
+                  <Input name="email" type="email" dir="ltr" required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">رقم الجوال (اختياري)</label>
+                  <Input name="phone" dir="ltr" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">كلمة المرور</label>
+                  <Input name="password" type="password" required minLength={6} />
+                </div>
+              </ActionForm>
+            </ModalTrigger>
+          ) : null
+        }
       />
 
       <Card>
@@ -77,29 +101,6 @@ export default async function RepsPage() {
         {(reps?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد مناديب بعد</p> : null}
       </Card>
 
-      {role === "admin" ? (
-        <Card className="max-w-md">
-          <h2 className="mb-3 font-semibold">إضافة مندوب</h2>
-          <ActionForm action={createRepAction} className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm">الاسم</label>
-              <Input name="name" required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">البريد الإلكتروني (لتسجيل الدخول)</label>
-              <Input name="email" type="email" dir="ltr" required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">رقم الجوال (اختياري)</label>
-              <Input name="phone" dir="ltr" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">كلمة المرور</label>
-              <Input name="password" type="password" required minLength={6} />
-            </div>
-          </ActionForm>
-        </Card>
-      ) : null}
     </div>
   );
 }

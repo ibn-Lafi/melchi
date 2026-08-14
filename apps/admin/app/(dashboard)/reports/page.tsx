@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, BarList, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProfitSummary } from "../../../lib/get-profitability";
@@ -61,7 +61,11 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">التقارير</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "التقارير"]} />}
+        title="التقارير"
+        subtitle="أداء المبيعات والربحية والخسائر"
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
@@ -75,7 +79,20 @@ export default async function ReportsPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold">أفضل المنتجات ربحًا</h2>
+        <h2 className="mb-4 font-semibold">أفضل المنتجات ربحًا</h2>
+        {topProducts.length > 0 ? (
+          <BarList
+            items={topProducts.map(([productId, stats]) => ({
+              label: productNameById.get(productId) ?? "—",
+              value: stats.profit,
+              displayValue: formatCurrency(stats.profit),
+            }))}
+          />
+        ) : null}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">تفاصيل أفضل المنتجات ربحًا</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-right text-foreground/60">
@@ -102,7 +119,20 @@ export default async function ReportsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold">الربح حسب المندوب</h2>
+        <h2 className="mb-4 font-semibold">الربح حسب المندوب</h2>
+        {topReps.length > 0 ? (
+          <BarList
+            items={topReps.map(([repId, stats]) => ({
+              label: repNameById.get(repId) ?? "—",
+              value: stats.profit,
+              displayValue: formatCurrency(stats.profit),
+            }))}
+          />
+        ) : null}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">تفاصيل الربح حسب المندوب</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-right text-foreground/60">

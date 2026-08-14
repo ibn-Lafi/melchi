@@ -5,3 +5,6 @@ export * from "./select";
 export * from "./card";
 export * from "./badge";
 export * from "./page-header";
+export * from "./modal";
+export * from "./bar-list";
+export * from "./bar-chart";
