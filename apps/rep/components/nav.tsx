@@ -51,7 +51,7 @@ function PlusIcon({ className }: { className?: string }) {
 
 type IconComponent = (p: { className?: string }) => JSX.Element;
 
-function MobileNavLink({
+function NavLink({
   href,
   label,
   icon: Icon,
@@ -76,78 +76,34 @@ function MobileNavLink({
   );
 }
 
-function DesktopNavLink({
-  href,
-  label,
-  icon: Icon,
-  isActive,
-}: {
-  href: string;
-  label: string;
-  icon: IconComponent;
-  isActive: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors",
-        isActive ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:bg-muted",
-      )}
-    >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span>{label}</span>
-    </Link>
-  );
-}
-
+// تطبيق المندوب يُستخدم حصرًا عن طريق الجوال ميدانيًا — شريط تنقل واحد
+// عائم بنفس التصميم بغض النظر عن عرض الشاشة (لا تبديل حسب breakpoint).
 export function AppNav() {
   const pathname = usePathname();
   const isItemActive = (href: string) => pathname?.startsWith(href) ?? false;
 
   return (
-    <>
-      {/* شريط عائم للجوال — نفس نمط تطبيقات التوصيل بزر إجراء دائري مرتفع بالمنتصف */}
-      <nav className="no-print fixed inset-x-3 bottom-3 z-20 sm:hidden">
-        <div className="relative flex items-stretch justify-between rounded-[28px] border border-border bg-background px-2 py-1.5 shadow-pop">
-          <div className="flex flex-1 items-center justify-evenly">
-            <MobileNavLink {...NAV_ITEMS[0]!} isActive={isItemActive(NAV_ITEMS[0]!.href)} />
-            <MobileNavLink {...NAV_ITEMS[1]!} isActive={isItemActive(NAV_ITEMS[1]!.href)} />
-          </div>
-
-          <div className="w-14 shrink-0" />
-
-          <div className="flex flex-1 items-center justify-evenly">
-            <MobileNavLink {...NAV_ITEMS[2]!} isActive={isItemActive(NAV_ITEMS[2]!.href)} />
-          </div>
-
-          <Link
-            href={CREATE_ITEM.href}
-            aria-label={CREATE_ITEM.label}
-            className="absolute inset-x-0 -top-7 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-95"
-          >
-            <PlusIcon className="h-6 w-6" />
-          </Link>
+    <nav className="no-print fixed inset-x-3 bottom-3 z-20 mx-auto max-w-sm">
+      <div className="relative flex items-stretch justify-between rounded-[28px] border border-border bg-background px-2 py-1.5 shadow-pop">
+        <div className="flex flex-1 items-center justify-evenly">
+          <NavLink {...NAV_ITEMS[0]!} isActive={isItemActive(NAV_ITEMS[0]!.href)} />
+          <NavLink {...NAV_ITEMS[1]!} isActive={isItemActive(NAV_ITEMS[1]!.href)} />
         </div>
-      </nav>
 
-      {/* شريط علوي لعرض الكمبيوتر/التابلت — الشريط العائم الصغير لا يناسب شاشة واسعة */}
-      <nav className="no-print sticky top-0 z-20 hidden border-b border-border bg-background/95 backdrop-blur sm:block">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <DesktopNavLink key={item.href} {...item} isActive={isItemActive(item.href)} />
-            ))}
-          </div>
-          <Link
-            href={CREATE_ITEM.href}
-            className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {CREATE_ITEM.label}
-          </Link>
+        <div className="w-14 shrink-0" />
+
+        <div className="flex flex-1 items-center justify-evenly">
+          <NavLink {...NAV_ITEMS[2]!} isActive={isItemActive(NAV_ITEMS[2]!.href)} />
         </div>
-      </nav>
-    </>
+
+        <Link
+          href={CREATE_ITEM.href}
+          aria-label={CREATE_ITEM.label}
+          className="absolute inset-x-0 -top-7 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-95"
+        >
+          <PlusIcon className="h-6 w-6" />
+        </Link>
+      </div>
+    </nav>
   );
 }
