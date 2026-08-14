@@ -11,7 +11,8 @@ export async function createRepAction(
 ): Promise<ActionState> {
   const parsed = createStaffUserSchema.safeParse({
     name: formData.get("name"),
-    phone: formData.get("phone"),
+    email: formData.get("email"),
+    phone: formData.get("phone") || undefined,
     password: formData.get("password"),
     role: "rep",
   });
@@ -20,10 +21,10 @@ export async function createRepAction(
 
   const supabaseAdmin = createSupabaseAdminClient();
   const { error } = await supabaseAdmin.auth.admin.createUser({
-    phone: parsed.data.phone,
+    email: parsed.data.email,
     password: parsed.data.password,
-    phone_confirm: true,
-    user_metadata: { name: parsed.data.name, phone: parsed.data.phone, role: parsed.data.role },
+    email_confirm: true,
+    user_metadata: { name: parsed.data.name, phone: parsed.data.phone ?? null, role: parsed.data.role },
   });
 
   if (error) return { error: error.message };

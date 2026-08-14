@@ -19,10 +19,10 @@ end;
 $$;
 
 -- ========== الإعداد ==========
-insert into auth.users (id, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data)
 values
-  ('11111111-1111-1111-1111-111111111111', '{"name":"Admin One","role":"admin"}'),
-  ('22222222-2222-2222-2222-222222222222', '{"name":"Rep One","role":"rep"}');
+  ('11111111-1111-1111-1111-111111111111', 'admin@test.local', '{"name":"Admin One","role":"admin"}'),
+  ('22222222-2222-2222-2222-222222222222', 'rep@test.local', '{"name":"Rep One","role":"rep"}');
 
 select pg_temp.assert_true(
   (select count(*) from public.profiles where role = 'admin') = 1,
@@ -31,6 +31,10 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.profiles where role = 'rep') = 1,
   'trigger on_auth_user_created لم ينشئ profile للمندوب'
+);
+select pg_temp.assert_true(
+  (select email from public.profiles where id = '11111111-1111-1111-1111-111111111111') = 'admin@test.local',
+  'trigger on_auth_user_created لم ينسخ email من auth.users (تسجيل الدخول أصبح بالبريد)'
 );
 
 update public.system_settings

@@ -67,10 +67,11 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, name, phone, role)
+  insert into public.profiles (id, name, email, phone, role)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'name', ''),
+    new.email,
     new.raw_user_meta_data ->> 'phone',
     coalesce((new.raw_user_meta_data ->> 'role')::public.user_role, 'rep')
   );

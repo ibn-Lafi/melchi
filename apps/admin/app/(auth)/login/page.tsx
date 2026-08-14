@@ -24,10 +24,10 @@ export default function LoginPage() {
         <h1 className="mb-6 text-center text-xl font-bold">تسجيل الدخول — لوحة التحكم</h1>
         <form action={formAction} className="space-y-4">
           <div>
-            <label htmlFor="phone" className="mb-1 block text-sm font-medium">
-              رقم الجوال
+            <label htmlFor="email" className="mb-1 block text-sm font-medium">
+              البريد الإلكتروني
             </label>
-            <Input id="phone" name="phone" type="tel" required autoComplete="tel" dir="ltr" />
+            <Input id="email" name="email" type="email" required autoComplete="email" dir="ltr" />
           </div>
           <div>
             <label htmlFor="password" className="mb-1 block text-sm font-medium">

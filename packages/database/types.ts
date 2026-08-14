@@ -23,6 +23,7 @@ export type Database = {
         {
           id: string;
           name: string;
+          email: string | null;
           phone: string | null;
           role: Database["public"]["Enums"]["user_role"];
           is_active: boolean;
@@ -32,6 +33,7 @@ export type Database = {
         {
           id: string;
           name: string;
+          email?: string | null;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           is_active?: boolean;

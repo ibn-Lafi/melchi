@@ -6,7 +6,7 @@ import { getProfitSummary } from "../../../lib/get-profitability";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createRepAction } from "./actions";
 
-type Rep = { id: string; name: string; phone: string | null; is_active: boolean };
+type Rep = { id: string; name: string; email: string | null; phone: string | null; is_active: boolean };
 type InventoryRow = { rep_id: string; product_id: string; quantity_available: number };
 
 export default async function RepsPage() {
@@ -16,7 +16,7 @@ export default async function RepsPage() {
   const [{ data: reps }, { data: inventory }, profitSummary] = await Promise.all([
     supabase
       .from("profiles")
-      .select<"id, name, phone, is_active", Rep>("id, name, phone, is_active")
+      .select<"id, name, email, phone, is_active", Rep>("id, name, email, phone, is_active")
       .eq("role", "rep")
       .order("name"),
     supabase
@@ -41,6 +41,7 @@ export default async function RepsPage() {
           <thead>
             <tr className="border-b border-border text-right text-foreground/60">
               <th className="py-2">الاسم</th>
+              <th>البريد الإلكتروني</th>
               <th>الجوال</th>
               <th>إجمالي رصيد المخزون</th>
               <th>إجمالي المبيعات</th>
@@ -54,6 +55,7 @@ export default async function RepsPage() {
               return (
                 <tr key={rep.id} className="border-b border-border/50">
                   <td className="py-2">{rep.name}</td>
+                  <td dir="ltr">{rep.email ?? "—"}</td>
                   <td>{rep.phone ?? "—"}</td>
                   <td>{inventoryCountByRep.get(rep.id) ?? 0}</td>
                   <td>{formatCurrency(stats?.sales ?? 0)}</td>
@@ -76,8 +78,12 @@ export default async function RepsPage() {
               <Input name="name" required />
             </div>
             <div>
-              <label className="mb-1 block text-sm">رقم الجوال</label>
-              <Input name="phone" dir="ltr" required />
+              <label className="mb-1 block text-sm">البريد الإلكتروني (لتسجيل الدخول)</label>
+              <Input name="email" type="email" dir="ltr" required />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm">رقم الجوال (اختياري)</label>
+              <Input name="phone" dir="ltr" />
             </div>
             <div>
               <label className="mb-1 block text-sm">كلمة المرور</label>
