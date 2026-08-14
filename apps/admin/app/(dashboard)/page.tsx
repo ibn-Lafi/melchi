@@ -1,6 +1,7 @@
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { InvoiceIcon, WalletIcon, ChartIcon } from "../../components/icons";
 
 export default async function DashboardHomePage() {
   const supabase = createSupabaseServerClient();
@@ -23,19 +24,26 @@ export default async function DashboardHomePage() {
   const collectionsTotal = todayPayments?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
 
   const stats = [
-    { label: "عدد الفواتير اليوم", value: invoiceCount.toString() },
-    { label: "مبيعات اليوم", value: formatCurrency(salesTotal) },
-    { label: "تحصيلات اليوم", value: formatCurrency(collectionsTotal) },
+    { label: "عدد الفواتير اليوم", value: invoiceCount.toString(), icon: InvoiceIcon },
+    { label: "مبيعات اليوم", value: formatCurrency(salesTotal), icon: ChartIcon },
+    { label: "تحصيلات اليوم", value: formatCurrency(collectionsTotal), icon: WalletIcon },
   ];
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">الرئيسية</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الرئيسية"]} />}
+        title="الرئيسية"
+        subtitle="نظرة سريعة على أداء اليوم"
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <p className="text-sm text-foreground/60">{stat.label}</p>
-            <p className="mt-2 text-2xl font-bold">{stat.value}</p>
+          <Card key={stat.label} className="hover:shadow-card-hover">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <stat.icon className="h-[18px] w-[18px]" />
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{stat.label}</p>
+            <p className="mt-1 text-2xl font-bold">{stat.value}</p>
           </Card>
         ))}
       </div>
