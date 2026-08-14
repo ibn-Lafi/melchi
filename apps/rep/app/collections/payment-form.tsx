@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input } from "@system2026/ui";
+import { Button, Card, Input, Select } from "@system2026/ui";
 import { recordPaymentAction, type RecordPaymentActionState } from "./actions";
 
 type Customer = { id: string; name: string; shop_name: string | null };
@@ -19,7 +19,7 @@ const initialState: RecordPaymentActionState = {};
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "جارٍ التسجيل..." : "تسجيل التحصيل"}
     </Button>
   );
@@ -43,33 +43,25 @@ export function PaymentForm({
       <form action={formAction} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium">العميل</label>
-          <select
-            name="customerId"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-          >
+          <Select name="customerId" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.shop_name ?? c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium">الفاتورة (اختياري)</label>
-          <select
-            name="invoiceId"
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-          >
+          <Select name="invoiceId">
             <option value="">بدون ربط بفاتورة محددة</option>
             {invoices.map((inv) => (
               <option key={inv.id} value={inv.id}>
                 فاتورة #{inv.invoice_number} — {inv.total_amount} ر.س ({inv.status})
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
@@ -79,13 +71,13 @@ export function PaymentForm({
 
         <div>
           <label className="mb-1 block text-sm font-medium">طريقة الدفع</label>
-          <select name="method" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+          <Select name="method">
             {METHODS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
