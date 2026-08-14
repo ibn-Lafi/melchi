@@ -1,4 +1,4 @@
-import { Card, Input } from "@system2026/ui";
+import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -38,7 +38,35 @@ export default async function SuppliersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">الموردين</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الموردين"]} />}
+        title="الموردين"
+        subtitle="متابعة الموردين ومستحقاتهم"
+        actions={
+          role === "admin" ? (
+            <ModalTrigger label="+ إضافة مورد" title="إضافة مورد">
+              <ActionForm action={createSupplierAction} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm">الاسم</label>
+                  <Input name="name" required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">الجوال</label>
+                  <Input name="phone" dir="ltr" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">العنوان</label>
+                  <Input name="address" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">ملاحظات</label>
+                  <Input name="notes" />
+                </div>
+              </ActionForm>
+            </ModalTrigger>
+          ) : null
+        }
+      />
 
       <Card>
         <table className="w-full text-sm">
@@ -70,29 +98,6 @@ export default async function SuppliersPage() {
         {(suppliers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد موردين بعد</p> : null}
       </Card>
 
-      {role === "admin" ? (
-        <Card className="max-w-md">
-          <h2 className="mb-3 font-semibold">إضافة مورد</h2>
-          <ActionForm action={createSupplierAction} className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm">الاسم</label>
-              <Input name="name" required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">الجوال</label>
-              <Input name="phone" dir="ltr" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">العنوان</label>
-              <Input name="address" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">ملاحظات</label>
-              <Input name="notes" />
-            </div>
-          </ActionForm>
-        </Card>
-      ) : null}
     </div>
   );
 }

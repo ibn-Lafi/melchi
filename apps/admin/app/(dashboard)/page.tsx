@@ -1,27 +1,57 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb, BarChart } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { InvoiceIcon, WalletIcon, ChartIcon } from "../../components/icons";
+
+const WEEKDAY_LABELS = ["أحد", "إثن", "ثلا", "أرب", "خمس", "جمعة", "سبت"];
 
 export default async function DashboardHomePage() {
   const supabase = createSupabaseServerClient();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const { data: todayInvoices } = await supabase
-    .from("invoices")
-    .select<"total_amount, status", { total_amount: number; status: string }>("total_amount, status")
-    .gte("invoice_date", todayStart.toISOString())
-    .neq("status", "cancelled");
+  const weekStart = new Date(todayStart);
+  weekStart.setDate(weekStart.getDate() - 6);
 
-  const { data: todayPayments } = await supabase
-    .from("payments")
-    .select<"amount", { amount: number }>("amount")
-    .gte("payment_date", todayStart.toISOString());
+  const [{ data: todayInvoices }, { data: todayPayments }, { data: weekInvoices }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select<"total_amount, status", { total_amount: number; status: string }>("total_amount, status")
+      .gte("invoice_date", todayStart.toISOString())
+      .neq("status", "cancelled"),
+    supabase
+      .from("payments")
+      .select<"amount", { amount: number }>("amount")
+      .gte("payment_date", todayStart.toISOString()),
+    supabase
+      .from("invoices")
+      .select<"invoice_date, total_amount", { invoice_date: string; total_amount: number }>(
+        "invoice_date, total_amount",
+      )
+      .gte("invoice_date", weekStart.toISOString())
+      .neq("status", "cancelled"),
+  ]);
 
   const invoiceCount = todayInvoices?.length ?? 0;
   const salesTotal = todayInvoices?.reduce((sum, inv) => sum + inv.total_amount, 0) ?? 0;
   const collectionsTotal = todayPayments?.reduce((sum, p) => sum + p.amount, 0) ?? 0;
+
+  const salesByDay = new Map<string, number>();
+  for (const inv of weekInvoices ?? []) {
+    const day = inv.invoice_date.slice(0, 10);
+    salesByDay.set(day, (salesByDay.get(day) ?? 0) + inv.total_amount);
+  }
+  const weekChartData = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + i);
+    const key = date.toISOString().slice(0, 10);
+    const value = salesByDay.get(key) ?? 0;
+    return {
+      label: WEEKDAY_LABELS[date.getDay()]!,
+      value,
+      displayValue: `${WEEKDAY_LABELS[date.getDay()]}: ${formatCurrency(value)}`,
+    };
+  });
 
   const stats = [
     { label: "عدد الفواتير اليوم", value: invoiceCount.toString(), icon: InvoiceIcon },
@@ -47,6 +77,11 @@ export default async function DashboardHomePage() {
           </Card>
         ))}
       </div>
+
+      <Card className="mt-4">
+        <h2 className="mb-4 font-semibold">المبيعات آخر 7 أيام</h2>
+        <BarChart data={weekChartData} />
+      </Card>
     </div>
   );
 }

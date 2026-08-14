@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button } from "@system2026/ui";
+import { Button, useModalClose } from "@system2026/ui";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -29,6 +29,13 @@ export function ActionForm({
   className?: string;
 }) {
   const [state, formAction] = useFormState(action, {});
+  const closeModal = useModalClose();
+
+  useEffect(() => {
+    if (!state.success || !closeModal) return;
+    const timer = setTimeout(closeModal, 700);
+    return () => clearTimeout(timer);
+  }, [state.success, closeModal]);
 
   return (
     <form action={formAction} className={className}>
