@@ -22,7 +22,7 @@ export default function NewCustomerPage() {
   return (
     <div>
       <AppNav />
-      <main className="mx-auto max-w-md p-4 pb-28 sm:pb-8">
+      <main className="mx-auto max-w-md p-4 pb-28">
         <h1 className="mb-4 text-xl font-bold">إضافة عميل جديد لخط سيري</h1>
         <Card>
           <form action={formAction} className="space-y-3">
