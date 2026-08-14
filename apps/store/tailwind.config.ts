@@ -5,6 +5,7 @@ const config: Config = {
   presets: [sharedPreset],
   content: [
     "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
     "./lib/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
