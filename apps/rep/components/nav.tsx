@@ -80,11 +80,18 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "flex flex-1 flex-col items-center gap-0.5 whitespace-nowrap rounded-2xl py-1.5 text-[10px] font-medium leading-tight",
+        "flex flex-1 flex-col items-center gap-1 whitespace-nowrap rounded-2xl py-1.5 text-[10px] font-medium leading-tight",
         isActive ? "text-primary" : "text-muted-foreground",
       )}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <span
+        className={cn(
+          "flex h-7 w-9 items-center justify-center rounded-full transition-colors",
+          isActive ? "bg-muted" : "",
+        )}
+      >
+        <Icon className="h-5 w-5 shrink-0" />
+      </span>
       <span>{label}</span>
     </Link>
   );
