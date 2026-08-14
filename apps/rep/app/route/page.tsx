@@ -25,7 +25,7 @@ export default async function RoutePage() {
       <AppNav />
       <main className="p-4 pb-28">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">خط السير</h1>
+          <h1 className="text-xl font-bold">العملاء</h1>
           <Link
             href="/route/new-customer"
             className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"

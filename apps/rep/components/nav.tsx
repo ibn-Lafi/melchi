@@ -4,10 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@system2026/ui";
 
-const NAV_ITEMS = [
-  { href: "/route", label: "خط السير", icon: HomeIcon },
-  { href: "/collections", label: "التحصيلات", icon: WalletIcon },
-  { href: "/returns", label: "المرتجعات", icon: ReturnIcon },
+const SIDE_ITEMS_RIGHT = [
+  { href: "/", label: "الرئيسية", icon: HomeIcon },
+  { href: "/invoices", label: "الفواتير", icon: InvoiceIcon },
+];
+
+const SIDE_ITEMS_LEFT = [
+  { href: "/route", label: "العملاء", icon: UsersIcon },
+  { href: "/inventory", label: "المخزون", icon: BoxIcon },
 ];
 
 const CREATE_ITEM = { href: "/invoice/new", label: "فاتورة جديدة" };
@@ -22,21 +26,31 @@ function HomeIcon({ className }: { className?: string }) {
   );
 }
 
-function WalletIcon({ className }: { className?: string }) {
+function InvoiceIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect x="3" y="6" width="18" height="13" rx="2.5" />
-      <path d="M3 10h18" />
-      <path d="M15 14.5h3" />
+      <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
+      <path d="M9 8h6M9 12h6" />
     </svg>
   );
 }
 
-function ReturnIcon({ className }: { className?: string }) {
+function UsersIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 12a8 8 0 1 0 3-6.2" />
-      <path d="M4 4v5h5" />
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" />
+      <circle cx="17.5" cy="8.5" r="2.3" />
+      <path d="M15.8 14.7c2.4.4 4.2 2.5 4.2 5" />
+    </svg>
+  );
+}
+
+function BoxIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5v-9Z" />
+      <path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" />
     </svg>
   );
 }
@@ -66,7 +80,7 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "flex flex-1 flex-col items-center gap-0.5 whitespace-nowrap rounded-2xl py-1.5 text-[11px] font-medium leading-tight",
+        "flex flex-1 flex-col items-center gap-0.5 whitespace-nowrap rounded-2xl py-1.5 text-[10px] font-medium leading-tight",
         isActive ? "text-primary" : "text-muted-foreground",
       )}
     >
@@ -80,20 +94,23 @@ function NavLink({
 // عائم بنفس التصميم بغض النظر عن عرض الشاشة (لا تبديل حسب breakpoint).
 export function AppNav() {
   const pathname = usePathname();
-  const isItemActive = (href: string) => pathname?.startsWith(href) ?? false;
+  const isItemActive = (href: string) => (href === "/" ? pathname === "/" : pathname?.startsWith(href) ?? false);
 
   return (
     <nav className="no-print fixed inset-x-3 bottom-3 z-20 mx-auto max-w-sm">
-      <div className="relative flex items-stretch justify-between rounded-[28px] border border-border bg-background px-2 py-1.5 shadow-pop">
+      <div className="relative flex items-stretch justify-between rounded-[28px] border border-border bg-background px-1.5 py-1.5 shadow-pop">
         <div className="flex flex-1 items-center justify-evenly">
-          <NavLink {...NAV_ITEMS[0]!} isActive={isItemActive(NAV_ITEMS[0]!.href)} />
-          <NavLink {...NAV_ITEMS[1]!} isActive={isItemActive(NAV_ITEMS[1]!.href)} />
+          {SIDE_ITEMS_RIGHT.map((item) => (
+            <NavLink key={item.href} {...item} isActive={isItemActive(item.href)} />
+          ))}
         </div>
 
         <div className="w-14 shrink-0" />
 
         <div className="flex flex-1 items-center justify-evenly">
-          <NavLink {...NAV_ITEMS[2]!} isActive={isItemActive(NAV_ITEMS[2]!.href)} />
+          {SIDE_ITEMS_LEFT.map((item) => (
+            <NavLink key={item.href} {...item} isActive={isItemActive(item.href)} />
+          ))}
         </div>
 
         <Link
