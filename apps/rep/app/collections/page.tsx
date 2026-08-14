@@ -36,7 +36,7 @@ export default async function CollectionsPage({
   return (
     <div>
       <AppNav />
-      <main className="mx-auto max-w-2xl p-4 pb-28">
+      <main className="mx-auto max-w-2xl p-4 pb-28 sm:pb-8">
         <h1 className="mb-4 text-xl font-bold">تسجيل تحصيل</h1>
         {(customers?.length ?? 0) === 0 ? (
           <p className="text-foreground/60">لا يوجد عملاء بخط سيرك بعد</p>
