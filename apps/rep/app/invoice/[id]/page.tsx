@@ -94,7 +94,7 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   return (
     <div>
       <AppNav />
-      <main className="mx-auto max-w-xl p-4 pb-28">
+      <main className="mx-auto max-w-xl p-4 pb-28 sm:pb-8">
         <div className="no-print mb-3 flex justify-end">
           <PrintButton />
         </div>

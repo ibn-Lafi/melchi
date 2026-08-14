@@ -23,7 +23,7 @@ export default async function RoutePage() {
   return (
     <div>
       <AppNav />
-      <main className="p-4 pb-28">
+      <main className="p-4 pb-28 sm:pb-8">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">خط السير</h1>
           <Link
