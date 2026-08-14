@@ -16,16 +16,17 @@ export default async function ProductPage({ params }: { params: { id: string } }
           <img
             src={product.image_url}
             alt={product.name}
-            className="mb-4 aspect-square w-full rounded-md object-cover"
+            className="mb-4 aspect-square w-full rounded-xl object-cover"
           />
         ) : null}
         <h1 className="text-2xl font-bold">{product.name}</h1>
         {product.category_name ? (
-          <p className="mt-1 text-sm text-foreground/60">{product.category_name}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{product.category_name}</p>
         ) : null}
-        {product.description ? <p className="mt-4">{product.description}</p> : null}
-        <p className="mt-4 text-xl font-bold text-primary">
-          {formatCurrency(product.price)} / {product.base_unit_name}
+        {product.description ? <p className="mt-4 text-foreground/80">{product.description}</p> : null}
+        <p className="mt-4 text-xl font-bold">
+          {formatCurrency(product.price)}{" "}
+          <span className="text-base font-normal text-muted-foreground">/ {product.base_unit_name}</span>
         </p>
         <a href={buildWhatsAppOrderLink(product.name)} target="_blank" rel="noreferrer">
           <Button className="mt-4 w-full">اطلب الآن عبر واتساب</Button>
