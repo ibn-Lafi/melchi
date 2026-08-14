@@ -1,4 +1,4 @@
-import { Button, Card } from "@system2026/ui";
+import { Button, Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { approveInvoiceEditRequest, rejectInvoiceEditRequest } from "./review-actions";
 
@@ -44,11 +44,11 @@ export default async function InvoiceRequestsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">طلبات تعديل/إلغاء الفواتير</h1>
-      <p className="text-sm text-foreground/60">
-        طلبات بعد انتهاء فترة السماح (راجع requirements.md §7.7) — تحتاج موافقتك، والموافقة على
-        &quot;إلغاء كامل&quot; تُنشئ إشعار دائن تلقائيًا وتعيد المخزون لرصيد المندوب.
-      </p>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "طلبات التعديل"]} />}
+        title="طلبات تعديل/إلغاء الفواتير"
+        subtitle="طلبات بعد انتهاء فترة السماح (راجع requirements.md §7.7) — تحتاج موافقتك، والموافقة على &quot;إلغاء كامل&quot; تُنشئ إشعار دائن تلقائيًا وتعيد الكمية للمخزون."
+      />
 
       <div className="space-y-3">
         {(requests ?? []).map((req) => (

@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 
 type StockRow = { id: string; product_id: string; quantity_available: number };
@@ -46,7 +46,11 @@ export default async function WarehousePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">المخزن المركزي</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "المخزون"]} />}
+        title="المخزون"
+        subtitle="مخزون واحد مشترك للنظام كامل — المندوبون يبيعون منه مباشرة"
+      />
 
       <Card>
         <h2 className="mb-3 font-semibold">الأرصدة الحالية</h2>

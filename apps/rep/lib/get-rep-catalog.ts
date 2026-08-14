@@ -14,14 +14,15 @@ export type RepCatalogProduct = {
   units: RepCatalogUnit[];
 };
 
-// يجمع بيانات رصيد المندوب + المنتجات + الوحدات البديلة بدون الاعتماد على
-// Embedded Resources التلقائية بـ Supabase (تحتاج بيانات Relationships الدقيقة
-// بـ types.ts، وهي مبسّطة حاليًا كونها مكتوبة يدويًا وليست مولّدة فعليًا).
+// يجمع بيانات المخزون المشترك (warehouse_stock — مخزن واحد للنظام كامل،
+// راجع CLAUDE.md) + المنتجات + الوحدات البديلة بدون الاعتماد على Embedded
+// Resources التلقائية بـ Supabase (تحتاج بيانات Relationships الدقيقة بـ
+// types.ts، وهي مبسّطة حاليًا كونها مكتوبة يدويًا وليست مولّدة فعليًا).
 export async function getRepCatalog(): Promise<RepCatalogProduct[]> {
   const supabase = createSupabaseServerClient();
 
   const { data: inventory } = await supabase
-    .from("rep_inventory")
+    .from("warehouse_stock")
     .select<"product_id, quantity_available", { product_id: string; quantity_available: number }>(
       "product_id, quantity_available",
     )

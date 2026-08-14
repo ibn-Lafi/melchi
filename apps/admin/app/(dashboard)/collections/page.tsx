@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { PaymentForm } from "./payment-form";
@@ -46,7 +46,10 @@ export default async function CollectionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">التحصيلات</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "التحصيلات"]} />}
+        title="التحصيلات"
+      />
 
       <Card>
         <h2 className="mb-3 font-semibold">ديون العملاء المستحقة</h2>

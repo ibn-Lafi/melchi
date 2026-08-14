@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 
@@ -65,9 +65,29 @@ export default async function InvoicesPage({
   const repNameById = new Map((reps ?? []).map((r) => [r.id, r.name]));
   const customerNameById = new Map((customers ?? []).map((c) => [c.id, c.shop_name ?? c.name]));
 
+  const linkButtonClass =
+    "inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted";
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">الفواتير</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير"]} />}
+        title="الفواتير"
+        subtitle="كل فواتير البيع، مع طلبات التعديل والمرتجعات والتحصيلات"
+        actions={
+          <>
+            <Link href="/invoice-requests" className={linkButtonClass}>
+              طلبات تعديل الفواتير
+            </Link>
+            <Link href="/returns" className={linkButtonClass}>
+              المرتجعات
+            </Link>
+            <Link href="/collections" className={linkButtonClass}>
+              التحصيلات
+            </Link>
+          </>
+        }
+      />
 
       <Card>
         <form className="mb-4 flex flex-wrap gap-3 text-sm">

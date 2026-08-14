@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
@@ -43,28 +44,36 @@ export default async function SuppliersPage() {
         title="الموردين"
         subtitle="متابعة الموردين ومستحقاتهم"
         actions={
-          role === "admin" ? (
-            <ModalTrigger label="+ إضافة مورد" title="إضافة مورد">
-              <ActionForm action={createSupplierAction} className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-sm">الاسم</label>
-                  <Input name="name" required />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">الجوال</label>
-                  <Input name="phone" dir="ltr" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">العنوان</label>
-                  <Input name="address" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">ملاحظات</label>
-                  <Input name="notes" />
-                </div>
-              </ActionForm>
-            </ModalTrigger>
-          ) : null
+          <>
+            <Link
+              href="/payables"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              مستحقات الموردين
+            </Link>
+            {role === "admin" ? (
+              <ModalTrigger label="+ إضافة مورد" title="إضافة مورد">
+                <ActionForm action={createSupplierAction} className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-sm">الاسم</label>
+                    <Input name="name" required />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">الجوال</label>
+                    <Input name="phone" dir="ltr" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">العنوان</label>
+                    <Input name="address" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">ملاحظات</label>
+                    <Input name="notes" />
+                  </div>
+                </ActionForm>
+              </ModalTrigger>
+            ) : null}
+          </>
         }
       />
 

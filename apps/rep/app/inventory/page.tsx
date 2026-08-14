@@ -4,13 +4,14 @@ import { AppNav } from "../../components/nav";
 
 type InventoryRow = { product_id: string; quantity_available: number };
 
-// RLS (rep_inventory_select_own_rep) يقيّد النتيجة تلقائيًا لرصيد
-// المندوب الحالي فقط.
+// مخزون مشترك واحد للنظام كامل (warehouse_stock) — راجع CLAUDE.md. RLS
+// (warehouse_stock_select_rep) تسمح لأي مندوب بقراءة الرصيد المشترك (بدون
+// تعديل مباشر، كل تغيير كمية يمر عبر RPC فقط).
 export default async function InventoryPage() {
   const supabase = createSupabaseServerClient();
 
   const { data: inventory } = await supabase
-    .from("rep_inventory")
+    .from("warehouse_stock")
     .select<"product_id, quantity_available", InventoryRow>("product_id, quantity_available")
     .order("quantity_available", { ascending: false });
 
@@ -51,7 +52,7 @@ export default async function InventoryPage() {
             );
           })}
           {(inventory?.length ?? 0) === 0 ? (
-            <p className="py-12 text-center text-muted-foreground">لا يوجد رصيد مخزون لديك حاليًا</p>
+            <p className="py-12 text-center text-muted-foreground">لا يوجد رصيد مخزون متاح حاليًا</p>
           ) : null}
         </Card>
       </main>
