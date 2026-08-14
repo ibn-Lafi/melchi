@@ -94,69 +94,58 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   return (
     <div>
       <AppNav />
-      <main className="mx-auto max-w-xl p-4">
+      <main className="mx-auto max-w-xl p-4 pb-28">
         <div className="no-print mb-3 flex justify-end">
           <PrintButton />
         </div>
-        <Card>
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-bold">فاتورة #{invoice.invoice_number}</h1>
-              <p className="text-sm text-foreground/60">
-                {new Date(invoice.invoice_date).toLocaleString("ar-SA")}
-              </p>
-            </div>
+        <Card className="text-center">
+          <span className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+            {STATUS_LABELS[invoice.status] ?? invoice.status}
+          </span>
+          <h1 className="mt-3 text-2xl font-bold">فاتورة #{invoice.invoice_number}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {new Date(invoice.invoice_date).toLocaleString("ar-SA")}
+          </p>
+          <p className="text-sm text-muted-foreground">{customer?.shop_name ?? customer?.name ?? "—"}</p>
+          <div className="mt-4 flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrCodeImage} alt="QR الفاتورة" width={120} height={120} />
+            <img
+              src={qrCodeImage}
+              alt="QR الفاتورة"
+              width={140}
+              height={140}
+              className="rounded-xl border border-border p-2"
+            />
           </div>
+        </Card>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-            <p>
-              <span className="text-foreground/60">العميل: </span>
-              {customer?.shop_name ?? customer?.name ?? "—"}
-            </p>
-            <p>
-              <span className="text-foreground/60">الحالة: </span>
-              {STATUS_LABELS[invoice.status] ?? invoice.status}
-            </p>
+        <Card className="mt-3 divide-y divide-border p-0">
+          {(items ?? []).map((item) => (
+            <div key={item.id} className="flex items-center justify-between gap-3 p-4">
+              <div>
+                <p className="font-medium">{productNameById.get(item.product_id) ?? "—"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.quantity_in_unit} × {unitNameById.get(item.unit_id) ?? "—"} @{" "}
+                  {formatCurrency(item.unit_price)}
+                </p>
+              </div>
+              <p className="shrink-0 font-semibold">{formatCurrency(item.subtotal)}</p>
+            </div>
+          ))}
+        </Card>
+
+        <Card className="mt-3 space-y-1.5 text-sm">
+          <div className="flex justify-between text-muted-foreground">
+            <span>المجموع قبل الضريبة</span>
+            <span>{formatCurrency(invoice.subtotal)}</span>
           </div>
-
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-right text-foreground/60">
-                <th className="py-2">المنتج</th>
-                <th>الوحدة</th>
-                <th>الكمية</th>
-                <th>السعر</th>
-                <th>الإجمالي</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(items ?? []).map((item) => (
-                <tr key={item.id} className="border-b border-border/50">
-                  <td className="py-2">{productNameById.get(item.product_id) ?? "—"}</td>
-                  <td>{unitNameById.get(item.unit_id) ?? "—"}</td>
-                  <td>{item.quantity_in_unit}</td>
-                  <td>{formatCurrency(item.unit_price)}</td>
-                  <td>{formatCurrency(item.subtotal)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="mt-4 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>المجموع قبل الضريبة</span>
-              <span>{formatCurrency(invoice.subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>ضريبة القيمة المضافة</span>
-              <span>{formatCurrency(invoice.vat_amount)}</span>
-            </div>
-            <div className="flex justify-between text-base font-bold">
-              <span>الإجمالي</span>
-              <span>{formatCurrency(invoice.total_amount)}</span>
-            </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>ضريبة القيمة المضافة</span>
+            <span>{formatCurrency(invoice.vat_amount)}</span>
+          </div>
+          <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
+            <span>الإجمالي</span>
+            <span>{formatCurrency(invoice.total_amount)}</span>
           </div>
         </Card>
 

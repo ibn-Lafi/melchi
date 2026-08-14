@@ -23,43 +23,57 @@ export default async function RoutePage() {
   return (
     <div>
       <AppNav />
-      <main className="p-4">
+      <main className="p-4 pb-28">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">خط السير</h1>
-          <Link href="/route/new-customer" className="text-sm text-primary underline">
-            + إضافة عميل جديد
+          <Link
+            href="/route/new-customer"
+            className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
+          >
+            + عميل جديد
           </Link>
         </div>
         <div className="grid gap-3">
           {(customers ?? []).map((customer) => (
             <Card key={customer.id}>
               <p className="font-semibold">{customer.shop_name ?? customer.name}</p>
-              {customer.address ? <p className="text-sm text-foreground/60">{customer.address}</p> : null}
-              <div className="mt-2 flex gap-3">
+              {customer.address ? (
+                <p className="text-sm text-muted-foreground">{customer.address}</p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {customer.google_maps_link ? (
                   <a
                     href={customer.google_maps_link}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm text-primary underline"
+                    className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
                   >
                     فتح الموقع 📍
                   </a>
                 ) : null}
-                <Link href={`/invoice/new?customerId=${customer.id}`} className="text-sm text-primary underline">
+                <Link
+                  href={`/invoice/new?customerId=${customer.id}`}
+                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
                   فاتورة جديدة
                 </Link>
-                <Link href={`/collections?customerId=${customer.id}`} className="text-sm text-primary underline">
+                <Link
+                  href={`/collections?customerId=${customer.id}`}
+                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
                   تسجيل تحصيل
                 </Link>
-                <Link href={`/returns?customerId=${customer.id}`} className="text-sm text-primary underline">
+                <Link
+                  href={`/returns?customerId=${customer.id}`}
+                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                >
                   تسجيل مرتجع
                 </Link>
               </div>
             </Card>
           ))}
           {(customers?.length ?? 0) === 0 ? (
-            <p className="text-foreground/60">لا يوجد عملاء بخط سيرك بعد</p>
+            <p className="py-12 text-center text-muted-foreground">لا يوجد عملاء بخط سيرك بعد</p>
           ) : null}
         </div>
       </main>

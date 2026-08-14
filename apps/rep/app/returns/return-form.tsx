@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input } from "@system2026/ui";
+import { Button, Card, Input, Select } from "@system2026/ui";
 import { createReturnAction, type ReturnActionState } from "./actions";
 
 type Customer = { id: string; name: string; shop_name: string | null };
@@ -19,7 +19,7 @@ const initialState: ReturnActionState = {};
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" className="w-full" disabled={pending}>
       {pending ? "جارٍ التسجيل..." : "تسجيل المرتجع"}
     </Button>
   );
@@ -57,75 +57,72 @@ export function ReturnForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">العميل</label>
-        <select
-          name="customerId"
-          defaultValue={defaultCustomerId ?? customers[0]?.id}
-          required
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-        >
+        <Select name="customerId" defaultValue={defaultCustomerId ?? customers[0]?.id} required>
           {customers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.shop_name ?? c.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {items.map((item, index) => (
-          <Card key={index} className="grid grid-cols-12 items-end gap-2">
-            <div className="col-span-3">
-              <label className="mb-1 block text-xs">المنتج</label>
-              <select
-                value={item.productId}
-                onChange={(e) => updateItem(index, { productId: e.target.value })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
+          <Card key={index} className="space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-muted-foreground">المنتج</label>
+                <Select value={item.productId} onChange={(e) => updateItem(index, { productId: e.target.value })}>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <button
+                type="button"
+                aria-label="حذف"
+                onClick={() => removeItem(index)}
+                className="mt-6 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-foreground/60 transition-colors hover:border-primary hover:text-primary"
               >
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                ✕
+              </button>
             </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-xs">الكمية</label>
-              <Input
-                type="number"
-                min={1}
-                value={item.quantity}
-                onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">الكمية</label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">سعر البيع الأصلي</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={item.unitPrice}
+                  onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
+                />
+              </div>
             </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-xs">سعر البيع الأصلي</label>
-              <Input
-                type="number"
-                step="0.01"
-                value={item.unitPrice}
-                onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
-              />
-            </div>
-            <div className="col-span-4">
-              <label className="mb-1 block text-xs">الحالة</label>
-              <select
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">الحالة</label>
+              <Select
                 value={item.condition}
                 onChange={(e) => updateItem(index, { condition: e.target.value as LineItem["condition"] })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
               >
                 <option value="resalable">سليم (يرجع لرصيدي)</option>
                 <option value="damaged">تالف</option>
                 <option value="expired">منتهي الصلاحية</option>
-              </select>
-            </div>
-            <div className="col-span-1">
-              <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
-                حذف
-              </Button>
+              </Select>
             </div>
           </Card>
         ))}
-        <Button type="button" variant="outline" onClick={addItem}>
+        <Button type="button" variant="outline" className="w-full" onClick={addItem}>
           + إضافة منتج
         </Button>
       </div>
