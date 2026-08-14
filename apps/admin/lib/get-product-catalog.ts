@@ -3,8 +3,7 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 export type CatalogUnit = { unitId: string; unitName: string };
 export type CatalogProduct = { productId: string; productName: string; units: CatalogUnit[] };
 
-// كتالوج كل المنتجات ووحداتها (أساسية + بديلة) — يُستخدم بفورم فواتير الشراء
-// ونقل البضاعة، حيث لا يوجد قيد على رصيد المندوب كما بتطبيق rep.
+// كتالوج كل المنتجات ووحداتها (أساسية + بديلة) — يُستخدم بفورم فواتير الشراء.
 export async function getProductCatalog(): Promise<CatalogProduct[]> {
   const supabase = createSupabaseServerClient();
 

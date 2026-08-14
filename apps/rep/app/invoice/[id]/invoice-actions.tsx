@@ -59,7 +59,7 @@ export function InvoiceActions({
     <Card className="no-print space-y-3">
       <p className="text-sm text-foreground/60">
         {withinGracePeriod
-          ? "لا يزال ضمن فترة السماح — الإلغاء فوري ويعيد البضاعة لرصيدك."
+          ? "لا يزال ضمن فترة السماح — الإلغاء فوري ويعيد البضاعة للمخزون."
           : "انتهت فترة السماح — سيُرسَل الطلب للأدمن للموافقة."}
       </p>
       <form action={formAction} className="space-y-3">

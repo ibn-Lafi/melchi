@@ -11,15 +11,10 @@ const NAV_ITEMS = [
   { href: "/products", label: "المنتجات", icon: "box" as const },
   { href: "/suppliers", label: "الموردين", icon: "truck" as const },
   { href: "/purchases", label: "المشتريات", icon: "cart" as const },
-  { href: "/warehouse", label: "المخزن المركزي", icon: "warehouse" as const },
-  { href: "/transfers", label: "نقل البضاعة", icon: "transfer" as const },
+  { href: "/warehouse", label: "المخزون", icon: "warehouse" as const },
   { href: "/reps", label: "المناديب", icon: "users" as const },
   { href: "/customers", label: "العملاء", icon: "store" as const },
   { href: "/invoices", label: "الفواتير", icon: "invoice" as const },
-  { href: "/invoice-requests", label: "طلبات تعديل الفواتير", icon: "edit" as const },
-  { href: "/returns", label: "المرتجعات", icon: "return" as const },
-  { href: "/collections", label: "التحصيلات", icon: "wallet" as const },
-  { href: "/payables", label: "مستحقات الموردين", icon: "creditCard" as const },
   { href: "/reports", label: "التقارير", icon: "chart" as const },
 ];
 

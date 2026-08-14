@@ -2,6 +2,10 @@
 -- على قاعدة بيانات اختبار فارغة، ويفشل (exit code != 0) عند أي RAISE EXCEPTION.
 -- هذا ليس Mock — يُنفَّذ فعليًا على Postgres حقيقي بنفس مخطط الإنتاج.
 --
+-- ملاحظة: النظام يستخدم مخزون مشترك واحد (warehouse_stock) للأدمن وكل
+-- المناديب معًا — لا يوجد "رصيد مخزون خاص بكل مندوب" (rep_inventory) ولا
+-- نظام نقل بضاعة بعد الآن (راجع requirements.md §6).
+--
 -- ملاحظة تقنية: psql لا يستبدل متغيراته (:'name') داخل نصوص $$...$$ (DO
 -- blocks/دوال)، لذلك أي تحقق يحتاج متغيّر psql (مثل invoice_id الناتج من
 -- \gset) يُكتب كاستدعاء SELECT مباشر لدالة pg_temp.assert_true أدناه، وليس
@@ -71,7 +75,7 @@ select pg_temp.assert_true(
 );
 select pg_temp.assert_true(
   (select quantity_available from public.warehouse_stock where product_id = 'b1111111-0000-0000-0000-000000000001') = 240,
-  'رصيد المخزن المركزي بعد أول شراء يجب أن يكون 240'
+  'رصيد المخزون المشترك بعد أول شراء يجب أن يكون 240'
 );
 
 select public.create_purchase_invoice(
@@ -89,23 +93,7 @@ select pg_temp.assert_true(
 );
 select pg_temp.assert_true(
   (select quantity_available from public.warehouse_stock where product_id = 'b1111111-0000-0000-0000-000000000001') = 360,
-  'رصيد المخزن المركزي بعد شراءين يجب أن يكون 360'
-);
-
--- ========== 2. نقل بضاعة للمندوب (requirements.md §6.2) ==========
-select public.transfer_stock_to_rep(
-  '22222222-2222-2222-2222-222222222222',
-  jsonb_build_array(jsonb_build_object('product_id', 'b1111111-0000-0000-0000-000000000001', 'quantity', 100))
-);
-
-select pg_temp.assert_true(
-  (select quantity_available from public.warehouse_stock where product_id = 'b1111111-0000-0000-0000-000000000001') = 260,
-  'رصيد المخزن بعد نقل 100 قطعة يجب أن يكون 260'
-);
-select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 100,
-  'رصيد المندوب بعد النقل يجب أن يكون 100'
+  'رصيد المخزون المشترك بعد شراءين يجب أن يكون 360'
 );
 
 insert into public.customers (id, name, shop_name, show_in_store, google_maps_link)
@@ -113,7 +101,7 @@ values ('e1111111-0000-0000-0000-000000000001', 'عميل تجريبي', 'محل
 insert into public.customer_reps (customer_id, rep_id)
 values ('e1111111-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222');
 
--- ========== 3. فاتورة بيع + VAT 15% + خصم مخزون (requirements.md §7.3/§7.5) ==========
+-- ========== 2. فاتورة بيع + VAT 15% + خصم مباشر من المخزون المشترك (requirements.md §7.3/§7.5) ==========
 set request.jwt.uid = '22222222-2222-2222-2222-222222222222';
 set request.jwt.claims = '{"role":"authenticated","app_metadata":{"role":"rep"}}';
 
@@ -145,12 +133,12 @@ select pg_temp.assert_true(
   'qr_code_data يجب ألا يكون فارغًا'
 );
 select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 80,
-  'رصيد المندوب بعد بيع 20 قطعة يجب أن يكون 80'
+  (select quantity_available from public.warehouse_stock
+    where product_id = 'b1111111-0000-0000-0000-000000000001') = 340,
+  'رصيد المخزون المشترك بعد بيع 20 قطعة يجب أن يكون 340 (360-20)'
 );
 
--- ========== 4. رفض بيع كمية أكبر من المتاح (requirements.md §7.3) ==========
+-- ========== 3. رفض بيع كمية أكبر من المتاح (requirements.md §7.3) ==========
 do $$
 begin
   perform public.create_invoice_with_stock_check(
@@ -162,16 +150,16 @@ begin
       'quantity_in_unit', 99999, 'unit_price', 5
     )), 'cash'
   );
-  raise exception 'كان يجب رفض بيع كمية أكبر من رصيد المندوب';
+  raise exception 'كان يجب رفض بيع كمية أكبر من المتوفر بالمخزون';
 exception
   when others then
-    if sqlerrm = 'كان يجب رفض بيع كمية أكبر من رصيد المندوب' then
+    if sqlerrm = 'كان يجب رفض بيع كمية أكبر من المتوفر بالمخزون' then
       raise exception 'FAILED: %', sqlerrm;
     end if;
     -- أي استثناء آخر متوقع من create_invoice_with_stock_check نفسها — هذا صحيح
 end $$;
 
--- ========== 5. تحصيل جزئي/كامل يحدّث حالة الفاتورة تلقائيًا (requirements.md §11) ==========
+-- ========== 4. تحصيل جزئي/كامل يحدّث حالة الفاتورة تلقائيًا (requirements.md §11) ==========
 select public.record_customer_payment(
   'e1111111-0000-0000-0000-000000000001', :'invoice1_invoice_id', 50, 'cash'
 );
@@ -188,7 +176,7 @@ select pg_temp.assert_true(
   'حالة الفاتورة بعد اكتمال التحصيل يجب أن تكون paid'
 );
 
--- ========== 6. مرتجع: سليم يرجع للمخزون، تالف يُسجَّل خسارة فقط (requirements.md §10.2) ==========
+-- ========== 5. مرتجع: سليم يرجع للمخزون المشترك، تالف يُسجَّل خسارة فقط (requirements.md §10.2) ==========
 select public.process_return(
   'e1111111-0000-0000-0000-000000000001',
   :'invoice1_invoice_id',
@@ -200,20 +188,20 @@ select public.process_return(
 );
 
 select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 85,
-  'رصيد المندوب بعد المرتجع يجب أن يكون 85 (80+5 سليم، بدون التالف)'
+  (select quantity_available from public.warehouse_stock
+    where product_id = 'b1111111-0000-0000-0000-000000000001') = 345,
+  'رصيد المخزون المشترك بعد المرتجع يجب أن يكون 345 (340+5 سليم، بدون التالف)'
 );
 select pg_temp.assert_true(
   (select quantity_change from public.stock_movements where movement_type = 'write_off' limit 1) = -2,
   'حركة write_off يجب أن تسجّل الكمية الفعلية المفقودة (-2) وليس صفر'
 );
 
--- ========== 7. منع ازدواج إعادة المخزون: لا إلغاء لفاتورة سبق إرجاعها ==========
--- invoice1 أُرجع جزء منها بالقسم 6 (process_return). لو سمحنا بإلغائها كاملة
+-- ========== 6. منع ازدواج إعادة المخزون: لا إلغاء لفاتورة سبق إرجاعها ==========
+-- invoice1 أُرجع جزء منها بالقسم 5 (process_return). لو سمحنا بإلغائها كاملة
 -- الآن، cancel_invoice_within_grace_period كانت سترجّع كامل الكمية الأصلية
--- (20) لرصيد المندوب فوق الكمية المُرجعة أصلًا (5) — ازدواج توثّق. يجب أن
--- تُرفض العملية.
+-- (20) للمخزون فوق الكمية المُرجعة أصلًا (5) — ازدواج توثّق. يجب أن تُرفض
+-- العملية.
 -- ملاحظة: psql لا يستبدل متغيراته داخل $$...$$، لذلك p_invoice_id يُمرَّر
 -- كوسيط عادي لدالة pg_temp (يُستبدل بشكل صحيح باستدعاء SELECT مباشر).
 create function pg_temp.assert_cancel_is_rejected(p_invoice_id uuid, p_reason text)
@@ -237,12 +225,12 @@ select pg_temp.assert_true(
   'حالة الفاتورة الأولى يجب ألا تتغيّر بعد رفض محاولة الإلغاء'
 );
 select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 85,
-  'رصيد المندوب يجب ألا يتأثر بمحاولة الإلغاء المرفوضة (يبقى 85)'
+  (select quantity_available from public.warehouse_stock
+    where product_id = 'b1111111-0000-0000-0000-000000000001') = 345,
+  'رصيد المخزون المشترك يجب ألا يتأثر بمحاولة الإلغاء المرفوضة (يبقى 345)'
 );
 
--- ========== 7.1 إلغاء فاتورة بفترة السماح بنجاح (فاتورة جديدة بلا مرتجعات) ==========
+-- ========== 6.1 إلغاء فاتورة بفترة السماح بنجاح (فاتورة جديدة بلا مرتجعات) ==========
 select public.create_invoice_with_stock_check(
   '22222222-2222-2222-2222-222222222222',
   'e1111111-0000-0000-0000-000000000001',
@@ -264,12 +252,12 @@ select pg_temp.assert_true(
   'يجب إنشاء إشعار دائن واحد بالضبط عند الإلغاء'
 );
 select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 85,
-  'رصيد المندوب يجب أن يعود 85 (بيع 4 ثم إلغاء يعيدها بالضبط)'
+  (select quantity_available from public.warehouse_stock
+    where product_id = 'b1111111-0000-0000-0000-000000000001') = 345,
+  'رصيد المخزون المشترك يجب أن يعود 345 (بيع 4 ثم إلغاء يعيدها بالضبط)'
 );
 
--- ========== 7.2 طلب تعديل بعد فترة السماح + مراجعة الأدمن (requirements.md §7.7) ==========
+-- ========== 6.2 طلب تعديل بعد فترة السماح + مراجعة الأدمن (requirements.md §7.7) ==========
 select public.create_invoice_with_stock_check(
   '22222222-2222-2222-2222-222222222222',
   'e1111111-0000-0000-0000-000000000001',
@@ -308,12 +296,12 @@ select pg_temp.assert_true(
   'يجب إنشاء إشعار دائن للفاتورة الرابعة عند موافقة الأدمن على الإلغاء'
 );
 select pg_temp.assert_true(
-  (select quantity_available from public.rep_inventory
-    where rep_id = '22222222-2222-2222-2222-222222222222' and product_id = 'b1111111-0000-0000-0000-000000000001') = 85,
-  'رصيد المندوب يجب أن يعود 85 (بيع 3 ثم إلغاء عبر موافقة الأدمن يعيدها بالضبط)'
+  (select quantity_available from public.warehouse_stock
+    where product_id = 'b1111111-0000-0000-0000-000000000001') = 345,
+  'رصيد المخزون المشترك يجب أن يعود 345 (بيع 3 ثم إلغاء عبر موافقة الأدمن يعيدها بالضبط)'
 );
 
--- ========== 8. RLS لكل دور (CLAUDE.md §4-5) ==========
+-- ========== 7. RLS لكل دور (CLAUDE.md §4-5) ==========
 reset role;
 set request.jwt.uid = '22222222-2222-2222-2222-222222222222';
 set request.jwt.claims = '{"role":"authenticated","app_metadata":{"role":"rep"}}';
@@ -326,6 +314,10 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.customers) = 1,
   'المندوب يجب أن يرى عميله المرتبط فقط (RLS)'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.warehouse_stock) = 1,
+  'المندوب يجب أن يرى المخزون المشترك كاملًا (RLS — مخزن واحد للنظام)'
 );
 
 reset role;

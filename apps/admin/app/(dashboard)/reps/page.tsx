@@ -7,37 +7,26 @@ import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { createRepAction } from "./actions";
 
 type Rep = { id: string; name: string; email: string | null; phone: string | null; is_active: boolean };
-type InventoryRow = { rep_id: string; product_id: string; quantity_available: number };
 
 export default async function RepsPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
 
-  const [{ data: reps }, { data: inventory }, profitSummary] = await Promise.all([
+  const [{ data: reps }, profitSummary] = await Promise.all([
     supabase
       .from("profiles")
       .select<"id, name, email, phone, is_active", Rep>("id, name, email, phone, is_active")
       .eq("role", "rep")
       .order("name"),
-    supabase
-      .from("rep_inventory")
-      .select<"rep_id, product_id, quantity_available", InventoryRow>(
-        "rep_id, product_id, quantity_available",
-      ),
     getProfitSummary(),
   ]);
-
-  const inventoryCountByRep = new Map<string, number>();
-  for (const row of inventory ?? []) {
-    inventoryCountByRep.set(row.rep_id, (inventoryCountByRep.get(row.rep_id) ?? 0) + row.quantity_available);
-  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "المناديب"]} />}
         title="المناديب"
-        subtitle="إدارة حسابات المناديب ومتابعة أدائهم ورصيد مخزونهم"
+        subtitle="إدارة حسابات المناديب ومتابعة أدائهم"
         actions={
           role === "admin" ? (
             <ModalTrigger label="+ إضافة مندوب" title="إضافة مندوب">
@@ -71,7 +60,6 @@ export default async function RepsPage() {
               <th className="py-2">الاسم</th>
               <th>البريد الإلكتروني</th>
               <th>الجوال</th>
-              <th>إجمالي رصيد المخزون</th>
               <th>إجمالي المبيعات</th>
               <th>إجمالي الربح</th>
               <th>الحالة</th>
@@ -85,7 +73,6 @@ export default async function RepsPage() {
                   <td className="py-2">{rep.name}</td>
                   <td dir="ltr">{rep.email ?? "—"}</td>
                   <td>{rep.phone ?? "—"}</td>
-                  <td>{inventoryCountByRep.get(rep.id) ?? 0}</td>
                   <td>{formatCurrency(stats?.sales ?? 0)}</td>
                   <td>{formatCurrency(stats?.profit ?? 0)}</td>
                   <td>

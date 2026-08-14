@@ -24,7 +24,7 @@ export default async function NewInvoicePage({
       <main className="mx-auto max-w-2xl p-4 pb-28">
         <h1 className="mb-4 text-xl font-bold">فاتورة بيع جديدة</h1>
         {catalog.length === 0 ? (
-          <p className="text-foreground/60">لا يوجد رصيد مخزون متاح لديك حاليًا</p>
+          <p className="text-foreground/60">لا يوجد رصيد مخزون متاح حاليًا</p>
         ) : (customers?.length ?? 0) === 0 ? (
           <p className="text-foreground/60">لا يوجد عملاء بخط سيرك بعد</p>
         ) : (

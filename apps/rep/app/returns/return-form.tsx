@@ -115,7 +115,7 @@ export function ReturnForm({
                 value={item.condition}
                 onChange={(e) => updateItem(index, { condition: e.target.value as LineItem["condition"] })}
               >
-                <option value="resalable">سليم (يرجع لرصيدي)</option>
+                <option value="resalable">سليم (يرجع للمخزون)</option>
                 <option value="damaged">تالف</option>
                 <option value="expired">منتهي الصلاحية</option>
               </Select>

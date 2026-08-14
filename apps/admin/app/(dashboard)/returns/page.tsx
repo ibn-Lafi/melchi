@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -44,7 +44,10 @@ export default async function ReturnsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">المرتجعات</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "المرتجعات"]} />}
+        title="المرتجعات"
+      />
 
       <Card>
         <table className="w-full text-sm">
