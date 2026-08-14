@@ -1,4 +1,4 @@
-import { Card, Input } from "@system2026/ui";
+import { Badge, Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -34,7 +34,11 @@ export default async function RepsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">المناديب</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "المناديب"]} />}
+        title="المناديب"
+        subtitle="إدارة حسابات المناديب ومتابعة أدائهم ورصيد مخزونهم"
+      />
 
       <Card>
         <table className="w-full text-sm">
@@ -60,7 +64,11 @@ export default async function RepsPage() {
                   <td>{inventoryCountByRep.get(rep.id) ?? 0}</td>
                   <td>{formatCurrency(stats?.sales ?? 0)}</td>
                   <td>{formatCurrency(stats?.profit ?? 0)}</td>
-                  <td>{rep.is_active ? "نشط" : "موقوف"}</td>
+                  <td>
+                    <Badge variant={rep.is_active ? "success" : "muted"}>
+                      {rep.is_active ? "نشط" : "موقوف"}
+                    </Badge>
+                  </td>
                 </tr>
               );
             })}
