@@ -11,7 +11,7 @@ export async function loginAction(
   formData: FormData,
 ): Promise<LoginActionState> {
   const parsed = loginSchema.safeParse({
-    phone: formData.get("phone"),
+    email: formData.get("email"),
     password: formData.get("password"),
   });
 
@@ -21,12 +21,12 @@ export async function loginAction(
 
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
-    phone: parsed.data.phone,
+    email: parsed.data.email,
     password: parsed.data.password,
   });
 
   if (error || !data.user) {
-    return { error: "رقم الجوال أو كلمة المرور غير صحيحة" };
+    return { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة" };
   }
 
   const { data: profile } = await supabase

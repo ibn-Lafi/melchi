@@ -16,7 +16,9 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "cache": false,
+      "passThroughEnv": ["PGHOST", "PGPORT", "PGUSER", "PGPASSWORD", "PGDATABASE", "TEST_DB_NAME"]
     }
   }
 }

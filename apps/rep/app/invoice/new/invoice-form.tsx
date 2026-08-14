@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import Link from "next/link";
 import { Button, Card, Input } from "@system2026/ui";
 import { calculateVat, calculateTotalWithVat, formatCurrency } from "@system2026/utils";
 import type { RepCatalogProduct } from "../../../lib/get-rep-catalog";
@@ -213,7 +214,14 @@ export function InvoiceForm({
       </Card>
 
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
-      {state.invoiceId ? <p className="text-sm text-primary">تم إصدار الفاتورة بنجاح ✓</p> : null}
+      {state.invoiceId ? (
+        <p className="text-sm text-primary">
+          تم إصدار الفاتورة بنجاح ✓{" "}
+          <Link href={`/invoice/${state.invoiceId}`} className="underline">
+            عرض الفاتورة وطباعتها
+          </Link>
+        </p>
+      ) : null}
 
       <SubmitButton />
     </form>

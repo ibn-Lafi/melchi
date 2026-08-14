@@ -6,10 +6,13 @@
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-type Table<Row, Insert> = {
+// ملاحظة: "Insert" هنا تحكم شكل .insert()، و"Update" مبنية افتراضيًا كـ
+// Partial<Insert> — إلا إذا مُرِّر UpdateShape صراحةً (لجداول تُمنع من INSERT
+// مباشر بالكامل عبر RLS لكنها تسمح بـ UPDATE، مثل system_settings).
+type Table<Row, Insert, UpdateShape = Partial<Insert>> = {
   Row: Row;
   Insert: Insert;
-  Update: Partial<Insert>;
+  Update: UpdateShape;
   Relationships: [];
 };
 
@@ -20,6 +23,7 @@ export type Database = {
         {
           id: string;
           name: string;
+          email: string | null;
           phone: string | null;
           role: Database["public"]["Enums"]["user_role"];
           is_active: boolean;
@@ -29,6 +33,7 @@ export type Database = {
         {
           id: string;
           name: string;
+          email?: string | null;
           phone?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           is_active?: boolean;
@@ -354,7 +359,16 @@ export type Database = {
           updated_at: string;
           updated_by: string | null;
         },
-        never // صف وحيد، عبر seed migration فقط
+        never, // لا INSERT مباشر — صف وحيد عبر seed migration فقط
+        {
+          company_name?: string;
+          vat_registration_number?: string;
+          commercial_registration_number?: string;
+          company_address?: string;
+          invoice_edit_grace_period_minutes?: number;
+          expiry_alert_days_threshold?: number;
+          updated_by?: string | null;
+        }
       >;
       audit_logs: Table<
         {

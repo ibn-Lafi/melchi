@@ -17,6 +17,7 @@ create type public.audit_action as enum ('insert', 'update', 'delete');
 create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,
+  email text,
   phone text,
   role public.user_role not null default 'rep',
   is_active boolean not null default true,

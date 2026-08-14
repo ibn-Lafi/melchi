@@ -11,10 +11,12 @@ const NAV_ITEMS = [
   { href: "/reps", label: "المناديب" },
   { href: "/customers", label: "العملاء" },
   { href: "/invoices", label: "الفواتير" },
+  { href: "/invoice-requests", label: "طلبات تعديل الفواتير" },
   { href: "/returns", label: "المرتجعات" },
   { href: "/collections", label: "التحصيلات" },
   { href: "/payables", label: "مستحقات الموردين" },
   { href: "/reports", label: "التقارير" },
+  { href: "/settings", label: "الإعدادات", adminOnly: true },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,6 +35,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq("id", user.id)
     .single();
 
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.adminOnly || profile?.role === "admin");
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-64 shrink-0 border-l border-border p-4">
@@ -40,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {profile?.name} — {profile?.role === "admin" ? "أدمن" : "محاسب"}
         </p>
         <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
+          {visibleNavItems.map((item) => (
             <a key={item.href} href={item.href} className="rounded-md px-3 py-2 text-sm hover:bg-black/5">
               {item.label}
             </a>

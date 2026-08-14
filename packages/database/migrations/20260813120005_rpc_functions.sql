@@ -575,13 +575,16 @@ begin
         'rep', p_rep_id, v_quantity, v_rep_qty, auth.uid()
       );
     else
-      -- تالف/منتهي الصلاحية: خسارة موثّقة بدون أي إضافة لمخزون قابل للبيع
+      -- تالف/منتهي الصلاحية: خسارة موثّقة بدون أي إضافة لمخزون قابل للبيع.
+      -- quantity_change هنا سالبة توثّق حجم الخسارة فعليًا (لأغراض تقرير
+      -- الخسائر)، رغم أنها لا تُطرح من أي رصيد فعلي — البضاعة أصلًا لم
+      -- تُضف لـ rep_inventory عند الإرجاع.
       insert into public.stock_movements (
         movement_type, reference_table, reference_id, product_id,
         location_type, location_id, quantity_change, balance_after, performed_by
       ) values (
         'write_off', 'return_records', v_return_id, v_product_id,
-        'rep', p_rep_id, 0, coalesce((
+        'rep', p_rep_id, -v_quantity, coalesce((
           select quantity_available from public.rep_inventory
           where rep_id = p_rep_id and product_id = v_product_id
         ), 0), auth.uid()
@@ -626,6 +629,12 @@ begin
   end if;
   if v_invoice.status = 'cancelled' then
     raise exception 'الفاتورة ملغاة مسبقًا';
+  end if;
+  -- منع الإلغاء الكامل لفاتورة سبق تسجيل مرتجع عليها: الإلغاء يعيد كامل
+  -- كمية invoice_items للرصيد بدون علم بما أُرجع مسبقًا عبر process_return،
+  -- ما يسبب ازدواج إضافة نفس الكمية لرصيد المندوب (Double-counting).
+  if exists (select 1 from public.return_records where invoice_id = p_invoice_id) then
+    raise exception 'لا يمكن إلغاء فاتورة سبق تسجيل مرتجع عليها — التصحيح يتم عبر طلب تعديل للأدمن';
   end if;
 
   select * into v_settings from public.system_settings where id = 1;
@@ -731,6 +740,14 @@ begin
 
   if p_decision = 'approved' and (v_request.requested_changes ->> 'action') = 'cancel' then
     select * into v_invoice from public.invoices where id = v_request.invoice_id;
+
+    if v_invoice.status = 'cancelled' then
+      raise exception 'الفاتورة ملغاة مسبقًا';
+    end if;
+    -- نفس منع الازدواج بـ cancel_invoice_within_grace_period أعلاه
+    if exists (select 1 from public.return_records where invoice_id = v_invoice.id) then
+      raise exception 'لا يمكن إلغاء فاتورة سبق تسجيل مرتجع عليها';
+    end if;
 
     for v_item in
       select product_id, quantity_in_base_unit
