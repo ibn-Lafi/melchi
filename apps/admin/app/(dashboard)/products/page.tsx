@@ -3,39 +3,62 @@ import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
-import { createCategoryAction, createProductAction, createUnitAction } from "./actions";
+import {
+  createCategoryAction,
+  createProductAction,
+  createUnitAction,
+  updateCategoryAction,
+  updateProductAction,
+} from "./actions";
 
 type ProductRow = {
   id: string;
   name: string;
+  description: string | null;
   price: number;
   average_cost: number;
+  image_url: string | null;
   visible_in_store: boolean;
+  has_expiry: boolean;
+  expiry_date: string | null;
   category_id: string | null;
   base_unit_id: string;
 };
-type CategoryRow = { id: string; name: string };
+type CategoryRow = { id: string; name: string; image_url: string | null };
 type UnitRow = { id: string; name: string };
+type StockRow = { product_id: string; quantity_available: number };
+
+const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm";
 
 export default async function ProductsPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
   const canManage = role === "admin";
 
-  const [{ data: products }, { data: categories }, { data: units }] = await Promise.all([
-    supabase
-      .from("products")
-      .select<
-        "id, name, price, average_cost, visible_in_store, category_id, base_unit_id",
-        ProductRow
-      >("id, name, price, average_cost, visible_in_store, category_id, base_unit_id")
-      .order("name"),
-    supabase.from("categories").select<"id, name", CategoryRow>("id, name").order("name"),
-    supabase.from("units").select<"id, name", UnitRow>("id, name").order("name"),
-  ]);
+  const [{ data: products }, { data: categories }, { data: units }, { data: stock }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select<
+          "id, name, description, price, average_cost, image_url, visible_in_store, has_expiry, expiry_date, category_id, base_unit_id",
+          ProductRow
+        >(
+          "id, name, description, price, average_cost, image_url, visible_in_store, has_expiry, expiry_date, category_id, base_unit_id",
+        )
+        .order("name"),
+      supabase
+        .from("categories")
+        .select<"id, name, image_url", CategoryRow>("id, name, image_url")
+        .order("name"),
+      supabase.from("units").select<"id, name", UnitRow>("id, name").order("name"),
+      supabase
+        .from("warehouse_stock")
+        .select<"product_id, quantity_available", StockRow>("product_id, quantity_available"),
+    ]);
 
   const categoryNameById = new Map((categories ?? []).map((c) => [c.id, c.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
+  const quantityByProductId = new Map((stock ?? []).map((s) => [s.product_id, s.quantity_available]));
 
   return (
     <div className="space-y-6">
@@ -49,6 +72,12 @@ export default async function ProductsPage() {
               <ModalTrigger label="+ فئة" title="إضافة فئة" variant="outline">
                 <ActionForm action={createCategoryAction} className="space-y-3">
                   <Input name="name" placeholder="اسم الفئة" required />
+                  <div>
+                    <label className="mb-1 block text-sm">
+                      صورة الفئة (تظهر بدائرة اختيار الفئة بالمتجر)
+                    </label>
+                    <Input name="image" type="file" accept="image/*" />
+                  </div>
                 </ActionForm>
               </ModalTrigger>
               <ModalTrigger label="+ وحدة قياس" title="إضافة وحدة قياس" variant="outline">
@@ -67,15 +96,20 @@ export default async function ProductsPage() {
                     <Input name="description" />
                   </div>
                   <div>
+                    <label className="mb-1 block text-sm">صورة المنتج</label>
+                    <Input name="image" type="file" accept="image/*" />
+                  </div>
+                  <div>
                     <label className="mb-1 block text-sm">سعر البيع</label>
                     <Input name="price" type="number" step="0.01" min="0" required />
                   </div>
                   <div>
+                    <label className="mb-1 block text-sm">الكمية بالمخزون (اختياري)</label>
+                    <Input name="quantity" type="number" step="1" min="0" placeholder="0" />
+                  </div>
+                  <div>
                     <label className="mb-1 block text-sm">الفئة</label>
-                    <select
-                      name="categoryId"
-                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                    >
+                    <select name="categoryId" className={SELECT_CLASS}>
                       <option value="">بدون فئة</option>
                       {(categories ?? []).map((c) => (
                         <option key={c.id} value={c.id}>
@@ -86,11 +120,7 @@ export default async function ProductsPage() {
                   </div>
                   <div>
                     <label className="mb-1 block text-sm">الوحدة الأساسية</label>
-                    <select
-                      name="baseUnitId"
-                      required
-                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                    >
+                    <select name="baseUnitId" required className={SELECT_CLASS}>
                       <option value="">اختر وحدة</option>
                       {(units ?? []).map((u) => (
                         <option key={u.id} value={u.id}>
@@ -122,23 +152,140 @@ export default async function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-right text-foreground/60">
-                <th className="py-2">الاسم</th>
+                <th className="py-2">الصورة</th>
+                <th>الاسم</th>
                 <th>الفئة</th>
                 <th>سعر البيع</th>
                 <th>متوسط التكلفة</th>
                 <th>الوحدة الأساسية</th>
+                <th>الكمية بالمخزون</th>
                 <th>بالمتجر</th>
+                {canManage ? <th></th> : null}
               </tr>
             </thead>
             <tbody>
               {(products ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-border/50">
-                  <td className="py-2">{p.name}</td>
+                  <td className="py-2">
+                    {p.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="h-10 w-10 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-muted" />
+                    )}
+                  </td>
+                  <td>{p.name}</td>
                   <td>{p.category_id ? categoryNameById.get(p.category_id) : "—"}</td>
                   <td>{formatCurrency(p.price)}</td>
                   <td>{formatCurrency(p.average_cost)}</td>
                   <td>{unitNameById.get(p.base_unit_id) ?? "—"}</td>
+                  <td>{quantityByProductId.get(p.id) ?? 0}</td>
                   <td>{p.visible_in_store ? "نعم" : "لا"}</td>
+                  {canManage ? (
+                    <td>
+                      <ModalTrigger label="تعديل" title={`تعديل: ${p.name}`} variant="outline">
+                        <ActionForm action={updateProductAction} className="space-y-3">
+                          <input type="hidden" name="id" value={p.id} />
+                          <div>
+                            <label className="mb-1 block text-sm">الاسم</label>
+                            <Input name="name" defaultValue={p.name} required />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">الوصف</label>
+                            <Input name="description" defaultValue={p.description ?? ""} />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">صورة المنتج</label>
+                            {p.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.image_url}
+                                alt={p.name}
+                                className="mb-2 h-16 w-16 rounded-lg object-cover"
+                              />
+                            ) : null}
+                            <Input name="image" type="file" accept="image/*" />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">سعر البيع</label>
+                            <Input
+                              name="price"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              defaultValue={p.price}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">الكمية بالمخزون</label>
+                            <Input
+                              name="quantity"
+                              type="number"
+                              step="1"
+                              min="0"
+                              defaultValue={quantityByProductId.get(p.id) ?? 0}
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">سبب تعديل الكمية (إن غيّرتها)</label>
+                            <Input name="quantityReason" placeholder="مثال: جرد دوري" />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">الفئة</label>
+                            <select
+                              name="categoryId"
+                              defaultValue={p.category_id ?? ""}
+                              className={SELECT_CLASS}
+                            >
+                              <option value="">بدون فئة</option>
+                              {(categories ?? []).map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">الوحدة الأساسية</label>
+                            <select
+                              name="baseUnitId"
+                              required
+                              defaultValue={p.base_unit_id}
+                              className={SELECT_CLASS}
+                            >
+                              <option value="">اختر وحدة</option>
+                              {(units ?? []).map((u) => (
+                                <option key={u.id} value={u.id}>
+                                  {u.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              name="visibleInStore"
+                              defaultChecked={p.visible_in_store}
+                            />{" "}
+                            ظاهر بالمتجر
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" name="hasExpiry" defaultChecked={p.has_expiry} /> له
+                            تاريخ صلاحية
+                          </label>
+                          <div>
+                            <label className="mb-1 block text-sm">تاريخ الصلاحية (إن وُجد)</label>
+                            <Input name="expiryDate" type="date" defaultValue={p.expiry_date ?? ""} />
+                          </div>
+                        </ActionForm>
+                      </ModalTrigger>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -147,6 +294,59 @@ export default async function ProductsPage() {
             <p className="py-4 text-foreground/60">لا توجد منتجات بعد</p>
           ) : null}
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">الفئات</h2>
+        <p className="mb-3 text-sm text-foreground/60">
+          صورة الفئة تظهر بدائرة اختيار الفئة أعلى صفحة المتجر — أضف صورة لكل فئة لأفضل تجربة.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {(categories ?? []).map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center gap-3 rounded-xl border border-border p-3"
+            >
+              {c.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={c.image_url}
+                  alt={c.name}
+                  className="h-12 w-12 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
+              )}
+              <p className="font-medium">{c.name}</p>
+              {canManage ? (
+                <ModalTrigger label="تعديل" title={`تعديل فئة: ${c.name}`} variant="outline">
+                  <ActionForm action={updateCategoryAction} className="space-y-3">
+                    <input type="hidden" name="id" value={c.id} />
+                    <div>
+                      <label className="mb-1 block text-sm">الاسم</label>
+                      <Input name="name" defaultValue={c.name} required />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm">الصورة</label>
+                      {c.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.image_url}
+                          alt={c.name}
+                          className="mb-2 h-16 w-16 rounded-full object-cover"
+                        />
+                      ) : null}
+                      <Input name="image" type="file" accept="image/*" />
+                    </div>
+                  </ActionForm>
+                </ModalTrigger>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {(categories?.length ?? 0) === 0 ? (
+          <p className="py-4 text-foreground/60">لا توجد فئات بعد</p>
+        ) : null}
       </Card>
     </div>
   );

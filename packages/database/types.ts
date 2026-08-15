@@ -40,8 +40,14 @@ export type Database = {
         }
       >;
       categories: Table<
-        { id: string; name: string; created_at: string; updated_at: string },
-        { id?: string; name: string }
+        {
+          id: string;
+          name: string;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        { id?: string; name: string; image_url?: string | null }
       >;
       units: Table<
         { id: string; name: string; created_at: string; updated_at: string },
@@ -196,6 +202,7 @@ export type Database = {
           location_id: string | null;
           quantity_change: number;
           balance_after: number;
+          notes: string | null;
           performed_by: string | null;
           created_at: string;
         },
@@ -209,6 +216,7 @@ export type Database = {
           location_id?: string | null;
           quantity_change: number;
           balance_after: number;
+          notes?: string | null;
           performed_by?: string | null;
         }
       >;
@@ -403,7 +411,7 @@ export type Database = {
         Relationships: [];
       };
       public_categories: {
-        Row: { id: string; name: string };
+        Row: { id: string; name: string; image_url: string | null };
         Relationships: [];
       };
     };
@@ -425,9 +433,9 @@ export type Database = {
         };
         Returns: string;
       };
-      transfer_stock_to_rep: {
-        Args: { p_rep_id: string; p_items: Json };
-        Returns: string;
+      set_warehouse_stock_quantity: {
+        Args: { p_product_id: string; p_new_quantity: number; p_reason?: string | null };
+        Returns: number;
       };
       record_customer_payment: {
         Args: {

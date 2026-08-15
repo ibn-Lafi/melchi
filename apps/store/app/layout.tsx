@@ -17,18 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl">
       <body>
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between p-4">
+          <nav className="mx-auto flex max-w-5xl items-center justify-between p-4 lg:max-w-6xl lg:px-6 xl:max-w-7xl">
             <Link href="/" className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
                 و
               </span>
               <span className="text-lg font-bold">المتجر</span>
-            </Link>
-            <Link
-              href="/points-of-sale"
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              نقاط البيع 📍
             </Link>
           </nav>
         </header>

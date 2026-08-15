@@ -6,7 +6,7 @@ export const productUnitSchema = z.object({
   unitPrice: z.number().nonnegative().optional(),
 });
 
-export const createProductSchema = z.object({
+const productFieldsSchema = z.object({
   name: z.string().min(1, "اسم المنتج مطلوب"),
   description: z.string().optional(),
   price: z.number().nonnegative("السعر يجب أن يكون صفر أو أكبر"),
@@ -17,14 +17,49 @@ export const createProductSchema = z.object({
   expiryDate: z.string().date().optional(),
   baseUnitId: z.string().uuid(),
   units: z.array(productUnitSchema).default([]),
-}).refine((data) => !data.hasExpiry || !!data.expiryDate, {
+  // الكمية بالمخزون المشترك (اختياري) — تُضبط عبر set_warehouse_stock_quantity()
+  // RPC، وليست عمود مباشر بجدول المنتجات.
+  quantity: z.number().nonnegative("الكمية يجب أن تكون صفر أو أكبر").optional(),
+});
+
+const expiryDateRequiredRefinement = <T extends { hasExpiry: boolean; expiryDate?: string }>(
+  data: T,
+) => !data.hasExpiry || !!data.expiryDate;
+
+export const createProductSchema = productFieldsSchema.refine(expiryDateRequiredRefinement, {
   message: "تاريخ الصلاحية مطلوب عند تفعيل خيار الصلاحية",
   path: ["expiryDate"],
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 
+export const updateProductSchema = productFieldsSchema
+  .extend({
+    id: z.string().uuid(),
+    // سبب تعديل الكمية — إلزامي داخل RPC فقط لو تغيّرت الكمية فعليًا.
+    quantityReason: z.string().optional(),
+  })
+  .refine(expiryDateRequiredRefinement, {
+    message: "تاريخ الصلاحية مطلوب عند تفعيل خيار الصلاحية",
+    path: ["expiryDate"],
+  });
+
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+export const adjustStockQuantitySchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.number().nonnegative("الكمية يجب أن تكون صفر أو أكبر"),
+  reason: z.string().min(1, "سبب التعديل مطلوب"),
+});
+
+export type AdjustStockQuantityInput = z.infer<typeof adjustStockQuantitySchema>;
+
 export const createCategorySchema = z.object({
+  name: z.string().min(1, "اسم الفئة مطلوب"),
+});
+
+export const updateCategorySchema = z.object({
+  id: z.string().uuid(),
   name: z.string().min(1, "اسم الفئة مطلوب"),
 });
 

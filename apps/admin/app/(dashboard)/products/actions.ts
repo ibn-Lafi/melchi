@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@system2026/database/server";
-import { createProductSchema, createCategorySchema, createUnitSchema } from "@system2026/validation";
+import {
+  createProductSchema,
+  updateProductSchema,
+  createCategorySchema,
+  updateCategorySchema,
+  createUnitSchema,
+} from "@system2026/validation";
+import { uploadImage } from "../../../lib/upload-image";
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -19,6 +26,7 @@ export async function createProductAction(
     hasExpiry: formData.get("hasExpiry") === "on",
     expiryDate: formData.get("expiryDate") || undefined,
     baseUnitId: formData.get("baseUnitId"),
+    quantity: formData.get("quantity") ? Number(formData.get("quantity")) : undefined,
   });
 
   if (!parsed.success) {
@@ -26,20 +34,107 @@ export async function createProductAction(
   }
 
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from("products").insert({
-    name: parsed.data.name,
-    description: parsed.data.description ?? null,
-    price: parsed.data.price,
-    category_id: parsed.data.categoryId ?? null,
-    visible_in_store: parsed.data.visibleInStore,
-    has_expiry: parsed.data.hasExpiry,
-    expiry_date: parsed.data.expiryDate ?? null,
-    base_unit_id: parsed.data.baseUnitId,
-  });
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "product-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { data: product, error } = await supabase
+    .from("products")
+    .insert({
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+      price: parsed.data.price,
+      category_id: parsed.data.categoryId ?? null,
+      image_url: imageUrl ?? null,
+      visible_in_store: parsed.data.visibleInStore,
+      has_expiry: parsed.data.hasExpiry,
+      expiry_date: parsed.data.expiryDate ?? null,
+      base_unit_id: parsed.data.baseUnitId,
+    })
+    .select<"id", { id: string }>("id")
+    .single();
 
   if (error) return { error: error.message };
 
+  if (parsed.data.quantity !== undefined && parsed.data.quantity > 0) {
+    const { error: stockError } = await supabase.rpc("set_warehouse_stock_quantity", {
+      p_product_id: product.id,
+      p_new_quantity: parsed.data.quantity,
+      p_reason: "كمية افتتاحية عند إضافة المنتج",
+    });
+    if (stockError) return { error: stockError.message };
+  }
+
   revalidatePath("/products");
+  revalidatePath("/warehouse");
+  return { success: true };
+}
+
+export async function updateProductAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = updateProductSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    price: Number(formData.get("price")),
+    categoryId: formData.get("categoryId") || undefined,
+    visibleInStore: formData.get("visibleInStore") === "on",
+    hasExpiry: formData.get("hasExpiry") === "on",
+    expiryDate: formData.get("expiryDate") || undefined,
+    baseUnitId: formData.get("baseUnitId"),
+    quantity: formData.get("quantity") ? Number(formData.get("quantity")) : undefined,
+    quantityReason: formData.get("quantityReason") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
+  }
+
+  const supabase = createSupabaseServerClient();
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "product-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+      price: parsed.data.price,
+      category_id: parsed.data.categoryId ?? null,
+      ...(imageUrl ? { image_url: imageUrl } : {}),
+      visible_in_store: parsed.data.visibleInStore,
+      has_expiry: parsed.data.hasExpiry,
+      expiry_date: parsed.data.expiryDate ?? null,
+      base_unit_id: parsed.data.baseUnitId,
+    })
+    .eq("id", parsed.data.id);
+
+  if (error) return { error: error.message };
+
+  if (parsed.data.quantity !== undefined) {
+    const { error: stockError } = await supabase.rpc("set_warehouse_stock_quantity", {
+      p_product_id: parsed.data.id,
+      p_new_quantity: parsed.data.quantity,
+      p_reason: parsed.data.quantityReason ?? "تعديل من صفحة المنتج",
+    });
+    if (stockError) return { error: stockError.message };
+  }
+
+  revalidatePath("/products");
+  revalidatePath("/warehouse");
   return { success: true };
 }
 
@@ -51,7 +146,48 @@ export async function createCategoryAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
 
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from("categories").insert({ name: parsed.data.name });
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "category-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { error } = await supabase
+    .from("categories")
+    .insert({ name: parsed.data.name, image_url: imageUrl ?? null });
+  if (error) return { error: error.message };
+
+  revalidatePath("/products");
+  return { success: true };
+}
+
+export async function updateCategoryAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = updateCategorySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
+
+  const supabase = createSupabaseServerClient();
+
+  const { url: imageUrl, error: imageError } = await uploadImage(
+    supabase,
+    formData,
+    "image",
+    "category-images",
+  );
+  if (imageError) return { error: imageError };
+
+  const { error } = await supabase
+    .from("categories")
+    .update({ name: parsed.data.name, ...(imageUrl ? { image_url: imageUrl } : {}) })
+    .eq("id", parsed.data.id);
   if (error) return { error: error.message };
 
   revalidatePath("/products");

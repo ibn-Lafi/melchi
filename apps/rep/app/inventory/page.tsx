@@ -21,9 +21,9 @@ export default async function InventoryPage() {
       ? await supabase
           .from("products")
           .select<
-            "id, name, base_unit_id",
-            { id: string; name: string; base_unit_id: string }
-          >("id, name, base_unit_id")
+            "id, name, base_unit_id, image_url",
+            { id: string; name: string; base_unit_id: string; image_url: string | null }
+          >("id, name, base_unit_id, image_url")
           .in("id", productIds)
       : { data: [] };
 
@@ -43,8 +43,18 @@ export default async function InventoryPage() {
           {(inventory ?? []).map((row) => {
             const product = productById.get(row.product_id);
             return (
-              <div key={row.product_id} className="flex items-center justify-between gap-3 p-4">
-                <p className="font-medium">{product?.name ?? "—"}</p>
+              <div key={row.product_id} className="flex items-center gap-3 p-4">
+                {product?.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 shrink-0 rounded-lg bg-muted" />
+                )}
+                <p className="flex-1 font-medium">{product?.name ?? "—"}</p>
                 <p className="shrink-0 text-sm text-muted-foreground">
                   {row.quantity_available} {product ? unitNameById.get(product.base_unit_id) ?? "" : ""}
                 </p>

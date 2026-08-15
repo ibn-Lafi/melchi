@@ -1,5 +1,8 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { ActionForm } from "../../../components/action-form";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { adjustStockQuantityAction } from "./actions";
 
 type StockRow = { id: string; product_id: string; quantity_available: number };
 type MovementRow = {
@@ -24,13 +27,18 @@ const MOVEMENT_LABELS: Record<string, string> = {
 
 export default async function WarehousePage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
+  const canManage = role === "admin";
 
   const [{ data: stock }, { data: products }, { data: movements }] = await Promise.all([
     supabase
       .from("warehouse_stock")
       .select<"id, product_id, quantity_available", StockRow>("id, product_id, quantity_available")
       .order("quantity_available", { ascending: false }),
-    supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
+    supabase
+      .from("products")
+      .select<"id, name", { id: string; name: string }>("id, name")
+      .order("name"),
     supabase
       .from("stock_movements")
       .select<
@@ -50,6 +58,37 @@ export default async function WarehousePage() {
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "المخزون"]} />}
         title="المخزون"
         subtitle="مخزون واحد مشترك للنظام كامل — المندوبون يبيعون منه مباشرة"
+        actions={
+          canManage ? (
+            <ModalTrigger label="+ تعديل كمية منتج" title="تعديل كمية منتج بالمخزون">
+              <ActionForm action={adjustStockQuantityAction} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm">المنتج</label>
+                  <select
+                    name="productId"
+                    required
+                    className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm"
+                  >
+                    <option value="">اختر منتجًا</option>
+                    {(products ?? []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">الكمية الجديدة</label>
+                  <Input name="quantity" type="number" step="1" min="0" required />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm">سبب التعديل</label>
+                  <Input name="reason" placeholder="مثال: جرد دوري / تلف" required />
+                </div>
+              </ActionForm>
+            </ModalTrigger>
+          ) : null
+        }
       />
 
       <Card>
