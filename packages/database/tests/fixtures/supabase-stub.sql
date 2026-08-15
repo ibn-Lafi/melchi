@@ -1,6 +1,22 @@
 -- محاكاة الحد الأدنى من بيئة Supabase (auth schema) للاختبار المحلي/CI فقط.
 -- ليست جزءًا من migrations الفعلية — لا تُطبَّق أبدًا على مشروع Supabase حقيقي.
 
+-- أدوار Supabase الافتراضية (anon/authenticated/service_role) موجودة تلقائيًا
+-- بأي مشروع Supabase حقيقي، لكن غير موجودة بـ postgres عادي (محلي أو CI) —
+-- لازم إنشاؤها هنا صراحة وإلا تفشل كل GRANT التالية.
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated nologin;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nologin bypassrls;
+  end if;
+end $$;
+
 create schema if not exists auth;
 
 create table auth.users (
