@@ -3,6 +3,7 @@ import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import {
   createCategoryAction,
   createProductAction,
@@ -35,7 +36,7 @@ const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background 
 export default async function ProductsPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
-  const canManage = role === "admin";
+  const canManage = hasPermission(role, "manage_products");
 
   const [{ data: products }, { data: categories }, { data: units }, { data: stock }] =
     await Promise.all([

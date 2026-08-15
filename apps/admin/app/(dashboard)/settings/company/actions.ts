@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { updateSystemSettingsSchema } from "@system2026/validation";
-import type { ActionState } from "../../../components/action-form";
+import type { ActionState } from "../../../../components/action-form";
 
 export async function updateSystemSettingsAction(
   _prevState: ActionState,
@@ -40,6 +40,6 @@ export async function updateSystemSettingsAction(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/settings");
+  revalidatePath("/settings/company");
   return { success: true };
 }

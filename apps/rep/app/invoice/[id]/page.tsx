@@ -16,6 +16,7 @@ type InvoiceDetail = {
   qr_code_data: string;
   status: string;
   customer_id: string;
+  discount_percentage: number;
 };
 
 type InvoiceItemRow = {
@@ -42,10 +43,10 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage",
     )
     .eq("id", params.id)
     .single();
@@ -135,6 +136,12 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
         </Card>
 
         <Card className="mt-3 space-y-1.5 text-sm">
+          {invoice.discount_percentage > 0 ? (
+            <div className="flex justify-between text-muted-foreground">
+              <span>نسبة الخصم</span>
+              <span>{invoice.discount_percentage}%</span>
+            </div>
+          ) : null}
           <div className="flex justify-between text-muted-foreground">
             <span>المجموع قبل الضريبة</span>
             <span>{formatCurrency(invoice.subtotal)}</span>

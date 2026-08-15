@@ -2,6 +2,7 @@ import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/u
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { adjustStockQuantityAction } from "./actions";
 
 type StockRow = { id: string; product_id: string; quantity_available: number };
@@ -28,7 +29,7 @@ const MOVEMENT_LABELS: Record<string, string> = {
 export default async function WarehousePage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
-  const canManage = role === "admin";
+  const canManage = hasPermission(role, "manage_warehouse");
 
   const [{ data: stock }, { data: products }, { data: movements }] = await Promise.all([
     supabase

@@ -3,6 +3,7 @@ import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProductCatalog } from "../../../lib/get-product-catalog";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { PurchaseForm } from "./purchase-form";
 
 type PurchaseInvoiceRow = {
@@ -16,7 +17,7 @@ type PurchaseInvoiceRow = {
 export default async function PurchasesPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
-  const canManage = role === "admin";
+  const canManage = hasPermission(role, "manage_purchases");
 
   const [{ data: purchaseInvoices }, { data: suppliers }, catalog, { data: categories }, { data: units }] =
     await Promise.all([

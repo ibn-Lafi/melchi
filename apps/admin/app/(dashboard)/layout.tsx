@@ -1,25 +1,43 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AdminSidebar } from "../../components/admin-sidebar";
+import type { IconName } from "../../components/admin-nav";
+import { hasPermission, type Permission, type StaffRole } from "../../lib/permissions";
 
 // ملاحظة: icon هنا اسم (string) وليس دالة React — مكوّنات الأيقونات لا يمكن
 // تمريرها كـ props من Server Component (هذا الملف) لـ Client Component
 // (AdminSidebar/AdminNav)، فالربط الفعلي بين الاسم والمكوّن يتم داخل
 // admin-nav.tsx (ICON_MAP) على جانب العميل.
-const NAV_ITEMS = [
-  { href: "/", label: "الرئيسية", icon: "home" as const },
-  { href: "/products", label: "المنتجات", icon: "box" as const },
-  { href: "/suppliers", label: "الموردين", icon: "truck" as const },
-  { href: "/warehouse", label: "المخزون", icon: "warehouse" as const },
-  { href: "/reps", label: "المناديب", icon: "users" as const },
-  { href: "/customers", label: "العملاء", icon: "store" as const },
-  { href: "/invoices", label: "الفواتير", icon: "invoice" as const },
-  { href: "/reports", label: "التقارير", icon: "chart" as const },
+//
+// permission: أي صلاحية من هذي القائمة تكفي لإظهار العنصر (OR)؛ بدونها =
+// يظهر للجميع (مثل الرئيسية). هذا إخفاء واجهة فقط — الفرض الفعلي بـ RLS
+// (راجع apps/admin/lib/permissions.ts).
+type NavItemDef = { href: string; label: string; icon: IconName; permissions?: Permission[] };
+
+const NAV_ITEMS: NavItemDef[] = [
+  { href: "/", label: "الرئيسية", icon: "home" },
+  { href: "/products", label: "المنتجات", icon: "box", permissions: ["manage_products"] },
+  { href: "/suppliers", label: "الموردين", icon: "truck", permissions: ["manage_purchases"] },
+  { href: "/warehouse", label: "المخزون", icon: "warehouse", permissions: ["manage_warehouse"] },
+  { href: "/reps", label: "المناديب", icon: "users", permissions: ["manage_reps"] },
+  { href: "/customers", label: "العملاء", icon: "store", permissions: ["manage_customers"] },
+  {
+    href: "/invoices",
+    label: "الفواتير",
+    icon: "invoice",
+    permissions: ["manage_collections", "manage_returns", "manage_invoice_requests"],
+  },
+  { href: "/reports", label: "التقارير", icon: "chart", permissions: ["view_reports"] },
 ];
 
-const SETTINGS_ITEMS = [
-  { href: "/settings", label: "الإعدادات", icon: "settings" as const, adminOnly: true },
+const SETTINGS_ITEMS: NavItemDef[] = [
+  { href: "/settings", label: "الإعدادات", icon: "settings", permissions: ["manage_settings"] },
 ];
+
+function isVisible(item: NavItemDef, role: StaffRole | null) {
+  if (!item.permissions || item.permissions.length === 0) return true;
+  return item.permissions.some((p) => hasPermission(role, p));
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = createSupabaseServerClient();
@@ -33,21 +51,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select<"name, role", { name: string; role: "admin" | "accountant" | "rep" }>("name, role")
+    .select<"name, role", { name: string; role: StaffRole }>("name, role")
     .eq("id", user.id)
     .single();
 
-  const visibleSettingsItems = SETTINGS_ITEMS.filter(
-    (item) => !item.adminOnly || profile?.role === "admin",
+  const role = profile?.role ?? null;
+  const visibleNavItems = NAV_ITEMS.filter((item) => isVisible(item, role)).map(
+    ({ href, label, icon }) => ({ href, label, icon }),
+  );
+  const visibleSettingsItems = SETTINGS_ITEMS.filter((item) => isVisible(item, role)).map(
+    ({ href, label, icon }) => ({ href, label, icon }),
   );
 
   return (
     <div className="flex min-h-screen bg-muted/40">
       <AdminSidebar
-        navItems={NAV_ITEMS}
+        navItems={visibleNavItems}
         settingsItems={visibleSettingsItems}
         profileName={profile?.name}
-        profileRole={profile?.role === "admin" ? "admin" : "accountant"}
+        profileRole={role ?? "accountant"}
       />
       <main className="flex-1 p-6 sm:p-8">
         <div className="mx-auto max-w-6xl">{children}</div>

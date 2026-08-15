@@ -1,6 +1,8 @@
 import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { PaymentForm } from "./payment-form";
 
 type Customer = { id: string; name: string; shop_name: string | null };
@@ -9,6 +11,8 @@ type PaymentRow = { invoice_id: string | null; amount: number };
 
 export default async function CollectionsPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
+  const canManage = hasPermission(role, "manage_collections");
 
   const [{ data: customers }, { data: unpaidInvoices }, { data: payments }] = await Promise.all([
     supabase
@@ -74,14 +78,16 @@ export default async function CollectionsPage() {
         ) : null}
       </Card>
 
-      <Card>
-        <h2 className="mb-3 font-semibold">تسجيل تحصيل</h2>
-        {(customers?.length ?? 0) === 0 ? (
-          <p className="text-foreground/60">لا يوجد عملاء بعد</p>
-        ) : (
-          <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
-        )}
-      </Card>
+      {canManage ? (
+        <Card>
+          <h2 className="mb-3 font-semibold">تسجيل تحصيل</h2>
+          {(customers?.length ?? 0) === 0 ? (
+            <p className="text-foreground/60">لا يوجد عملاء بعد</p>
+          ) : (
+            <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
+          )}
+        </Card>
+      ) : null}
     </div>
   );
 }

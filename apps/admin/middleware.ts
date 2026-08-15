@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSupabaseSession } from "@system2026/database/middleware";
+import { DASHBOARD_ROLES } from "./lib/permissions";
 
 const PUBLIC_PATHS = ["/login"];
 
@@ -8,7 +9,7 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
 
   const role = user?.app_metadata?.role;
-  const isAuthorized = role === "admin" || role === "accountant";
+  const isAuthorized = DASHBOARD_ROLES.includes(role);
 
   if ((!user || !isAuthorized) && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);

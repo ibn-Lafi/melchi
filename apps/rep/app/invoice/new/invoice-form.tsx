@@ -14,7 +14,7 @@ type LineItem = {
   productId: string;
   unitId: string;
   quantityInUnit: number;
-  unitPrice: number;
+  listUnitPrice: number;
 };
 
 const PAYMENT_METHODS = [
@@ -48,6 +48,7 @@ export function InvoiceForm({
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? customers[0]?.id ?? "");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [items, setItems] = useState<LineItem[]>([]);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
 
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
 
@@ -61,7 +62,7 @@ export function InvoiceForm({
         productId: firstProduct.productId,
         unitId: firstUnit?.unitId ?? "",
         quantityInUnit: 1,
-        unitPrice: firstUnit?.price ?? 0,
+        listUnitPrice: firstUnit?.price ?? 0,
       },
     ]);
   }
@@ -77,7 +78,7 @@ export function InvoiceForm({
   function handleProductChange(index: number, productId: string) {
     const product = productById.get(productId);
     const unit = product?.units[0];
-    updateItem(index, { productId, unitId: unit?.unitId ?? "", unitPrice: unit?.price ?? 0 });
+    updateItem(index, { productId, unitId: unit?.unitId ?? "", listUnitPrice: unit?.price ?? 0 });
   }
 
   function handleUnitChange(index: number, unitId: string) {
@@ -85,10 +86,16 @@ export function InvoiceForm({
     if (!item) return;
     const product = productById.get(item.productId);
     const unit = product?.units.find((u) => u.unitId === unitId);
-    updateItem(index, { unitId, unitPrice: unit?.price ?? item.unitPrice });
+    updateItem(index, { unitId, listUnitPrice: unit?.price ?? item.listUnitPrice });
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.quantityInUnit * item.unitPrice, 0);
+  const discountedUnitPrice = (listPrice: number) =>
+    Math.round(listPrice * (1 - discountPercentage / 100) * 100) / 100;
+
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.quantityInUnit * discountedUnitPrice(item.listUnitPrice),
+    0,
+  );
   const vatAmount = calculateVat(subtotal);
   const total = calculateTotalWithVat(subtotal);
 
@@ -162,13 +169,15 @@ export function InvoiceForm({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">السعر</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
-                  />
+                  <label className="mb-1 block text-xs text-muted-foreground">السعر بعد الخصم</label>
+                  <div className="flex h-11 flex-col justify-center overflow-hidden rounded-xl border border-border bg-muted px-3 text-sm">
+                    <span>{formatCurrency(discountedUnitPrice(item.listUnitPrice))}</span>
+                    {discountPercentage > 0 ? (
+                      <span className="text-xs text-muted-foreground line-through">
+                        {formatCurrency(item.listUnitPrice)}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -190,7 +199,28 @@ export function InvoiceForm({
         </Select>
       </div>
 
+      <div>
+        <label className="mb-1 block text-sm font-medium">نسبة الخصم المتفق عليها مع العميل (0% - 25%)</label>
+        <Input
+          type="number"
+          name="discountPercentage"
+          min={0}
+          max={25}
+          step="0.01"
+          value={discountPercentage}
+          onChange={(e) =>
+            setDiscountPercentage(Math.min(25, Math.max(0, Number(e.target.value) || 0)))
+          }
+        />
+      </div>
+
       <Card className="space-y-1.5 text-sm">
+        {discountPercentage > 0 ? (
+          <div className="flex justify-between text-muted-foreground">
+            <span>نسبة الخصم</span>
+            <span>{discountPercentage}%</span>
+          </div>
+        ) : null}
         <div className="flex justify-between text-muted-foreground">
           <span>المجموع قبل الضريبة</span>
           <span>{formatCurrency(subtotal)}</span>

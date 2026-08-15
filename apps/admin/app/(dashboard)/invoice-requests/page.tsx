@@ -1,5 +1,7 @@
 import { Button, Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { approveInvoiceEditRequest, rejectInvoiceEditRequest } from "./review-actions";
 
 type EditRequest = {
@@ -14,6 +16,8 @@ type EditRequest = {
 
 export default async function InvoiceRequestsPage() {
   const supabase = createSupabaseServerClient();
+  const role = await getCurrentUserRole();
+  const canReview = hasPermission(role, "manage_invoice_requests");
 
   const { data: requests } = await supabase
     .from("invoice_edit_requests")
@@ -66,18 +70,20 @@ export default async function InvoiceRequestsPage() {
                   {new Date(req.created_at).toLocaleString("ar-SA")}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <form action={approveInvoiceEditRequest}>
-                  <input type="hidden" name="requestId" value={req.id} />
-                  <Button type="submit">موافقة</Button>
-                </form>
-                <form action={rejectInvoiceEditRequest}>
-                  <input type="hidden" name="requestId" value={req.id} />
-                  <Button type="submit" variant="destructive">
-                    رفض
-                  </Button>
-                </form>
-              </div>
+              {canReview ? (
+                <div className="flex gap-2">
+                  <form action={approveInvoiceEditRequest}>
+                    <input type="hidden" name="requestId" value={req.id} />
+                    <Button type="submit">موافقة</Button>
+                  </form>
+                  <form action={rejectInvoiceEditRequest}>
+                    <input type="hidden" name="requestId" value={req.id} />
+                    <Button type="submit" variant="destructive">
+                      رفض
+                    </Button>
+                  </form>
+                </div>
+              ) : null}
             </div>
           </Card>
         ))}

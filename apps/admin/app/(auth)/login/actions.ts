@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { loginSchema } from "@system2026/validation";
+import { DASHBOARD_ROLES, type StaffRole } from "../../../lib/permissions";
 
 export type LoginActionState = { error?: string };
 
@@ -31,13 +32,11 @@ export async function loginAction(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select<"role, is_active", { role: "admin" | "accountant" | "rep"; is_active: boolean }>(
-      "role, is_active",
-    )
+    .select<"role, is_active", { role: StaffRole; is_active: boolean }>("role, is_active")
     .eq("id", data.user.id)
     .single();
 
-  if (!profile?.is_active || (profile.role !== "admin" && profile.role !== "accountant")) {
+  if (!profile?.is_active || !DASHBOARD_ROLES.includes(profile.role)) {
     await supabase.auth.signOut();
     return { error: "هذا الحساب غير مصرّح له بالدخول للوحة التحكم" };
   }

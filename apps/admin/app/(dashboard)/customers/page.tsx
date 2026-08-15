@@ -3,6 +3,7 @@ import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/u
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { createCustomerAction, updateCustomerAction } from "./actions";
 
 type Customer = {
@@ -21,7 +22,7 @@ type Rep = { id: string; name: string };
 export default async function CustomersPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
-  const canManage = role === "admin";
+  const canManage = hasPermission(role, "manage_customers");
 
   const [{ data: customers }, { data: customerReps }, { data: reps }] = await Promise.all([
     supabase

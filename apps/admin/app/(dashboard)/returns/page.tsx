@@ -2,6 +2,7 @@ import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { ReturnForm } from "./return-form";
 
 type ReturnRecordRow = {
@@ -73,7 +74,7 @@ export default async function ReturnsPage() {
         {(returns?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مرتجعات بعد</p> : null}
       </Card>
 
-      {role === "admin" ? (
+      {hasPermission(role, "manage_returns") ? (
         <Card>
           <h2 className="mb-3 font-semibold">تسجيل مرتجع جديد</h2>
           {(customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (

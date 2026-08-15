@@ -207,8 +207,13 @@ $$;
 ## 5. الأمان (Security) — قواعد إلزامية
 
 1. **Row Level Security مفعّل على كل جدول** بدون استثناء (راجع قسم 4.1).
-2. **كل صلاحية دور (admin/accountant/rep)** تُحدَّد عبر `custom claims` في JWT الخاص بـ Supabase Auth، وتُتحقق منها كل Policy وكل Middleware.
-3. **التحقق من الصلاحيات على مستويين:** الفرونت (لإخفاء عناصر الواجهة فقط) + قاعدة البيانات (RLS، وهي خط الدفاع الحقيقي — لا تثق بالفرونت إند أبدًا).
+2. **كل صلاحية دور** تُحدَّد عبر `custom claims` في JWT الخاص بـ Supabase Auth (`app_metadata.role`، مُزامَن تلقائيًا من `profiles.role` عبر trigger)، وتُتحقق منها كل Policy وكل Middleware.
+   - الأدوار: `admin`, `accountant`, `rep` (تطبيق المندوب — مستقل تمامًا) + أدوار لوحة تحكم إضافية: `marketing`, `sales`, `production`, `supervisor`.
+   - **نظام الصلاحيات (Permissions):** كل دور (عدا `admin`) له مجموعة صلاحيات ثابتة **مشتقة من الدور مباشرة** (case ثابتة داخل دالة `public.auth_has_permission(text)` بقاعدة البيانات) — وليست عمودًا/جدولًا منفصلًا قابلًا للتخصيص لكل مستخدم. المصدر الوحيد الملزم أمنيًا هو `auth_has_permission()`؛ نسخة مطابقة بالفرونت إند (`apps/admin/lib/permissions.ts`) **للعرض/الإخفاء فقط**، يجب إبقاؤها متطابقة يدويًا مع أي تعديل بقاعدة البيانات.
+   - مفاتيح الصلاحيات: `manage_products`, `manage_warehouse`, `manage_purchases`, `manage_customers`, `manage_collections`, `manage_returns`, `manage_invoice_requests`, `manage_reps`, `manage_settings`, `view_reports`. آخر اثنين (`manage_reps`, `manage_settings`) حصرًا للأدمن ولا يُفوَّضان لأي دور آخر (إدارة المستخدمين وإعدادات النظام).
+   - **`auth_is_staff()`** (بديل `auth_is_admin_or_accountant()` السابقة، بنفس الـ OID عبر `RENAME`): قراءة عامة (`SELECT`) لكل موظفي لوحة التحكم الداخليين — القراءة داخل النظام ليست حسّاسة كالكتابة. الكتابة (`INSERT/UPDATE/DELETE`) دائمًا عبر `auth_has_permission()` لكل جدول/RPC حسب مجاله.
+   - **منع تصعيد الصلاحية الذاتي:** trigger `prevent_self_privilege_escalation` على `profiles` يمنع أي مستخدم (غير أدمن) من تعديل `role`/`is_active` الخاصين به عبر أي مسار (حتى لو تجاوز الواجهة)، رغم أن باقي أعمدة `profiles` (كالاسم) قابلة للتعديل الذاتي.
+3. **التحقق من الصلاحيات على مستويين:** الفرونت (لإخفاء عناصر الواجهة فقط) + قاعدة البيانات (RLS/RPC، وهي خط الدفاع الحقيقي — لا تثق بالفرونت إند أبدًا). **تنبيه مهم:** أي Server Action تستخدم `service_role` (`createSupabaseAdminClient`، مثل إنشاء مستخدم أو تغيير كلمة مرور مستخدم آخر) **تتجاوز RLS بالكامل** — التحقق من الصلاحية داخل الـ Action نفسها **إلزامي صراحةً** بهذي الحالة تحديدًا، وليس كافيًا الاعتماد على إخفاء الزر بالواجهة.
 4. **كل Input من المستخدم يُتحقق منه بـ Zod** قبل إرساله لأي عملية — سواء فورم أو Edge Function.
 5. **لا أسرار (API keys, DB passwords) في الكود مطلقًا.** كل شيء في متغيرات بيئة (`.env`) و`.env.example` فقط يحتوي أسماء المتغيرات بدون قيم حقيقية. `.env` داخل `.gitignore` دائمًا.
 6. **سجل تدقيق (Audit Log):** جدول `audit_logs` يسجل كل عملية حساسة (تعديل فاتورة، حذف، تسجيل دفعة، تغيير رصيد مخزون مندوب) مع: من نفّذها، متى، القيمة قبل/بعد.
