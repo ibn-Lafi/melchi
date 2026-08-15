@@ -36,10 +36,40 @@ body {
   display: none;
 }
 
-/* طباعة الفاتورة (تنزيل PDF من الجوال) بدون شريط التنقل */
+/* طباعة الفاتورة (تنزيل PDF من الجوال) — تُظهر مستند الفاتورة
+   (#invoice-print-root، راجع packages/ui/src/invoice-print.tsx) فقط بمقاس
+   A4 الحقيقي، بغض النظر عن إطار الجوال الثابت (#app-frame) أو أي عنصر آخر
+   بالصفحة. */
 @media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
   nav,
   .no-print {
     display: none !important;
+  }
+
+  #app-frame {
+    max-width: none !important;
+    box-shadow: none !important;
+    position: static !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-print-root,
+  #invoice-print-root * {
+    visibility: visible;
+  }
+
+  #invoice-print-root {
+    position: absolute;
+    inset: 0;
+    margin: 0 !important;
+    box-shadow: none !important;
   }
 }

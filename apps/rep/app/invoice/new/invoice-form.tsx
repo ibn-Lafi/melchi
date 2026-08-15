@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
-import { Button, Card, Input, Select } from "@system2026/ui";
+import { Button, Card, Input, Select, cn } from "@system2026/ui";
 import { calculateVat, calculateTotalWithVat, formatCurrency } from "@system2026/utils";
 import type { RepCatalogProduct } from "../../../lib/get-rep-catalog";
 import { createInvoiceAction, type CreateInvoiceActionState } from "./actions";
@@ -23,6 +23,16 @@ const PAYMENT_METHODS = [
   { value: "credit", label: "آجل (دين)" },
   { value: "check", label: "شيك" },
   { value: "transfer", label: "تحويل بنكي" },
+];
+
+// ملاحظات جاهزة مرتّبة من الأعم (سياسة الاستبدال/الاسترجاع) إلى الأخص
+// (تعليمات استلام)، لتغطية أكثر الحالات شيوعًا بالبيع الميداني.
+const PRESET_NOTES = [
+  "لا يُقبل استرجاع البضاعة بعد استلامها",
+  "يُقبل استرجاع البضاعة السليمة خلال 24 ساعة من الاستلام",
+  "البضاعة التالفة أو منتهية الصلاحية تُستبدل فقط ولا تُسترد قيمتها نقدًا",
+  "يُرجى فحص البضاعة والتأكد من الكمية عند الاستلام",
+  "الدفع مستحق خلال المدة المتفق عليها مع العميل",
 ];
 
 const initialState: CreateInvoiceActionState = {};
@@ -58,6 +68,16 @@ export function InvoiceForm({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [items, setItems] = useState<LineItem[]>([]);
   const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [notes, setNotes] = useState("");
+
+  function togglePresetNote(note: string) {
+    setNotes((prev) => {
+      const lines = prev.split("\n").filter(Boolean);
+      return lines.includes(note)
+        ? lines.filter((l) => l !== note).join("\n")
+        : [...lines, note].join("\n");
+    });
+  }
 
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
   const customerById = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers]);
@@ -241,6 +261,38 @@ export function InvoiceForm({
           onChange={(e) =>
             setDiscountPercentage(Math.min(25, Math.max(0, Number(e.target.value) || 0)))
           }
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">ملاحظات الفاتورة</label>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {PRESET_NOTES.map((note) => {
+            const isSelected = notes.split("\n").includes(note);
+            return (
+              <button
+                key={note}
+                type="button"
+                onClick={() => togglePresetNote(note)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  isSelected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-muted",
+                )}
+              >
+                {note}
+              </button>
+            );
+          })}
+        </div>
+        <textarea
+          name="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="أضف ملاحظة أخرى (اختياري)..."
+          rows={2}
+          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm"
         />
       </div>
 

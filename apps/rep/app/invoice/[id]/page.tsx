@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { Card } from "@system2026/ui";
-import { formatCurrency, renderQrCodeDataUrl } from "@system2026/utils";
+import { InvoicePrintDocument, type InvoicePrintItem } from "@system2026/ui";
+import { renderQrCodeDataUrl } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AppNav } from "../../../components/nav";
 import { PrintButton } from "../../../components/print-button";
@@ -14,10 +14,12 @@ type InvoiceDetail = {
   vat_amount: number;
   total_amount: number;
   qr_code_data: string;
+  payment_method: string;
   status: string;
   customer_id: string;
   discount_percentage: number;
   branch_id: string | null;
+  notes: string | null;
 };
 
 type InvoiceItemRow = {
@@ -29,11 +31,26 @@ type InvoiceItemRow = {
   subtotal: number;
 };
 
+type Settings = {
+  company_name: string;
+  vat_registration_number: string;
+  commercial_registration_number: string | null;
+  company_address: string | null;
+  invoice_edit_grace_period_minutes: number;
+};
+
 const STATUS_LABELS: Record<string, string> = {
   paid: "مدفوعة",
   partial: "جزئي",
   unpaid: "غير مدفوعة",
   cancelled: "ملغاة",
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: "نقدًا",
+  credit: "آجل",
+  check: "شيك",
+  transfer: "تحويل",
 };
 
 // RLS (reps_view_own_invoices) يقيّد النتيجة تلقائيًا لفواتير المندوب الحالي
@@ -44,10 +61,10 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage, branch_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, customer_id, discount_percentage, branch_id, notes",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage, branch_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, customer_id, discount_percentage, branch_id, notes",
     )
     .eq("id", params.id)
     .single();
@@ -78,8 +95,11 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
     supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
     supabase
       .from("system_settings")
-      .select<"invoice_edit_grace_period_minutes", { invoice_edit_grace_period_minutes: number }>(
-        "invoice_edit_grace_period_minutes",
+      .select<
+        "company_name, vat_registration_number, commercial_registration_number, company_address, invoice_edit_grace_period_minutes",
+        Settings
+      >(
+        "company_name, vat_registration_number, commercial_registration_number, company_address, invoice_edit_grace_period_minutes",
       )
       .eq("id", 1)
       .single(),
@@ -102,73 +122,48 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   const withinGracePeriod = Date.now() <= deadline;
   const hasPendingRequest = (pendingRequests?.length ?? 0) > 0;
 
+  const printItems: InvoicePrintItem[] = (items ?? []).map((item) => ({
+    id: item.id,
+    productName: productNameById.get(item.product_id) ?? "—",
+    unitName: unitNameById.get(item.unit_id) ?? "—",
+    quantity: item.quantity_in_unit,
+    unitPrice: item.unit_price,
+    listUnitPrice:
+      invoice.discount_percentage > 0
+        ? Math.round((item.unit_price / (1 - invoice.discount_percentage / 100)) * 100) / 100
+        : item.unit_price,
+    subtotal: item.subtotal,
+  }));
+
   return (
     <div>
       <AppNav />
-      <main className="mx-auto max-w-xl p-4 pb-28">
-        <div className="no-print mb-3 flex justify-end">
+      <main className="pb-28">
+        <div className="no-print mx-auto mb-3 flex max-w-xl justify-end p-4 pb-0">
           <PrintButton />
         </div>
-        <Card className="text-center">
-          <span className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            {STATUS_LABELS[invoice.status] ?? invoice.status}
-          </span>
-          <h1 className="mt-3 text-2xl font-bold">فاتورة #{invoice.invoice_number}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {new Date(invoice.invoice_date).toLocaleString("ar-SA")}
-          </p>
-          <p className="text-sm text-muted-foreground">{customer?.shop_name ?? customer?.name ?? "—"}</p>
-          {branch ? <p className="text-sm text-muted-foreground">فرع: {branch.name}</p> : null}
-          <div className="mt-4 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={qrCodeImage}
-              alt="QR الفاتورة"
-              width={140}
-              height={140}
-              className="rounded-xl border border-border p-2"
-            />
-          </div>
-        </Card>
-
-        <Card className="mt-3 divide-y divide-border p-0">
-          {(items ?? []).map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 p-4">
-              <div>
-                <p className="font-medium">{productNameById.get(item.product_id) ?? "—"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {item.quantity_in_unit} × {unitNameById.get(item.unit_id) ?? "—"} @{" "}
-                  {formatCurrency(item.unit_price)}
-                </p>
-              </div>
-              <p className="shrink-0 font-semibold">{formatCurrency(item.subtotal)}</p>
-            </div>
-          ))}
-        </Card>
-
-        <Card className="mt-3 space-y-1.5 text-sm">
-          {invoice.discount_percentage > 0 ? (
-            <div className="flex justify-between text-muted-foreground">
-              <span>نسبة الخصم</span>
-              <span>{invoice.discount_percentage}%</span>
-            </div>
-          ) : null}
-          <div className="flex justify-between text-muted-foreground">
-            <span>المجموع قبل الضريبة</span>
-            <span>{formatCurrency(invoice.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>ضريبة القيمة المضافة</span>
-            <span>{formatCurrency(invoice.vat_amount)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-1.5 text-base font-bold">
-            <span>الإجمالي</span>
-            <span>{formatCurrency(invoice.total_amount)}</span>
-          </div>
-        </Card>
+        <InvoicePrintDocument
+          companyName={settings?.company_name ?? ""}
+          companyVatNumber={settings?.vat_registration_number ?? ""}
+          companyCommercialRegistration={settings?.commercial_registration_number}
+          companyAddress={settings?.company_address}
+          invoiceNumber={invoice.invoice_number}
+          invoiceDate={invoice.invoice_date}
+          statusLabel={STATUS_LABELS[invoice.status] ?? invoice.status}
+          paymentMethodLabel={PAYMENT_LABELS[invoice.payment_method] ?? invoice.payment_method}
+          customerName={customer?.shop_name ?? customer?.name ?? "—"}
+          branchName={branch?.name}
+          discountPercentage={invoice.discount_percentage}
+          items={printItems}
+          subtotal={invoice.subtotal}
+          vatAmount={invoice.vat_amount}
+          totalAmount={invoice.total_amount}
+          notes={invoice.notes}
+          qrCodeImage={qrCodeImage}
+        />
 
         {invoice.status !== "cancelled" ? (
-          <div className="mt-4">
+          <div className="no-print mx-auto mt-4 max-w-xl p-4 pt-0">
             <InvoiceActions
               invoiceId={invoice.id}
               withinGracePeriod={withinGracePeriod}

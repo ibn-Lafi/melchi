@@ -8,3 +8,4 @@ export * from "./page-header";
 export * from "./modal";
 export * from "./bar-list";
 export * from "./bar-chart";
+export * from "./invoice-print";

@@ -28,10 +28,33 @@ body {
   color: hsl(var(--background));
 }
 
-/* طباعة الفاتورة (تنزيل PDF من المتصفح) بدون شريط التنقل الجانبي */
+/* طباعة الفاتورة (تنزيل PDF من المتصفح) — تُظهر مستند الفاتورة
+   (#invoice-print-root، راجع packages/ui/src/invoice-print.tsx) فقط بمقاس
+   A4 الحقيقي، بغض النظر عن الشريط الجانبي أو تخطيط لوحة التحكم المحيط. */
 @media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
   aside,
   .no-print {
     display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-print-root,
+  #invoice-print-root * {
+    visibility: visible;
+  }
+
+  #invoice-print-root {
+    position: absolute;
+    inset: 0;
+    margin: 0 !important;
+    box-shadow: none !important;
   }
 }

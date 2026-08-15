@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { Card } from "@system2026/ui";
-import { formatCurrency, renderQrCodeDataUrl } from "@system2026/utils";
+import { InvoicePrintDocument, type InvoicePrintItem } from "@system2026/ui";
+import { renderQrCodeDataUrl } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { PrintButton } from "../../../../components/print-button";
 
@@ -18,6 +18,7 @@ type InvoiceDetail = {
   customer_id: string;
   discount_percentage: number;
   branch_id: string | null;
+  notes: string | null;
 };
 
 type InvoiceItemRow = {
@@ -29,11 +30,25 @@ type InvoiceItemRow = {
   subtotal: number;
 };
 
+type Settings = {
+  company_name: string;
+  vat_registration_number: string;
+  commercial_registration_number: string | null;
+  company_address: string | null;
+};
+
 const STATUS_LABELS: Record<string, string> = {
   paid: "مدفوعة",
   partial: "جزئي",
   unpaid: "غير مدفوعة",
   cancelled: "ملغاة",
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: "نقدًا",
+  credit: "آجل",
+  check: "شيك",
+  transfer: "تحويل",
 };
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
@@ -42,17 +57,17 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id, notes",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id, notes",
     )
     .eq("id", params.id)
     .single();
 
   if (!invoice) notFound();
 
-  const [{ data: items }, { data: rep }, { data: customer }, { data: products }, { data: units }, { data: branch }] =
+  const [{ data: items }, { data: rep }, { data: customer }, { data: products }, { data: units }, { data: branch }, { data: settings }] =
     await Promise.all([
       supabase
         .from("invoice_items")
@@ -80,92 +95,60 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
             .eq("id", invoice.branch_id)
             .single()
         : Promise.resolve({ data: null as { name: string } | null }),
+      supabase
+        .from("system_settings")
+        .select<
+          "company_name, vat_registration_number, commercial_registration_number, company_address",
+          Settings
+        >("company_name, vat_registration_number, commercial_registration_number, company_address")
+        .eq("id", 1)
+        .single(),
     ]);
 
   const productNameById = new Map((products ?? []).map((p) => [p.id, p.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
   const qrCodeImage = await renderQrCodeDataUrl(invoice.qr_code_data);
 
+  // السعر قبل الخصم يُعاد حسابه من نسبة الخصم بالفاتورة (خصم واحد موحّد
+  // لكل بنودها) بدل تخزينه بعمود منفصل — راجع migrations/20260815100000
+  const printItems: InvoicePrintItem[] = (items ?? []).map((item) => ({
+    id: item.id,
+    productName: productNameById.get(item.product_id) ?? "—",
+    unitName: unitNameById.get(item.unit_id) ?? "—",
+    quantity: item.quantity_in_unit,
+    unitPrice: item.unit_price,
+    listUnitPrice:
+      invoice.discount_percentage > 0
+        ? Math.round((item.unit_price / (1 - invoice.discount_percentage / 100)) * 100) / 100
+        : item.unit_price,
+    subtotal: item.subtotal,
+  }));
+
   return (
-    <div className="mx-auto max-w-xl">
-      <div className="no-print mb-3 flex justify-end">
+    <div>
+      <div className="no-print mx-auto mb-3 flex max-w-xl justify-end">
         <PrintButton />
       </div>
-      <Card>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-bold">فاتورة #{invoice.invoice_number}</h1>
-            <p className="text-sm text-foreground/60">
-              {new Date(invoice.invoice_date).toLocaleString("ar-SA")}
-            </p>
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrCodeImage} alt="QR الفاتورة" width={120} height={120} />
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-          <p>
-            <span className="text-foreground/60">المندوب: </span>
-            {rep?.name ?? "—"}
-          </p>
-          <p>
-            <span className="text-foreground/60">العميل: </span>
-            {customer?.shop_name ?? customer?.name ?? "—"}
-          </p>
-          {branch ? (
-            <p>
-              <span className="text-foreground/60">الفرع: </span>
-              {branch.name}
-            </p>
-          ) : null}
-          <p>
-            <span className="text-foreground/60">الحالة: </span>
-            {STATUS_LABELS[invoice.status] ?? invoice.status}
-          </p>
-          <p>
-            <span className="text-foreground/60">نسبة الخصم: </span>
-            {invoice.discount_percentage > 0 ? `${invoice.discount_percentage}%` : "بدون خصم"}
-          </p>
-        </div>
-
-        <table className="mt-4 w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المنتج</th>
-              <th>الوحدة</th>
-              <th>الكمية</th>
-              <th>السعر</th>
-              <th>الإجمالي</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(items ?? []).map((item) => (
-              <tr key={item.id} className="border-b border-border/50">
-                <td className="py-2">{productNameById.get(item.product_id) ?? "—"}</td>
-                <td>{unitNameById.get(item.unit_id) ?? "—"}</td>
-                <td>{item.quantity_in_unit}</td>
-                <td>{formatCurrency(item.unit_price)}</td>
-                <td>{formatCurrency(item.subtotal)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="mt-4 space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span>المجموع قبل الضريبة</span>
-            <span>{formatCurrency(invoice.subtotal)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>ضريبة القيمة المضافة</span>
-            <span>{formatCurrency(invoice.vat_amount)}</span>
-          </div>
-          <div className="flex justify-between text-base font-bold">
-            <span>الإجمالي</span>
-            <span>{formatCurrency(invoice.total_amount)}</span>
-          </div>
-        </div>
-      </Card>
+      <InvoicePrintDocument
+        companyName={settings?.company_name ?? ""}
+        companyVatNumber={settings?.vat_registration_number ?? ""}
+        companyCommercialRegistration={settings?.commercial_registration_number}
+        companyAddress={settings?.company_address}
+        invoiceNumber={invoice.invoice_number}
+        invoiceDate={invoice.invoice_date}
+        statusLabel={STATUS_LABELS[invoice.status] ?? invoice.status}
+        paymentMethodLabel={PAYMENT_LABELS[invoice.payment_method] ?? invoice.payment_method}
+        customerName={customer?.shop_name ?? customer?.name ?? "—"}
+        branchName={branch?.name}
+        repName={rep?.name}
+        discountPercentage={invoice.discount_percentage}
+        items={printItems}
+        subtotal={invoice.subtotal}
+        vatAmount={invoice.vat_amount}
+        totalAmount={invoice.total_amount}
+        notes={invoice.notes}
+        qrCodeImage={qrCodeImage}
+      />
     </div>
   );
 }
