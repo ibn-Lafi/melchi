@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 import { InvoiceModalProvider } from "../components/invoice-modal-provider";
+
+// خط Cairo محلي (لا يحتاج اتصال شبكة وقت البناء) — راجع تعليق admin/app/layout.tsx
+const cairo = localFont({
+  src: "./fonts/cairo-variable.ttf",
+  weight: "200 1000",
+  variable: "--font-cairo",
+});
 
 export const metadata: Metadata = {
   title: "تطبيق المندوب",
@@ -15,7 +23,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className="bg-muted">
         {/* إطار بعرض جوال ثابت (max-w-[430px]) — يملأ الشاشة كاملة فعليًا على
             جوال حقيقي، ويظهر كعمود متوسّط بعرض جوال على شاشة أوسع (كمبيوتر)،
@@ -27,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             بأسفل الشاشة المرئية. شريط التنقل بنفسه (fixed + inset-x + mx-auto
             + max-w) يتمركز تلقائيًا على نفس محور هذا الإطار لأن الاثنين
             يتمركزان أفقيًا داخل نفس الـ viewport. */}
-        <div className="relative mx-auto min-h-screen w-full max-w-[430px] bg-background shadow-2xl">
+        <div id="app-frame" className="relative mx-auto min-h-screen w-full max-w-[430px] bg-background shadow-2xl">
           <InvoiceModalProvider>{children}</InvoiceModalProvider>
         </div>
       </body>

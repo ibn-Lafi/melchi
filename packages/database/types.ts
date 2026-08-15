@@ -301,6 +301,7 @@ export type Database = {
           status: Database["public"]["Enums"]["invoice_status"];
           discount_percentage: number;
           branch_id: string | null;
+          notes: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -460,6 +461,7 @@ export type Database = {
           p_payment_method: Database["public"]["Enums"]["invoice_payment_method"];
           p_discount_percentage?: number;
           p_branch_id?: string | null;
+          p_notes?: string | null;
         };
         Returns: string;
       };

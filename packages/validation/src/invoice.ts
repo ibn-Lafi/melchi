@@ -13,6 +13,7 @@ export const createInvoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, "يجب إضافة بند واحد على الأقل"),
   paymentMethod: z.enum(["cash", "credit", "check", "transfer"]),
   discountPercentage: z.number().min(0, "نسبة الخصم لا يمكن أن تكون أقل من 0%").max(25, "نسبة الخصم لا يمكن أن تتجاوز 25%"),
+  notes: z.string().max(500, "الملاحظات طويلة جدًا").optional(),
 });
 
 export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;

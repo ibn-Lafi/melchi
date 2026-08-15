@@ -4,6 +4,11 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      // خط Cairo رسمي موحّد (يُحمَّل عبر next/font/google بكل layout.tsx) —
+      // مهم خصوصًا لمستندات الفواتير القابلة للطباعة/PDF.
+      fontFamily: {
+        sans: ["var(--font-cairo)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         background: "hsl(var(--background))",

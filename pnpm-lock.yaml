@@ -234,6 +234,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@system2026/utils':
+        specifier: workspace:*
+        version: link:../utils
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
