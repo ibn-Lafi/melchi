@@ -39,10 +39,7 @@ export function AdminSidebar({
         collapsed ? "w-[76px]" : "w-64",
       )}
     >
-      <div className={cn("mb-5 flex items-center", collapsed ? "flex-col gap-3" : "justify-between px-1")}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-          و
-        </div>
+      <div className={cn("mb-5 flex items-center", collapsed ? "justify-center" : "justify-end px-1")}>
         <button
           type="button"
           onClick={toggle}
