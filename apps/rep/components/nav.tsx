@@ -11,7 +11,7 @@ const SIDE_ITEMS_RIGHT = [
 
 const SIDE_ITEMS_LEFT = [
   { href: "/route", label: "العملاء", icon: UsersIcon },
-  { href: "/inventory", label: "المخزون", icon: BoxIcon },
+  { href: "/account", label: "حسابي", icon: PersonIcon },
 ];
 
 const CREATE_ITEM = { href: "/invoice/new", label: "فاتورة جديدة" };
@@ -46,11 +46,11 @@ function UsersIcon({ className }: { className?: string }) {
   );
 }
 
-function BoxIcon({ className }: { className?: string }) {
+function PersonIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5v-9Z" />
-      <path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" />
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5" />
     </svg>
   );
 }
