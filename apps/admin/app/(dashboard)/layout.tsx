@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: "home" as const },
   { href: "/products", label: "المنتجات", icon: "box" as const },
   { href: "/suppliers", label: "الموردين", icon: "truck" as const },
-  { href: "/purchases", label: "المشتريات", icon: "cart" as const },
   { href: "/warehouse", label: "المخزون", icon: "warehouse" as const },
   { href: "/reps", label: "المناديب", icon: "users" as const },
   { href: "/customers", label: "العملاء", icon: "store" as const },

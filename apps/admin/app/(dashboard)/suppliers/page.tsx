@@ -42,9 +42,15 @@ export default async function SuppliersPage() {
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الموردين"]} />}
         title="الموردين"
-        subtitle="متابعة الموردين ومستحقاتهم"
+        subtitle="متابعة الموردين وفواتير الشراء ومستحقاتهم"
         actions={
           <>
+            <Link
+              href="/purchases"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              فواتير الشراء
+            </Link>
             <Link
               href="/payables"
               className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
