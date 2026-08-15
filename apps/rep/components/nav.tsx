@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@system2026/ui";
+import { useInvoiceModal } from "./invoice-modal-provider";
 
 const SIDE_ITEMS_RIGHT = [
   { href: "/", label: "الرئيسية", icon: HomeIcon },
@@ -13,8 +14,6 @@ const SIDE_ITEMS_LEFT = [
   { href: "/route", label: "العملاء", icon: UsersIcon },
   { href: "/account", label: "حسابي", icon: PersonIcon },
 ];
-
-const CREATE_ITEM = { href: "/invoice/new", label: "فاتورة جديدة" };
 
 function HomeIcon({ className }: { className?: string }) {
   return (
@@ -101,6 +100,7 @@ function NavLink({
 // عائم بنفس التصميم بغض النظر عن عرض الشاشة (لا تبديل حسب breakpoint).
 export function AppNav() {
   const pathname = usePathname();
+  const { openInvoiceModal } = useInvoiceModal();
   const isItemActive = (href: string) => (href === "/" ? pathname === "/" : pathname?.startsWith(href) ?? false);
 
   return (
@@ -120,13 +120,14 @@ export function AppNav() {
           ))}
         </div>
 
-        <Link
-          href={CREATE_ITEM.href}
-          aria-label={CREATE_ITEM.label}
+        <button
+          type="button"
+          onClick={() => openInvoiceModal()}
+          aria-label="فاتورة جديدة"
           className="absolute inset-x-0 -top-7 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-95"
         >
           <PlusIcon className="h-6 w-6" />
-        </Link>
+        </button>
       </div>
     </nav>
   );

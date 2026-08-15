@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { InvoiceModalProvider } from "../components/invoice-modal-provider";
 
 export const metadata: Metadata = {
   title: "تطبيق المندوب",
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             + max-w) يتمركز تلقائيًا على نفس محور هذا الإطار لأن الاثنين
             يتمركزان أفقيًا داخل نفس الـ viewport. */}
         <div className="relative mx-auto min-h-screen w-full max-w-[430px] bg-background shadow-2xl">
-          {children}
+          <InvoiceModalProvider>{children}</InvoiceModalProvider>
         </div>
       </body>
     </html>
