@@ -71,29 +71,23 @@ export function InvoicePrintDocument({
       dir="rtl"
       className="mx-auto min-h-[297mm] w-[210mm] bg-white p-[14mm] text-[11px] leading-relaxed text-neutral-900 shadow-card print:m-0 print:w-full print:shadow-none"
     >
-      {/* ===== الترويسة ===== */}
-      <div className="flex items-center justify-center border-b border-neutral-200 pb-4">
-        <div className="rounded-xl border border-neutral-300 px-5 py-2 text-center">
-          <p className="text-base font-extrabold">{companyName}</p>
+      {/* ===== ترويسة الصفحة: بيانات الشركة (من إعدادات الأدمن) في المنتصف ===== */}
+      <div className="border-b border-neutral-200 pb-4 text-center">
+        <p className="text-lg font-extrabold">{companyName}</p>
+        <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[10px] text-neutral-600">
+          {companyCommercialRegistration ? <span>السجل التجاري: {companyCommercialRegistration}</span> : null}
+          {companyVatNumber ? <span>الرقم الضريبي: {companyVatNumber}</span> : null}
+          {companyAddress ? <span>{companyAddress}</span> : null}
         </div>
       </div>
 
+      {/* ===== عنوان الفاتورة (يمين) وتاريخها (يسار) ===== */}
       <div className="mt-4 flex items-start justify-between">
         <div>
           <h1 className="text-lg font-extrabold">فاتورة ضريبية</h1>
           <p className="mt-1">
             <span className="text-neutral-500">رقم الفاتورة: </span>#{invoiceNumber}
           </p>
-          <p>
-            <span className="text-neutral-500">الرقم الضريبي: </span>
-            {companyVatNumber}
-          </p>
-          {companyCommercialRegistration ? (
-            <p>
-              <span className="text-neutral-500">السجل التجاري: </span>
-              {companyCommercialRegistration}
-            </p>
-          ) : null}
         </div>
         <div className="text-left">
           <p className="font-semibold">{dateLabel}</p>
