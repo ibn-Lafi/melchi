@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { formatCurrency } from "@system2026/utils";
 import { AppNav } from "../components/nav";
 import { getRepDashboardStats } from "../lib/get-rep-dashboard";
@@ -22,16 +21,7 @@ export default async function HomePage() {
           <p className="mt-1 text-sm text-primary-foreground/70">نظرة سريعة على أدائك</p>
         </div>
 
-        <div className="-mt-5 px-4">
-          <Link
-            href="/invoice/new"
-            className="flex items-center justify-center rounded-2xl bg-background py-4 text-center font-semibold shadow-pop"
-          >
-            + إنشاء فاتورة جديدة
-          </Link>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 px-4">
+        <div className="-mt-5 grid grid-cols-2 gap-3 px-4">
           {cards.map((card) => (
             <div key={card.label} className="rounded-2xl border border-border bg-background p-4 shadow-card">
               <p className="text-sm text-muted-foreground">{card.label}</p>

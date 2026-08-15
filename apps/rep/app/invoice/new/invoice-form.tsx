@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Button, Card, Input, Select } from "@system2026/ui";
@@ -40,13 +40,20 @@ export function InvoiceForm({
   customers,
   catalog,
   defaultCustomerId,
+  onCreated,
 }: {
   customers: Customer[];
   catalog: RepCatalogProduct[];
   defaultCustomerId?: string;
+  onCreated?: (invoiceId: string) => void;
 }) {
   const [state, formAction] = useFormState(createInvoiceAction, initialState);
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? customers[0]?.id ?? "");
+
+  useEffect(() => {
+    if (state.invoiceId) onCreated?.(state.invoiceId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.invoiceId]);
   const [branchId, setBranchId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [items, setItems] = useState<LineItem[]>([]);

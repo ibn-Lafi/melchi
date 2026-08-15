@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AppNav } from "../../components/nav";
+import { InvoiceQuickButton } from "./invoice-quick-button";
 
 type CustomerRow = {
   id: string;
@@ -51,12 +52,7 @@ export default async function RoutePage() {
                     فتح الموقع 📍
                   </a>
                 ) : null}
-                <Link
-                  href={`/invoice/new?customerId=${customer.id}`}
-                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  فاتورة جديدة
-                </Link>
+                <InvoiceQuickButton customerId={customer.id} />
                 <Link
                   href={`/collections?customerId=${customer.id}`}
                   className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
