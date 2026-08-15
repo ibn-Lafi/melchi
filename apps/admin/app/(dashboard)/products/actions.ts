@@ -235,3 +235,16 @@ export async function addProductUnitAction(
   revalidatePath("/products");
   return { success: true };
 }
+
+// أرشفة منتج (بدل حذف فعلي) — يُخفيه من كتالوج المتجر والمندوب دون حذف
+// بياناته، لأن فواتير تاريخية قد تشير إليه (product_id). راجع CLAUDE.md.
+export async function toggleProductActiveAction(formData: FormData): Promise<void> {
+  const productId = formData.get("productId");
+  const nextIsActive = formData.get("nextIsActive") === "true";
+  if (typeof productId !== "string") return;
+
+  const supabase = createSupabaseServerClient();
+  await supabase.from("products").update({ is_active: nextIsActive }).eq("id", productId);
+
+  revalidatePath("/products");
+}

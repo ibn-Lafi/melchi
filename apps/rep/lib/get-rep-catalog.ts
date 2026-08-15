@@ -37,7 +37,8 @@ export async function getRepCatalog(): Promise<RepCatalogProduct[]> {
       "id, name, price, base_unit_id",
       { id: string; name: string; price: number; base_unit_id: string }
     >("id, name, price, base_unit_id")
-    .in("id", productIds);
+    .in("id", productIds)
+    .eq("is_active", true);
 
   const { data: units } = await supabase
     .from("units")

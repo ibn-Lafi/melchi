@@ -63,6 +63,7 @@ export type Database = {
           category_id: string | null;
           image_url: string | null;
           visible_in_store: boolean;
+          is_active: boolean;
           has_expiry: boolean;
           expiry_date: string | null;
           base_unit_id: string;
@@ -78,6 +79,7 @@ export type Database = {
           category_id?: string | null;
           image_url?: string | null;
           visible_in_store?: boolean;
+          is_active?: boolean;
           has_expiry?: boolean;
           expiry_date?: string | null;
           base_unit_id: string;
