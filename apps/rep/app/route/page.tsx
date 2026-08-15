@@ -3,6 +3,8 @@ import { Card } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AppNav } from "../../components/nav";
 import { InvoiceQuickButton } from "./invoice-quick-button";
+import { ReturnQuickButton } from "./return-quick-button";
+import { CollectionQuickButton } from "./collection-quick-button";
 
 type CustomerRow = {
   id: string;
@@ -53,18 +55,8 @@ export default async function RoutePage() {
                   </a>
                 ) : null}
                 <InvoiceQuickButton customerId={customer.id} />
-                <Link
-                  href={`/collections?customerId=${customer.id}`}
-                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  تسجيل تحصيل
-                </Link>
-                <Link
-                  href={`/returns?customerId=${customer.id}`}
-                  className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  تسجيل مرتجع
-                </Link>
+                <CollectionQuickButton customerId={customer.id} />
+                <ReturnQuickButton customerId={customer.id} />
               </div>
             </Card>
           ))}

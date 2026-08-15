@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { InvoicePrintDocument, type InvoicePrintItem } from "@system2026/ui";
-import { renderQrCodeDataUrl } from "@system2026/utils";
+import { Card, InvoicePrintDocument, type InvoicePrintItem } from "@system2026/ui";
+import { formatCurrency, renderQrCodeDataUrl } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { AppNav } from "../../../components/nav";
-import { PrintButton } from "../../../components/print-button";
+import { DocumentPdfActions } from "../../../components/pdf-actions";
 import { InvoiceActions } from "./invoice-actions";
 
 type InvoiceDetail = {
@@ -138,10 +138,39 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   return (
     <div>
       <AppNav />
-      <main className="pb-28">
-        <div className="no-print mx-auto mb-3 flex max-w-xl justify-end p-4 pb-0">
-          <PrintButton />
+      <main className="p-4 pb-28">
+        <div className="mx-auto max-w-md space-y-4">
+          <Card className="space-y-1">
+            <p className="text-sm text-muted-foreground">فاتورة ضريبية</p>
+            <p className="text-lg font-bold">فاتورة #{invoice.invoice_number}</p>
+            <p className="text-sm text-muted-foreground">
+              {customer?.shop_name ?? customer?.name ?? "—"} ·{" "}
+              {new Date(invoice.invoice_date).toLocaleDateString("ar-SA")}
+            </p>
+            <div className="flex items-center justify-between pt-1">
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                {STATUS_LABELS[invoice.status] ?? invoice.status}
+              </span>
+              <p className="text-xl font-extrabold">{formatCurrency(invoice.total_amount)}</p>
+            </div>
+          </Card>
+
+          <DocumentPdfActions elementId="invoice-print-root" fileName={`فاتورة-${invoice.invoice_number}`} />
+
+          {invoice.status !== "cancelled" ? (
+            <InvoiceActions
+              invoiceId={invoice.id}
+              withinGracePeriod={withinGracePeriod}
+              hasPendingRequest={hasPendingRequest}
+            />
+          ) : null}
         </div>
+      </main>
+
+      {/* مستند الطباعة الفعلي — خارج الشاشة عمدًا (وليس display:none حتى
+          تقدر html2canvas تلتقطه) ويُستخدم فقط لتوليد ملف PDF عبر
+          DocumentPdfActions، وليس للعرض المباشر بهذه الصفحة. */}
+      <div className="pointer-events-none fixed -left-[10000px] top-0" aria-hidden="true">
         <InvoicePrintDocument
           companyName={settings?.company_name ?? ""}
           companyVatNumber={settings?.vat_registration_number ?? ""}
@@ -161,17 +190,7 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
           notes={invoice.notes}
           qrCodeImage={qrCodeImage}
         />
-
-        {invoice.status !== "cancelled" ? (
-          <div className="no-print mx-auto mt-4 max-w-xl p-4 pt-0">
-            <InvoiceActions
-              invoiceId={invoice.id}
-              withinGracePeriod={withinGracePeriod}
-              hasPendingRequest={hasPendingRequest}
-            />
-          </div>
-        ) : null}
-      </main>
+      </div>
     </div>
   );
 }
