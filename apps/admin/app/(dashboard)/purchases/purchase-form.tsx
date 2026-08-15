@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input } from "@system2026/ui";
+import { Button, Card, Input, useModalClose } from "@system2026/ui";
 import type { CatalogProduct } from "../../../lib/get-product-catalog";
 import { createPurchaseInvoiceAction, type PurchaseActionState } from "./actions";
 
@@ -24,6 +24,13 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
   const [state, formAction] = useFormState(createPurchaseInvoiceAction, initialState);
   const [items, setItems] = useState<LineItem[]>([]);
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
+  const closeModal = useModalClose();
+
+  useEffect(() => {
+    if (!state.purchaseInvoiceId || !closeModal) return;
+    const timer = setTimeout(closeModal, 700);
+    return () => clearTimeout(timer);
+  }, [state.purchaseInvoiceId, closeModal]);
 
   function addItem() {
     const first = catalog[0];
@@ -61,8 +68,8 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
         {items.map((item, index) => {
           const product = productById.get(item.productId);
           return (
-            <Card key={index} className="grid grid-cols-12 items-end gap-2">
-              <div className="col-span-4">
+            <Card key={index} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-12">
+              <div className="col-span-2 sm:col-span-4">
                 <label className="mb-1 block text-xs">المنتج</label>
                 <select
                   value={item.productId}
@@ -79,7 +86,7 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   ))}
                 </select>
               </div>
-              <div className="col-span-3">
+              <div className="col-span-1 sm:col-span-3">
                 <label className="mb-1 block text-xs">الوحدة</label>
                 <select
                   value={item.unitId}
@@ -93,7 +100,7 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   ))}
                 </select>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <label className="mb-1 block text-xs">الكمية</label>
                 <Input
                   type="number"
@@ -102,7 +109,7 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   onChange={(e) => updateItem(index, { quantityInUnit: Number(e.target.value) })}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1 sm:col-span-2">
                 <label className="mb-1 block text-xs">تكلفة الوحدة</label>
                 <Input
                   type="number"
@@ -111,8 +118,8 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   onChange={(e) => updateItem(index, { unitCost: Number(e.target.value) })}
                 />
               </div>
-              <div className="col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
+              <div className="col-span-1 sm:col-span-1">
+                <Button type="button" variant="destructive" onClick={() => removeItem(index)} className="w-full">
                   حذف
                 </Button>
               </div>
