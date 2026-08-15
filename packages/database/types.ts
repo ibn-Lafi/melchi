@@ -267,6 +267,7 @@ export type Database = {
           qr_code_data: string;
           payment_method: Database["public"]["Enums"]["invoice_payment_method"];
           status: Database["public"]["Enums"]["invoice_status"];
+          discount_percentage: number;
           created_at: string;
           updated_at: string;
         },
@@ -424,6 +425,7 @@ export type Database = {
           p_customer_id: string;
           p_items: Json;
           p_payment_method: Database["public"]["Enums"]["invoice_payment_method"];
+          p_discount_percentage?: number;
         };
         Returns: string;
       };

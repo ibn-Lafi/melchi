@@ -16,6 +16,7 @@ type InvoiceDetail = {
   status: string;
   rep_id: string;
   customer_id: string;
+  discount_percentage: number;
 };
 
 type InvoiceItemRow = {
@@ -40,10 +41,10 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage",
     )
     .eq("id", params.id)
     .single();
@@ -106,6 +107,10 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
           <p>
             <span className="text-foreground/60">الحالة: </span>
             {STATUS_LABELS[invoice.status] ?? invoice.status}
+          </p>
+          <p>
+            <span className="text-foreground/60">نسبة الخصم: </span>
+            {invoice.discount_percentage > 0 ? `${invoice.discount_percentage}%` : "بدون خصم"}
           </p>
         </div>
 

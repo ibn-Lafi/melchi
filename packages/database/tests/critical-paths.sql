@@ -111,7 +111,7 @@ select public.create_invoice_with_stock_check(
   jsonb_build_array(jsonb_build_object(
     'product_id', 'b1111111-0000-0000-0000-000000000001',
     'unit_id', 'a1111111-0000-0000-0000-000000000001',
-    'quantity_in_unit', 20, 'unit_price', 5
+    'quantity_in_unit', 20
   )), 'credit'
 ) as invoice_id \gset invoice1_
 
@@ -147,7 +147,7 @@ begin
     jsonb_build_array(jsonb_build_object(
       'product_id', 'b1111111-0000-0000-0000-000000000001',
       'unit_id', 'a1111111-0000-0000-0000-000000000001',
-      'quantity_in_unit', 99999, 'unit_price', 5
+      'quantity_in_unit', 99999
     )), 'cash'
   );
   raise exception 'كان يجب رفض بيع كمية أكبر من المتوفر بالمخزون';
@@ -237,7 +237,7 @@ select public.create_invoice_with_stock_check(
   jsonb_build_array(jsonb_build_object(
     'product_id', 'b1111111-0000-0000-0000-000000000001',
     'unit_id', 'a1111111-0000-0000-0000-000000000001',
-    'quantity_in_unit', 4, 'unit_price', 5
+    'quantity_in_unit', 4
   )), 'cash'
 ) as invoice_id \gset invoice3_
 
@@ -264,7 +264,7 @@ select public.create_invoice_with_stock_check(
   jsonb_build_array(jsonb_build_object(
     'product_id', 'b1111111-0000-0000-0000-000000000001',
     'unit_id', 'a1111111-0000-0000-0000-000000000001',
-    'quantity_in_unit', 3, 'unit_price', 5
+    'quantity_in_unit', 3
   )), 'cash'
 ) as invoice_id \gset invoice4_
 
@@ -300,6 +300,53 @@ select pg_temp.assert_true(
     where product_id = 'b1111111-0000-0000-0000-000000000001') = 345,
   'رصيد المخزون المشترك يجب أن يعود 345 (بيع 3 ثم إلغاء عبر موافقة الأدمن يعيدها بالضبط)'
 );
+
+-- ========== 6.3 نسبة خصم الفاتورة (0%-25%) — تُحسب داخل قاعدة البيانات ولا تُقرأ من العميل ==========
+-- unit_price لم يعد جزءًا من العقد؛ السعر الحقيقي يُقرأ من products.price
+-- ويُطبَّق عليه الخصم داخل create_invoice_with_stock_check نفسها.
+select public.create_invoice_with_stock_check(
+  '22222222-2222-2222-2222-222222222222',
+  'e1111111-0000-0000-0000-000000000001',
+  jsonb_build_array(jsonb_build_object(
+    'product_id', 'b1111111-0000-0000-0000-000000000001',
+    'unit_id', 'a1111111-0000-0000-0000-000000000001',
+    'quantity_in_unit', 4
+  )), 'cash', 25
+) as invoice_id \gset invoice5_
+
+select pg_temp.assert_true(
+  (select discount_percentage from public.invoices where id = :'invoice5_invoice_id') = 25,
+  'نسبة الخصم المحفوظة بالفاتورة يجب أن تكون 25'
+);
+select pg_temp.assert_true(
+  (select (subtotal, vat_amount, total_amount) = (15, 2.25, 17.25)
+     from public.invoices where id = :'invoice5_invoice_id'),
+  'مع خصم 25% على سعر 5: السعر الفعلي 3.75 × 4 = 15، والضريبة 2.25، والإجمالي 17.25'
+);
+select pg_temp.assert_true(
+  (select unit_price from public.invoice_items where invoice_id = :'invoice5_invoice_id') = 3.75,
+  'سعر الوحدة المحفوظ ببند الفاتورة يجب أن يعكس الخصم (5 × (1-25%) = 3.75)'
+);
+
+do $$
+begin
+  perform public.create_invoice_with_stock_check(
+    '22222222-2222-2222-2222-222222222222',
+    'e1111111-0000-0000-0000-000000000001',
+    jsonb_build_array(jsonb_build_object(
+      'product_id', 'b1111111-0000-0000-0000-000000000001',
+      'unit_id', 'a1111111-0000-0000-0000-000000000001',
+      'quantity_in_unit', 1
+    )), 'cash', 26
+  );
+  raise exception 'كان يجب رفض نسبة خصم أكبر من 25%%';
+exception
+  when others then
+    if sqlerrm = 'كان يجب رفض نسبة خصم أكبر من 25%' then
+      raise exception 'FAILED: %', sqlerrm;
+    end if;
+    -- الاستثناء المتوقع من create_invoice_with_stock_check نفسها — هذا صحيح
+end $$;
 
 -- ========== 7. RLS لكل دور (CLAUDE.md §4-5) ==========
 reset role;

@@ -12,6 +12,7 @@ type InvoiceRow = {
   status: string;
   rep_id: string;
   customer_id: string;
+  discount_percentage: number;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -38,9 +39,11 @@ export default async function InvoicesPage({
   let query = supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, total_amount, payment_method, status, rep_id, customer_id",
+      "id, invoice_number, invoice_date, total_amount, payment_method, status, rep_id, customer_id, discount_percentage",
       InvoiceRow
-    >("id, invoice_number, invoice_date, total_amount, payment_method, status, rep_id, customer_id")
+    >(
+      "id, invoice_number, invoice_date, total_amount, payment_method, status, rep_id, customer_id, discount_percentage",
+    )
     .order("invoice_number", { ascending: false })
     .limit(100);
 
@@ -157,6 +160,7 @@ export default async function InvoicesPage({
               <th>المندوب</th>
               <th>العميل</th>
               <th>الإجمالي</th>
+              <th>نسبة الخصم</th>
               <th>الدفع</th>
               <th>الحالة</th>
             </tr>
@@ -173,6 +177,7 @@ export default async function InvoicesPage({
                 <td>{repNameById.get(inv.rep_id) ?? "—"}</td>
                 <td>{customerNameById.get(inv.customer_id) ?? "—"}</td>
                 <td>{formatCurrency(inv.total_amount)}</td>
+                <td>{inv.discount_percentage > 0 ? `${inv.discount_percentage}%` : "—"}</td>
                 <td>{PAYMENT_LABELS[inv.payment_method] ?? inv.payment_method}</td>
                 <td>{STATUS_LABELS[inv.status] ?? inv.status}</td>
               </tr>

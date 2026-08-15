@@ -29,6 +29,7 @@ export async function createInvoiceAction(
     customerId: formData.get("customerId"),
     items,
     paymentMethod: formData.get("paymentMethod"),
+    discountPercentage: Number(formData.get("discountPercentage") ?? 0),
   });
 
   if (!parsed.success) {
@@ -42,9 +43,9 @@ export async function createInvoiceAction(
       product_id: item.productId,
       unit_id: item.unitId,
       quantity_in_unit: item.quantityInUnit,
-      unit_price: item.unitPrice,
     })),
     p_payment_method: parsed.data.paymentMethod,
+    p_discount_percentage: parsed.data.discountPercentage,
   });
 
   if (error) {
