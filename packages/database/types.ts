@@ -232,6 +232,7 @@ export type Database = {
           notes: string | null;
           google_maps_link: string | null;
           show_in_store: boolean;
+          city_id: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -244,11 +245,42 @@ export type Database = {
           notes?: string | null;
           google_maps_link?: string | null;
           show_in_store?: boolean;
+          city_id?: string | null;
         }
       >;
       customer_reps: Table<
         { id: string; customer_id: string; rep_id: string; created_at: string },
         { id?: string; customer_id: string; rep_id: string }
+      >;
+      cities: Table<
+        { id: string; name: string; created_at: string; updated_at: string },
+        { id?: string; name: string }
+      >;
+      customer_branches: Table<
+        {
+          id: string;
+          customer_id: string;
+          name: string;
+          shop_name: string | null;
+          address: string | null;
+          city_id: string | null;
+          phone: string | null;
+          google_maps_link: string | null;
+          show_in_store: boolean;
+          created_at: string;
+          updated_at: string;
+        },
+        {
+          id?: string;
+          customer_id: string;
+          name: string;
+          shop_name?: string | null;
+          address?: string | null;
+          city_id?: string | null;
+          phone?: string | null;
+          google_maps_link?: string | null;
+          show_in_store?: boolean;
+        }
       >;
       rep_inventory: Table<
         { id: string; rep_id: string; product_id: string; quantity_available: number; created_at: string; updated_at: string },
@@ -268,6 +300,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["invoice_payment_method"];
           status: Database["public"]["Enums"]["invoice_status"];
           discount_percentage: number;
+          branch_id: string | null;
           created_at: string;
           updated_at: string;
         },
@@ -426,6 +459,7 @@ export type Database = {
           p_items: Json;
           p_payment_method: Database["public"]["Enums"]["invoice_payment_method"];
           p_discount_percentage?: number;
+          p_branch_id?: string | null;
         };
         Returns: string;
       };

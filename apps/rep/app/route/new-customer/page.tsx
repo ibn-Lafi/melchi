@@ -27,7 +27,7 @@ export default function NewCustomerPage() {
         <Card>
           <form action={formAction} className="space-y-3">
             <div>
-              <label className="mb-1 block text-sm">الاسم</label>
+              <label className="mb-1 block text-sm">اسم السجل</label>
               <Input name="name" required />
             </div>
             <div>

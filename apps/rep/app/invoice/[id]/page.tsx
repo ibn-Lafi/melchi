@@ -17,6 +17,7 @@ type InvoiceDetail = {
   status: string;
   customer_id: string;
   discount_percentage: number;
+  branch_id: string | null;
 };
 
 type InvoiceItemRow = {
@@ -43,45 +44,54 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage, branch_id",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, status, customer_id, discount_percentage, branch_id",
     )
     .eq("id", params.id)
     .single();
 
   if (!invoice) notFound();
 
-  const [{ data: items }, { data: customer }, { data: products }, { data: units }, { data: settings }, { data: pendingRequests }] =
-    await Promise.all([
-      supabase
-        .from("invoice_items")
-        .select<
-          "id, product_id, unit_id, quantity_in_unit, unit_price, subtotal",
-          InvoiceItemRow
-        >("id, product_id, unit_id, quantity_in_unit, unit_price, subtotal")
-        .eq("invoice_id", invoice.id),
-      supabase
-        .from("customers")
-        .select<"name, shop_name", { name: string; shop_name: string | null }>("name, shop_name")
-        .eq("id", invoice.customer_id)
-        .single(),
-      supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
-      supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
-      supabase
-        .from("system_settings")
-        .select<"invoice_edit_grace_period_minutes", { invoice_edit_grace_period_minutes: number }>(
-          "invoice_edit_grace_period_minutes",
-        )
-        .eq("id", 1)
-        .single(),
-      supabase
-        .from("invoice_edit_requests")
-        .select<"id", { id: string }>("id")
-        .eq("invoice_id", invoice.id)
-        .eq("status", "pending"),
-    ]);
+  const [
+    { data: items },
+    { data: customer },
+    { data: products },
+    { data: units },
+    { data: settings },
+    { data: pendingRequests },
+    { data: branch },
+  ] = await Promise.all([
+    supabase
+      .from("invoice_items")
+      .select<"id, product_id, unit_id, quantity_in_unit, unit_price, subtotal", InvoiceItemRow>(
+        "id, product_id, unit_id, quantity_in_unit, unit_price, subtotal",
+      )
+      .eq("invoice_id", invoice.id),
+    supabase
+      .from("customers")
+      .select<"name, shop_name", { name: string; shop_name: string | null }>("name, shop_name")
+      .eq("id", invoice.customer_id)
+      .single(),
+    supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
+    supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
+    supabase
+      .from("system_settings")
+      .select<"invoice_edit_grace_period_minutes", { invoice_edit_grace_period_minutes: number }>(
+        "invoice_edit_grace_period_minutes",
+      )
+      .eq("id", 1)
+      .single(),
+    supabase
+      .from("invoice_edit_requests")
+      .select<"id", { id: string }>("id")
+      .eq("invoice_id", invoice.id)
+      .eq("status", "pending"),
+    invoice.branch_id
+      ? supabase.from("customer_branches").select<"name", { name: string }>("name").eq("id", invoice.branch_id).single()
+      : Promise.resolve({ data: null as { name: string } | null }),
+  ]);
 
   const productNameById = new Map((products ?? []).map((p) => [p.id, p.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
@@ -108,6 +118,7 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
             {new Date(invoice.invoice_date).toLocaleString("ar-SA")}
           </p>
           <p className="text-sm text-muted-foreground">{customer?.shop_name ?? customer?.name ?? "—"}</p>
+          {branch ? <p className="text-sm text-muted-foreground">فرع: {branch.name}</p> : null}
           <div className="mt-4 flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

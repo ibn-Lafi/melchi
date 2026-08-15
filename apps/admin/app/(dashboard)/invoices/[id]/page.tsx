@@ -17,6 +17,7 @@ type InvoiceDetail = {
   rep_id: string;
   customer_id: string;
   discount_percentage: number;
+  branch_id: string | null;
 };
 
 type InvoiceItemRow = {
@@ -41,17 +42,17 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   const { data: invoice } = await supabase
     .from("invoices")
     .select<
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id",
       InvoiceDetail
     >(
-      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage",
+      "id, invoice_number, invoice_date, subtotal, vat_amount, total_amount, qr_code_data, payment_method, status, rep_id, customer_id, discount_percentage, branch_id",
     )
     .eq("id", params.id)
     .single();
 
   if (!invoice) notFound();
 
-  const [{ data: items }, { data: rep }, { data: customer }, { data: products }, { data: units }] =
+  const [{ data: items }, { data: rep }, { data: customer }, { data: products }, { data: units }, { data: branch }] =
     await Promise.all([
       supabase
         .from("invoice_items")
@@ -72,6 +73,13 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         .single(),
       supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
       supabase.from("units").select<"id, name", { id: string; name: string }>("id, name"),
+      invoice.branch_id
+        ? supabase
+            .from("customer_branches")
+            .select<"name", { name: string }>("name")
+            .eq("id", invoice.branch_id)
+            .single()
+        : Promise.resolve({ data: null as { name: string } | null }),
     ]);
 
   const productNameById = new Map((products ?? []).map((p) => [p.id, p.name]));
@@ -104,6 +112,12 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
             <span className="text-foreground/60">العميل: </span>
             {customer?.shop_name ?? customer?.name ?? "—"}
           </p>
+          {branch ? (
+            <p>
+              <span className="text-foreground/60">الفرع: </span>
+              {branch.name}
+            </p>
+          ) : null}
           <p>
             <span className="text-foreground/60">الحالة: </span>
             {STATUS_LABELS[invoice.status] ?? invoice.status}

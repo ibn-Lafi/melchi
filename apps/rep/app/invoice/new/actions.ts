@@ -27,6 +27,7 @@ export async function createInvoiceAction(
   const parsed = createInvoiceSchema.safeParse({
     repId: user.id,
     customerId: formData.get("customerId"),
+    branchId: formData.get("branchId") || undefined,
     items,
     paymentMethod: formData.get("paymentMethod"),
     discountPercentage: Number(formData.get("discountPercentage") ?? 0),
@@ -46,6 +47,7 @@ export async function createInvoiceAction(
     })),
     p_payment_method: parsed.data.paymentMethod,
     p_discount_percentage: parsed.data.discountPercentage,
+    p_branch_id: parsed.data.branchId ?? null,
   });
 
   if (error) {
