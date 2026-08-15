@@ -7,7 +7,31 @@ import type { CatalogProduct } from "../../../lib/get-product-catalog";
 import { createPurchaseInvoiceAction, type PurchaseActionState } from "./actions";
 
 type Supplier = { id: string; name: string };
-type LineItem = { productId: string; unitId: string; quantityInUnit: number; unitCost: number };
+type Category = { id: string; name: string };
+type Unit = { id: string; name: string };
+
+type ExistingLineItem = {
+  kind: "existing";
+  productId: string;
+  unitId: string;
+  quantityInUnit: number;
+  unitCost: number;
+};
+
+// بند لمنتج غير موجود بالكتالوج بعد — يُنشأ المنتج تلقائيًا عند اعتماد
+// الفاتورة (راجع createPurchaseInvoiceAction)، فلا داعي لمغادرة نافذة
+// الشراء لإضافة المنتج بصفحة المنتجات أولًا.
+type NewLineItem = {
+  kind: "new";
+  name: string;
+  price: number;
+  baseUnitId: string;
+  categoryId: string;
+  quantityInUnit: number;
+  unitCost: number;
+};
+
+type LineItem = ExistingLineItem | NewLineItem;
 
 const initialState: PurchaseActionState = {};
 
@@ -20,7 +44,17 @@ function SubmitButton() {
   );
 }
 
-export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; catalog: CatalogProduct[] }) {
+export function PurchaseForm({
+  suppliers,
+  catalog,
+  categories,
+  units,
+}: {
+  suppliers: Supplier[];
+  catalog: CatalogProduct[];
+  categories: Category[];
+  units: Unit[];
+}) {
   const [state, formAction] = useFormState(createPurchaseInvoiceAction, initialState);
   const [items, setItems] = useState<LineItem[]>([]);
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
@@ -32,26 +66,44 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
     return () => clearTimeout(timer);
   }, [state.purchaseInvoiceId, closeModal]);
 
-  function addItem() {
+  function newExistingItem(): ExistingLineItem {
     const first = catalog[0];
-    if (!first) return;
-    setItems((prev) => [
-      ...prev,
-      { productId: first.productId, unitId: first.units[0]?.unitId ?? "", quantityInUnit: 1, unitCost: 0 },
-    ]);
+    return { kind: "existing", productId: first?.productId ?? "", unitId: first?.units[0]?.unitId ?? "", quantityInUnit: 1, unitCost: 0 };
   }
 
-  function updateItem(index: number, patch: Partial<LineItem>) {
-    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+  function newNewItem(): NewLineItem {
+    return { kind: "new", name: "", price: 0, baseUnitId: units[0]?.id ?? "", categoryId: "", quantityInUnit: 1, unitCost: 0 };
+  }
+
+  function addItem() {
+    setItems((prev) => [...prev, catalog.length > 0 ? newExistingItem() : newNewItem()]);
+  }
+
+  function switchItemKind(index: number, kind: LineItem["kind"]) {
+    setItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== index) return it;
+        if (kind === "existing") return { ...newExistingItem(), quantityInUnit: it.quantityInUnit, unitCost: it.unitCost };
+        return { ...newNewItem(), quantityInUnit: it.quantityInUnit, unitCost: it.unitCost };
+      }),
+    );
+  }
+
+  function updateItem(index: number, patch: Record<string, unknown>) {
+    setItems((prev) => prev.map((it, i) => (i === index ? ({ ...it, ...patch } as LineItem) : it)));
   }
 
   function removeItem(index: number) {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  const serializedItems = items.map((item) =>
+    item.kind === "new" ? { ...item, categoryId: item.categoryId || undefined } : item,
+  );
+
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="items" value={JSON.stringify(items)} />
+      <input type="hidden" name="items" value={JSON.stringify(serializedItems)} />
 
       <div>
         <label className="mb-1 block text-sm font-medium">المورد</label>
@@ -65,42 +117,123 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
       </div>
 
       <div className="space-y-2">
-        {items.map((item, index) => {
-          const product = productById.get(item.productId);
-          return (
-            <Card key={index} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-12">
-              <div className="col-span-2 sm:col-span-4">
-                <label className="mb-1 block text-xs">المنتج</label>
-                <select
-                  value={item.productId}
-                  onChange={(e) => {
-                    const p = productById.get(e.target.value);
-                    updateItem(index, { productId: e.target.value, unitId: p?.units[0]?.unitId ?? "" });
-                  }}
-                  className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-                >
-                  {catalog.map((p) => (
-                    <option key={p.productId} value={p.productId}>
-                      {p.productName}
-                    </option>
-                  ))}
-                </select>
+        {items.map((item, index) => (
+          <Card key={index} className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-medium text-foreground/50">بند #{index + 1}</span>
+              <div className="flex items-center gap-3 text-xs">
+                <label className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name={`kind-${index}`}
+                    checked={item.kind === "existing"}
+                    onChange={() => switchItemKind(index, "existing")}
+                    disabled={catalog.length === 0}
+                  />
+                  منتج موجود
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name={`kind-${index}`}
+                    checked={item.kind === "new"}
+                    onChange={() => switchItemKind(index, "new")}
+                  />
+                  منتج جديد
+                </label>
               </div>
-              <div className="col-span-1 sm:col-span-3">
-                <label className="mb-1 block text-xs">الوحدة</label>
-                <select
-                  value={item.unitId}
-                  onChange={(e) => updateItem(index, { unitId: e.target.value })}
-                  className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-                >
-                  {product?.units.map((u) => (
-                    <option key={u.unitId} value={u.unitId}>
-                      {u.unitName}
-                    </option>
-                  ))}
-                </select>
+            </div>
+
+            {item.kind === "existing" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs">المنتج</label>
+                  <select
+                    value={item.productId}
+                    onChange={(e) => {
+                      const p = productById.get(e.target.value);
+                      updateItem(index, { productId: e.target.value, unitId: p?.units[0]?.unitId ?? "" });
+                    }}
+                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
+                  >
+                    {catalog.map((p) => (
+                      <option key={p.productId} value={p.productId}>
+                        {p.productName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">الوحدة</label>
+                  <select
+                    value={item.unitId}
+                    onChange={(e) => updateItem(index, { unitId: e.target.value })}
+                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
+                  >
+                    {productById.get(item.productId)?.units.map((u) => (
+                      <option key={u.unitId} value={u.unitId}>
+                        {u.unitName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="col-span-1 sm:col-span-2">
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs">اسم المنتج الجديد</label>
+                  <Input
+                    value={item.name}
+                    onChange={(e) => updateItem(index, { name: e.target.value })}
+                    placeholder="اسم المنتج"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">الفئة (اختياري)</label>
+                  <select
+                    value={item.categoryId}
+                    onChange={(e) => updateItem(index, { categoryId: e.target.value })}
+                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
+                  >
+                    <option value="">بدون فئة</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs">الوحدة الأساسية</label>
+                  <select
+                    value={item.baseUnitId}
+                    onChange={(e) => updateItem(index, { baseUnitId: e.target.value })}
+                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
+                  >
+                    {units.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs">سعر البيع</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    value={item.price}
+                    onChange={(e) => updateItem(index, { price: Number(e.target.value) })}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 items-end gap-2">
+              <div>
                 <label className="mb-1 block text-xs">الكمية</label>
                 <Input
                   type="number"
@@ -109,7 +242,7 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   onChange={(e) => updateItem(index, { quantityInUnit: Number(e.target.value) })}
                 />
               </div>
-              <div className="col-span-1 sm:col-span-2">
+              <div>
                 <label className="mb-1 block text-xs">تكلفة الوحدة</label>
                 <Input
                   type="number"
@@ -118,14 +251,12 @@ export function PurchaseForm({ suppliers, catalog }: { suppliers: Supplier[]; ca
                   onChange={(e) => updateItem(index, { unitCost: Number(e.target.value) })}
                 />
               </div>
-              <div className="col-span-1 sm:col-span-1">
-                <Button type="button" variant="destructive" onClick={() => removeItem(index)} className="w-full">
-                  حذف
-                </Button>
-              </div>
-            </Card>
-          );
-        })}
+              <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
+                حذف
+              </Button>
+            </div>
+          </Card>
+        ))}
         <Button type="button" variant="outline" onClick={addItem}>
           + إضافة منتج
         </Button>

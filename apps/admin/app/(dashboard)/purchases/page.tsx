@@ -18,38 +18,46 @@ export default async function PurchasesPage() {
   const role = await getCurrentUserRole();
   const canManage = role === "admin";
 
-  const [{ data: purchaseInvoices }, { data: suppliers }, catalog] = await Promise.all([
-    supabase
-      .from("purchase_invoices")
-      .select<
-        "id, invoice_date, total_amount, payment_status, supplier_id",
-        PurchaseInvoiceRow
-      >("id, invoice_date, total_amount, payment_status, supplier_id")
-      .order("invoice_date", { ascending: false }),
-    supabase.from("suppliers").select<"id, name", { id: string; name: string }>("id, name").order("name"),
-    getProductCatalog(),
-  ]);
+  const [{ data: purchaseInvoices }, { data: suppliers }, catalog, { data: categories }, { data: units }] =
+    await Promise.all([
+      supabase
+        .from("purchase_invoices")
+        .select<
+          "id, invoice_date, total_amount, payment_status, supplier_id",
+          PurchaseInvoiceRow
+        >("id, invoice_date, total_amount, payment_status, supplier_id")
+        .order("invoice_date", { ascending: false }),
+      supabase.from("suppliers").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+      getProductCatalog(),
+      supabase.from("categories").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+      supabase.from("units").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+    ]);
 
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
-  const canCreatePurchase = (suppliers?.length ?? 0) > 0 && catalog.length > 0;
+  const canCreatePurchase = (suppliers?.length ?? 0) > 0 && (units?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={["لوحة التحكم", "المشتريات"]} />}
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الموردين", "المشتريات"]} />}
         title="فواتير الشراء"
         subtitle="تسجيل فواتير الشراء من الموردين واحتساب متوسط التكلفة تلقائيًا"
         actions={
           canManage && canCreatePurchase ? (
             <ModalTrigger label="+ فاتورة شراء" title="فاتورة شراء جديدة" size="lg">
-              <PurchaseForm suppliers={suppliers ?? []} catalog={catalog} />
+              <PurchaseForm
+                suppliers={suppliers ?? []}
+                catalog={catalog}
+                categories={categories ?? []}
+                units={units ?? []}
+              />
             </ModalTrigger>
           ) : null
         }
       />
 
       {canManage && !canCreatePurchase ? (
-        <p className="text-sm text-foreground/60">أضف مورد ومنتج واحد على الأقل أولًا لتتمكن من تسجيل فاتورة شراء</p>
+        <p className="text-sm text-foreground/60">أضف مورد ووحدة قياس واحدة على الأقل أولًا لتتمكن من تسجيل فاتورة شراء</p>
       ) : null}
 
       <Card>
