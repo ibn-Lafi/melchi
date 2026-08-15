@@ -1,4 +1,4 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProductCatalog } from "../../../lib/get-product-catalog";
@@ -16,6 +16,7 @@ type PurchaseInvoiceRow = {
 export default async function PurchasesPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
+  const canManage = role === "admin";
 
   const [{ data: purchaseInvoices }, { data: suppliers }, catalog] = await Promise.all([
     supabase
@@ -30,6 +31,7 @@ export default async function PurchasesPage() {
   ]);
 
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
+  const canCreatePurchase = (suppliers?.length ?? 0) > 0 && catalog.length > 0;
 
   return (
     <div className="space-y-6">
@@ -37,7 +39,18 @@ export default async function PurchasesPage() {
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "المشتريات"]} />}
         title="فواتير الشراء"
         subtitle="تسجيل فواتير الشراء من الموردين واحتساب متوسط التكلفة تلقائيًا"
+        actions={
+          canManage && canCreatePurchase ? (
+            <ModalTrigger label="+ فاتورة شراء" title="فاتورة شراء جديدة" size="lg">
+              <PurchaseForm suppliers={suppliers ?? []} catalog={catalog} />
+            </ModalTrigger>
+          ) : null
+        }
       />
+
+      {canManage && !canCreatePurchase ? (
+        <p className="text-sm text-foreground/60">أضف مورد ومنتج واحد على الأقل أولًا لتتمكن من تسجيل فاتورة شراء</p>
+      ) : null}
 
       <Card>
         <table className="w-full text-sm">
@@ -66,17 +79,6 @@ export default async function PurchasesPage() {
           <p className="py-4 text-foreground/60">لا توجد فواتير شراء بعد</p>
         ) : null}
       </Card>
-
-      {role === "admin" ? (
-        <Card>
-          <h2 className="mb-3 font-semibold">فاتورة شراء جديدة</h2>
-          {(suppliers?.length ?? 0) === 0 || catalog.length === 0 ? (
-            <p className="text-foreground/60">أضف مورد ومنتج واحد على الأقل أولًا</p>
-          ) : (
-            <PurchaseForm suppliers={suppliers ?? []} catalog={catalog} />
-          )}
-        </Card>
-      ) : null}
     </div>
   );
 }

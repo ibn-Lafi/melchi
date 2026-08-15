@@ -11,15 +11,24 @@ export function useModalClose() {
   return useContext(ModalCloseContext);
 }
 
+const MODAL_SIZE_CLASS = {
+  md: "max-w-md",
+  lg: "max-w-2xl",
+} as const;
+
+export type ModalSize = keyof typeof MODAL_SIZE_CLASS;
+
 export function Modal({
   open,
   onClose,
   title,
+  size = "md",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  size?: ModalSize;
   children: ReactNode;
 }) {
   useEffect(() => {
@@ -37,7 +46,9 @@ export function Modal({
     <ModalCloseContext.Provider value={onClose}>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-foreground/30" onClick={onClose} />
-        <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-6 shadow-pop">
+        <div
+          className={`relative max-h-[85vh] w-full ${MODAL_SIZE_CLASS[size]} overflow-y-auto rounded-2xl bg-background p-6 shadow-pop`}
+        >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">{title}</h2>
             <button
@@ -60,11 +71,13 @@ export function ModalTrigger({
   label,
   title,
   variant = "default",
+  size = "md",
   children,
 }: {
   label: string;
   title: string;
   variant?: ButtonVariant;
+  size?: ModalSize;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -73,7 +86,7 @@ export function ModalTrigger({
       <Button type="button" variant={variant} onClick={() => setOpen(true)}>
         {label}
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title={title}>
+      <Modal open={open} onClose={() => setOpen(false)} title={title} size={size}>
         {children}
       </Modal>
     </>
