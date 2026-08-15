@@ -1,4 +1,5 @@
 import { formatCurrency } from "@system2026/utils";
+import { DocumentHeader } from "./document-header";
 
 export type InvoicePrintItem = {
   id: string;
@@ -71,32 +72,18 @@ export function InvoicePrintDocument({
       dir="rtl"
       className="mx-auto min-h-[297mm] w-[210mm] bg-white p-[14mm] text-[11px] leading-relaxed text-neutral-900 shadow-card print:m-0 print:w-full print:shadow-none"
     >
-      {/* ===== ترويسة الصفحة: بيانات الشركة (من إعدادات الأدمن) في المنتصف ===== */}
-      <div className="border-b border-neutral-200 pb-4 text-center">
-        <p className="text-lg font-extrabold">{companyName}</p>
-        <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[10px] text-neutral-600">
-          {companyCommercialRegistration ? <span>السجل التجاري: {companyCommercialRegistration}</span> : null}
-          {companyVatNumber ? <span>الرقم الضريبي: {companyVatNumber}</span> : null}
-          {companyAddress ? <span>{companyAddress}</span> : null}
-        </div>
-      </div>
-
-      {/* ===== عنوان الفاتورة (يمين) وتاريخها (يسار) ===== */}
-      <div className="mt-4 flex items-start justify-between">
-        <div>
-          <h1 className="text-lg font-extrabold">فاتورة ضريبية</h1>
-          <p className="mt-1">
-            <span className="text-neutral-500">رقم الفاتورة: </span>#{invoiceNumber}
-          </p>
-        </div>
-        <div className="text-left">
-          <p className="font-semibold">{dateLabel}</p>
-          <p className="text-neutral-500">{timeLabel}</p>
-          <p className="mt-1 inline-block rounded-full bg-neutral-100 px-3 py-0.5 text-[10px] font-medium">
-            {statusLabel}
-          </p>
-        </div>
-      </div>
+      <DocumentHeader
+        companyName={companyName}
+        companyVatNumber={companyVatNumber}
+        companyCommercialRegistration={companyCommercialRegistration}
+        companyAddress={companyAddress}
+        title="فاتورة ضريبية"
+        documentNumberLabel="رقم الفاتورة"
+        documentNumber={invoiceNumber}
+        dateLabel={dateLabel}
+        timeLabel={timeLabel}
+        statusLabel={statusLabel}
+      />
 
       {/* ===== من / إلى ===== */}
       <div className="mt-5 grid grid-cols-2 gap-4 border-t border-neutral-200 pt-4">

@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@system2026/ui";
 import { useInvoiceModal } from "./invoice-modal-provider";
+import { useReturnModal } from "./return-modal-provider";
+import { useCollectionModal } from "./collection-modal-provider";
 
 const SIDE_ITEMS_RIGHT = [
   { href: "/", label: "الرئيسية", icon: HomeIcon },
@@ -101,10 +104,33 @@ function NavLink({
 export function AppNav() {
   const pathname = usePathname();
   const { openInvoiceModal } = useInvoiceModal();
+  const { openReturnModal } = useReturnModal();
+  const { openCollectionModal } = useCollectionModal();
+  const [menuOpen, setMenuOpen] = useState(false);
   const isItemActive = (href: string) => (href === "/" ? pathname === "/" : pathname?.startsWith(href) ?? false);
+
+  const QUICK_ACTIONS = [
+    { label: "فاتورة جديدة", onClick: () => openInvoiceModal() },
+    { label: "تسجيل مرتجع", onClick: () => openReturnModal() },
+    { label: "تحصيل", onClick: () => openCollectionModal() },
+  ];
+
+  function runAction(action: () => void) {
+    setMenuOpen(false);
+    action();
+  }
 
   return (
     <nav className="no-print fixed inset-x-3 bottom-3 z-20 mx-auto max-w-sm">
+      {menuOpen ? (
+        <button
+          type="button"
+          aria-label="إغلاق القائمة"
+          onClick={() => setMenuOpen(false)}
+          className="fixed inset-0 z-10 cursor-default"
+        />
+      ) : null}
+
       <div className="relative flex items-stretch justify-between rounded-[28px] border border-border bg-background px-1.5 py-1.5 shadow-pop">
         <div className="flex flex-1 items-center justify-evenly">
           {SIDE_ITEMS_RIGHT.map((item) => (
@@ -120,13 +146,28 @@ export function AppNav() {
           ))}
         </div>
 
+        {menuOpen ? (
+          <div className="absolute inset-x-3 -top-[10.5rem] z-20 space-y-1.5 rounded-2xl border border-border bg-background p-2 shadow-pop">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={() => runAction(action.onClick)}
+                className="flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         <button
           type="button"
-          onClick={() => openInvoiceModal()}
-          aria-label="فاتورة جديدة"
-          className="absolute inset-x-0 -top-7 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-95"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="إجراء جديد"
+          className="absolute inset-x-0 -top-7 z-20 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-95"
         >
-          <PlusIcon className="h-6 w-6" />
+          <PlusIcon className={cn("h-6 w-6 transition-transform", menuOpen && "rotate-45")} />
         </button>
       </div>
     </nav>

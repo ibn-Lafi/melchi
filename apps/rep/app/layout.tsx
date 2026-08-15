@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { InvoiceModalProvider } from "../components/invoice-modal-provider";
+import { ReturnModalProvider } from "../components/return-modal-provider";
+import { CollectionModalProvider } from "../components/collection-modal-provider";
 
 // خط Cairo محلي (لا يحتاج اتصال شبكة وقت البناء) — راجع تعليق admin/app/layout.tsx
 const cairo = localFont({
@@ -36,7 +38,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             + max-w) يتمركز تلقائيًا على نفس محور هذا الإطار لأن الاثنين
             يتمركزان أفقيًا داخل نفس الـ viewport. */}
         <div id="app-frame" className="relative mx-auto min-h-screen w-full max-w-[430px] bg-background shadow-2xl">
-          <InvoiceModalProvider>{children}</InvoiceModalProvider>
+          <InvoiceModalProvider>
+            <ReturnModalProvider>
+              <CollectionModalProvider>{children}</CollectionModalProvider>
+            </ReturnModalProvider>
+          </InvoiceModalProvider>
         </div>
       </body>
     </html>
