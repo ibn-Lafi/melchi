@@ -1,104 +1,49 @@
-import { Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
-import { createSupabaseServerClient } from "@system2026/database/server";
-import { ActionForm } from "../../../components/action-form";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
-import { updateSystemSettingsAction } from "./actions";
+import { hasPermission } from "../../../lib/permissions";
 
-type Settings = {
-  company_name: string;
-  vat_registration_number: string;
-  commercial_registration_number: string;
-  company_address: string;
-  invoice_edit_grace_period_minutes: number;
-  expiry_alert_days_threshold: number;
-};
+const SECTIONS = [
+  {
+    href: "/settings/company",
+    title: "بيانات الشركة والفوترة",
+    description: "اسم الشركة، الرقم الضريبي، السجل التجاري، وفترة سماح تعديل الفواتير",
+  },
+  {
+    href: "/settings/users",
+    title: "المستخدمون",
+    description: "إضافة موظفي لوحة التحكم، تحديد أدوارهم وصلاحياتهم، وتفعيل/إيقاف حساباتهم",
+  },
+  {
+    href: "/account",
+    title: "الحساب الشخصي",
+    description: "بياناتك، دورك، وتعديل اسمك وكلمة المرور",
+  },
+];
 
 export default async function SettingsPage() {
-  const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
-  const { data: settings } = await supabase
-    .from("system_settings")
-    .select<
-      "company_name, vat_registration_number, commercial_registration_number, company_address, invoice_edit_grace_period_minutes, expiry_alert_days_threshold",
-      Settings
-    >(
-      "company_name, vat_registration_number, commercial_registration_number, company_address, invoice_edit_grace_period_minutes, expiry_alert_days_threshold",
-    )
-    .eq("id", 1)
-    .single();
+  if (!hasPermission(role, "manage_settings")) redirect("/");
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الإعدادات"]} />}
-        title="إعدادات النظام"
-        subtitle="بيانات الشركة تظهر بترويسة كل فاتورة وتُستخدم بتوليد QR (راجع requirements.md §8.1)"
+        title="الإعدادات"
+        subtitle="اختر قسمًا لإدارته"
       />
 
-      {role === "admin" ? (
-        <Card className="max-w-lg">
-          <ActionForm action={updateSystemSettingsAction} className="space-y-3">
-            <div>
-              <label className="mb-1 block text-sm">اسم الشركة</label>
-              <Input name="companyName" defaultValue={settings?.company_name ?? ""} required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">الرقم الضريبي (VAT Registration Number)</label>
-              <Input
-                name="vatRegistrationNumber"
-                dir="ltr"
-                defaultValue={settings?.vat_registration_number ?? ""}
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">رقم السجل التجاري</label>
-              <Input
-                name="commercialRegistrationNumber"
-                dir="ltr"
-                defaultValue={settings?.commercial_registration_number ?? ""}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">عنوان الشركة</label>
-              <Input name="companyAddress" defaultValue={settings?.company_address ?? ""} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">
-                فترة سماح تعديل/إلغاء الفاتورة (دقيقة) — راجع requirements.md §7.7
-              </label>
-              <Input
-                name="invoiceEditGracePeriodMinutes"
-                type="number"
-                min={1}
-                defaultValue={settings?.invoice_edit_grace_period_minutes ?? 30}
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm">تنبيه قرب انتهاء الصلاحية (عدد الأيام)</label>
-              <Input
-                name="expiryAlertDaysThreshold"
-                type="number"
-                min={1}
-                defaultValue={settings?.expiry_alert_days_threshold ?? 30}
-                required
-              />
-            </div>
-          </ActionForm>
-        </Card>
-      ) : (
-        <Card className="max-w-lg text-sm">
-          <p>
-            <span className="text-foreground/60">اسم الشركة: </span>
-            {settings?.company_name}
-          </p>
-          <p className="mt-2">
-            <span className="text-foreground/60">الرقم الضريبي: </span>
-            {settings?.vat_registration_number}
-          </p>
-        </Card>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {SECTIONS.map((section) => (
+          <Link key={section.href} href={section.href}>
+            <Card className="h-full hover:shadow-card-hover">
+              <h2 className="font-semibold">{section.title}</h2>
+              <p className="mt-1 text-sm text-foreground/60">{section.description}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

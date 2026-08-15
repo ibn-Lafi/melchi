@@ -4,6 +4,7 @@ import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { createSupplierAction } from "./actions";
 
 type Supplier = { id: string; name: string; phone: string | null };
@@ -57,7 +58,7 @@ export default async function SuppliersPage() {
             >
               مستحقات الموردين
             </Link>
-            {role === "admin" ? (
+            {hasPermission(role, "manage_purchases") ? (
               <ModalTrigger label="+ إضافة مورد" title="إضافة مورد">
                 <ActionForm action={createSupplierAction} className="space-y-3">
                   <div>

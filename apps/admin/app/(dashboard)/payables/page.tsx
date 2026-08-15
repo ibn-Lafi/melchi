@@ -2,6 +2,7 @@ import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { SupplierPaymentForm } from "./payment-form";
 
 type Supplier = { id: string; name: string };
@@ -74,7 +75,7 @@ export default async function PayablesPage() {
         ) : null}
       </Card>
 
-      {role === "admin" ? (
+      {hasPermission(role, "manage_purchases") ? (
         <Card>
           <h2 className="mb-3 font-semibold">تسجيل دفعة لمورد</h2>
           {(suppliers?.length ?? 0) === 0 ? (

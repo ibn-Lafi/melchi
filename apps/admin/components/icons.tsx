@@ -176,3 +176,12 @@ export function ChevronIcon(p: IconProps) {
     </Icon>
   );
 }
+
+export function PersonIcon(p: IconProps) {
+  return (
+    <Icon {...p}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" />
+    </Icon>
+  );
+}

@@ -479,7 +479,7 @@ export type Database = {
       };
     };
     Enums: {
-      user_role: "admin" | "accountant" | "rep";
+      user_role: "admin" | "accountant" | "rep" | "marketing" | "sales" | "production" | "supervisor";
       invoice_payment_method: "cash" | "credit" | "check" | "transfer";
       settlement_method: "cash" | "check" | "transfer";
       invoice_status: "paid" | "partial" | "unpaid" | "cancelled";

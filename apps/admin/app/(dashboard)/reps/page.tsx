@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getProfitSummary } from "../../../lib/get-profitability";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import { createRepAction, toggleRepActiveAction } from "./actions";
 
 type Rep = { id: string; name: string; email: string | null; phone: string | null; is_active: boolean };
@@ -11,6 +12,7 @@ type Rep = { id: string; name: string; email: string | null; phone: string | nul
 export default async function RepsPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
+  const canManage = hasPermission(role, "manage_reps");
 
   const [{ data: reps }, profitSummary] = await Promise.all([
     supabase
@@ -28,7 +30,7 @@ export default async function RepsPage() {
         title="المناديب"
         subtitle="إدارة حسابات المناديب ومتابعة أدائهم"
         actions={
-          role === "admin" ? (
+          canManage ? (
             <ModalTrigger label="+ إضافة مندوب" title="إضافة مندوب">
               <ActionForm action={createRepAction} className="space-y-3">
                 <div>
@@ -63,7 +65,7 @@ export default async function RepsPage() {
               <th>إجمالي المبيعات</th>
               <th>إجمالي الربح</th>
               <th>الحالة</th>
-              {role === "admin" ? <th></th> : null}
+              {canManage ? <th></th> : null}
             </tr>
           </thead>
           <tbody>
@@ -81,7 +83,7 @@ export default async function RepsPage() {
                       {rep.is_active ? "نشط" : "موقوف"}
                     </Badge>
                   </td>
-                  {role === "admin" ? (
+                  {canManage ? (
                     <td>
                       <form action={toggleRepActiveAction}>
                         <input type="hidden" name="repId" value={rep.id} />
