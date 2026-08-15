@@ -8,7 +8,8 @@ import { calculateVat, calculateTotalWithVat, formatCurrency } from "@system2026
 import type { RepCatalogProduct } from "../../../lib/get-rep-catalog";
 import { createInvoiceAction, type CreateInvoiceActionState } from "./actions";
 
-type Customer = { id: string; name: string; shop_name: string | null };
+type Branch = { id: string; name: string };
+type Customer = { id: string; name: string; shop_name: string | null; branches: Branch[] };
 
 type LineItem = {
   productId: string;
@@ -46,11 +47,19 @@ export function InvoiceForm({
 }) {
   const [state, formAction] = useFormState(createInvoiceAction, initialState);
   const [customerId, setCustomerId] = useState(defaultCustomerId ?? customers[0]?.id ?? "");
+  const [branchId, setBranchId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [items, setItems] = useState<LineItem[]>([]);
   const [discountPercentage, setDiscountPercentage] = useState(0);
 
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
+  const customerById = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers]);
+  const selectedCustomerBranches = customerById.get(customerId)?.branches ?? [];
+
+  function handleCustomerChange(nextCustomerId: string) {
+    setCustomerId(nextCustomerId);
+    setBranchId("");
+  }
 
   function addItem() {
     const firstProduct = catalog[0];
@@ -111,7 +120,7 @@ export function InvoiceForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">العميل</label>
-        <Select name="customerId" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+        <Select name="customerId" value={customerId} onChange={(e) => handleCustomerChange(e.target.value)}>
           {customers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.shop_name ?? c.name}
@@ -119,6 +128,20 @@ export function InvoiceForm({
           ))}
         </Select>
       </div>
+
+      {selectedCustomerBranches.length > 0 ? (
+        <div>
+          <label className="mb-1 block text-sm font-medium">الفرع</label>
+          <Select name="branchId" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <option value="">— اختر الفرع —</option>
+            {selectedCustomerBranches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         {items.map((item, index) => {

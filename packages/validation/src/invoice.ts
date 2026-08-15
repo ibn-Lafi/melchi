@@ -9,6 +9,7 @@ export const invoiceItemSchema = z.object({
 export const createInvoiceSchema = z.object({
   repId: z.string().uuid(),
   customerId: z.string().uuid(),
+  branchId: z.string().uuid().optional(),
   items: z.array(invoiceItemSchema).min(1, "يجب إضافة بند واحد على الأقل"),
   paymentMethod: z.enum(["cash", "credit", "check", "transfer"]),
   discountPercentage: z.number().min(0, "نسبة الخصم لا يمكن أن تكون أقل من 0%").max(25, "نسبة الخصم لا يمكن أن تتجاوز 25%"),
