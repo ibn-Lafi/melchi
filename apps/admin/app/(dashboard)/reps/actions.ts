@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createStaffUserSchema } from "@system2026/validation";
 import { createSupabaseAdminClient } from "../../../lib/supabase-admin";
+import { createSupabaseServerClient } from "@system2026/database/server";
 import type { ActionState } from "../../../components/action-form";
 
 export async function createRepAction(
@@ -31,4 +32,17 @@ export async function createRepAction(
 
   revalidatePath("/reps");
   return { success: true };
+}
+
+// إيقاف/تفعيل حساب مندوب — لا يُلغي حسابه، فقط يمنعه من تسجيل الدخول
+// لاحقًا (راجع apps/rep/app/(auth)/login/actions.ts الذي يتحقق من is_active).
+export async function toggleRepActiveAction(formData: FormData): Promise<void> {
+  const repId = formData.get("repId");
+  const nextIsActive = formData.get("nextIsActive") === "true";
+  if (typeof repId !== "string") return;
+
+  const supabase = createSupabaseServerClient();
+  await supabase.from("profiles").update({ is_active: nextIsActive }).eq("id", repId);
+
+  revalidatePath("/reps");
 }

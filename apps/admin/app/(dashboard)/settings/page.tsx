@@ -1,4 +1,4 @@
-import { Card, Input } from "@system2026/ui";
+import { Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -29,10 +29,11 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">إعدادات النظام</h1>
-      <p className="text-sm text-foreground/60">
-        بيانات الشركة تظهر بترويسة كل فاتورة وتُستخدم بتوليد QR (راجع requirements.md §8.1).
-      </p>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الإعدادات"]} />}
+        title="إعدادات النظام"
+        subtitle="بيانات الشركة تظهر بترويسة كل فاتورة وتُستخدم بتوليد QR (راجع requirements.md §8.1)"
+      />
 
       {role === "admin" ? (
         <Card className="max-w-lg">

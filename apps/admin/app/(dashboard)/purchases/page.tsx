@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProductCatalog } from "../../../lib/get-product-catalog";
@@ -33,7 +33,11 @@ export default async function PurchasesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">فواتير الشراء</h1>
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "المشتريات"]} />}
+        title="فواتير الشراء"
+        subtitle="تسجيل فواتير الشراء من الموردين واحتساب متوسط التكلفة تلقائيًا"
+      />
 
       <Card>
         <table className="w-full text-sm">

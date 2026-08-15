@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getProfitSummary } from "../../../lib/get-profitability";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
-import { createRepAction } from "./actions";
+import { createRepAction, toggleRepActiveAction } from "./actions";
 
 type Rep = { id: string; name: string; email: string | null; phone: string | null; is_active: boolean };
 
@@ -63,6 +63,7 @@ export default async function RepsPage() {
               <th>إجمالي المبيعات</th>
               <th>إجمالي الربح</th>
               <th>الحالة</th>
+              {role === "admin" ? <th></th> : null}
             </tr>
           </thead>
           <tbody>
@@ -80,6 +81,20 @@ export default async function RepsPage() {
                       {rep.is_active ? "نشط" : "موقوف"}
                     </Badge>
                   </td>
+                  {role === "admin" ? (
+                    <td>
+                      <form action={toggleRepActiveAction}>
+                        <input type="hidden" name="repId" value={rep.id} />
+                        <input type="hidden" name="nextIsActive" value={(!rep.is_active).toString()} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
+                        >
+                          {rep.is_active ? "إيقاف" : "تفعيل"}
+                        </button>
+                      </form>
+                    </td>
+                  ) : null}
                 </tr>
               );
             })}

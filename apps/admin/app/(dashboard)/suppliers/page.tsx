@@ -86,6 +86,7 @@ export default async function SuppliersPage() {
               <th>إجمالي المشتريات</th>
               <th>المسدد</th>
               <th>المستحق</th>
+              <th>كشف الحساب</th>
             </tr>
           </thead>
           <tbody>
@@ -99,6 +100,11 @@ export default async function SuppliersPage() {
                   <td>{formatCurrency(purchased)}</td>
                   <td>{formatCurrency(paid)}</td>
                   <td className="font-semibold">{formatCurrency(purchased - paid)}</td>
+                  <td>
+                    <Link href={`/suppliers/${s.id}`} className="text-primary underline">
+                      عرض
+                    </Link>
+                  </td>
                 </tr>
               );
             })}

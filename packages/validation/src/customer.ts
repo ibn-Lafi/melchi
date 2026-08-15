@@ -12,3 +12,9 @@ export const createCustomerSchema = z.object({
 });
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+
+export const updateCustomerSchema = createCustomerSchema.extend({
+  id: z.string().uuid(),
+});
+
+export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

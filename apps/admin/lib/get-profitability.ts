@@ -16,23 +16,34 @@ export type ProfitSummary = {
   totalProfit: number;
 };
 
+export type ProfitDateRange = { from?: string; to?: string };
+
 // الربح لكل بند = (سعر البيع - سعر التكلفة المحفوظ وقت البيع) × الكمية —
 // راجع requirements.md §9.1. مُستبعدة الفواتير الملغاة (Credit Note يصفّر أثرها).
-export async function getProfitSummary(): Promise<ProfitSummary> {
+// range اختياري لحصر الحساب بفترة زمنية (راجع §9.2 "الربح الصافي... خلال فترة").
+export async function getProfitSummary(range?: ProfitDateRange): Promise<ProfitSummary> {
   const supabase = createSupabaseServerClient();
 
-  const [{ data: invoices }, { data: items }] = await Promise.all([
-    supabase.from("invoices").select<"id, rep_id, status", InvoiceRow>("id, rep_id, status").neq(
-      "status",
-      "cancelled",
-    ),
-    supabase
-      .from("invoice_items")
-      .select<
-        "invoice_id, product_id, quantity_in_base_unit, unit_price, cost_price",
-        InvoiceItemRow
-      >("invoice_id, product_id, quantity_in_base_unit, unit_price, cost_price"),
-  ]);
+  let invoiceQuery = supabase
+    .from("invoices")
+    .select<"id, rep_id, status", InvoiceRow>("id, rep_id, status")
+    .neq("status", "cancelled");
+  if (range?.from) invoiceQuery = invoiceQuery.gte("invoice_date", range.from);
+  if (range?.to) invoiceQuery = invoiceQuery.lte("invoice_date", range.to);
+
+  const { data: invoices } = await invoiceQuery;
+  const invoiceIds = (invoices ?? []).map((inv) => inv.id);
+
+  const { data: items } =
+    invoiceIds.length > 0
+      ? await supabase
+          .from("invoice_items")
+          .select<
+            "invoice_id, product_id, quantity_in_base_unit, unit_price, cost_price",
+            InvoiceItemRow
+          >("invoice_id, product_id, quantity_in_base_unit, unit_price, cost_price")
+          .in("invoice_id", invoiceIds)
+      : { data: [] as InvoiceItemRow[] };
 
   const repIdByInvoiceId = new Map((invoices ?? []).map((inv) => [inv.id, inv.rep_id]));
   const byRep = new Map<string, { sales: number; profit: number }>();

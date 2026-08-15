@@ -31,7 +31,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 export default async function InvoicesPage({
   searchParams,
 }: {
-  searchParams: { repId?: string; status?: string };
+  searchParams: { repId?: string; status?: string; paymentMethod?: string; from?: string; to?: string };
 }) {
   const supabase = createSupabaseServerClient();
 
@@ -48,6 +48,11 @@ export default async function InvoicesPage({
   if (searchParams.status) {
     query = query.eq("status", searchParams.status as "paid" | "partial" | "unpaid" | "cancelled");
   }
+  if (searchParams.paymentMethod) {
+    query = query.eq("payment_method", searchParams.paymentMethod as "cash" | "credit" | "check" | "transfer");
+  }
+  if (searchParams.from) query = query.gte("invoice_date", searchParams.from);
+  if (searchParams.to) query = query.lte("invoice_date", `${searchParams.to}T23:59:59`);
 
   const [{ data: invoices }, { data: reps }, { data: customers }] = await Promise.all([
     query,
@@ -115,6 +120,30 @@ export default async function InvoicesPage({
               </option>
             ))}
           </select>
+          <select
+            name="paymentMethod"
+            defaultValue={searchParams.paymentMethod ?? ""}
+            className="h-10 rounded-md border border-border bg-background px-3"
+          >
+            <option value="">كل طرق الدفع</option>
+            {Object.entries(PAYMENT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            name="from"
+            defaultValue={searchParams.from ?? ""}
+            className="h-10 rounded-md border border-border bg-background px-3"
+          />
+          <input
+            type="date"
+            name="to"
+            defaultValue={searchParams.to ?? ""}
+            className="h-10 rounded-md border border-border bg-background px-3"
+          />
           <button type="submit" className="rounded-md border border-border px-3 py-2">
             فلترة
           </button>

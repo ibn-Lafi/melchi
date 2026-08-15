@@ -1,4 +1,4 @@
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -7,6 +7,7 @@ import {
   createCategoryAction,
   createProductAction,
   createUnitAction,
+  toggleProductActiveAction,
   updateCategoryAction,
   updateProductAction,
 } from "./actions";
@@ -19,6 +20,7 @@ type ProductRow = {
   average_cost: number;
   image_url: string | null;
   visible_in_store: boolean;
+  is_active: boolean;
   has_expiry: boolean;
   expiry_date: string | null;
   category_id: string | null;
@@ -40,10 +42,10 @@ export default async function ProductsPage() {
       supabase
         .from("products")
         .select<
-          "id, name, description, price, average_cost, image_url, visible_in_store, has_expiry, expiry_date, category_id, base_unit_id",
+          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, base_unit_id",
           ProductRow
         >(
-          "id, name, description, price, average_cost, image_url, visible_in_store, has_expiry, expiry_date, category_id, base_unit_id",
+          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, base_unit_id",
         )
         .order("name"),
       supabase
@@ -160,12 +162,13 @@ export default async function ProductsPage() {
                 <th>الوحدة الأساسية</th>
                 <th>الكمية بالمخزون</th>
                 <th>بالمتجر</th>
+                <th>الحالة</th>
                 {canManage ? <th></th> : null}
               </tr>
             </thead>
             <tbody>
               {(products ?? []).map((p) => (
-                <tr key={p.id} className="border-b border-border/50">
+                <tr key={p.id} className={`border-b border-border/50 ${!p.is_active ? "opacity-50" : ""}`}>
                   <td className="py-2">
                     {p.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -185,8 +188,23 @@ export default async function ProductsPage() {
                   <td>{unitNameById.get(p.base_unit_id) ?? "—"}</td>
                   <td>{quantityByProductId.get(p.id) ?? 0}</td>
                   <td>{p.visible_in_store ? "نعم" : "لا"}</td>
+                  <td>
+                    <Badge variant={p.is_active ? "success" : "muted"}>
+                      {p.is_active ? "نشط" : "مؤرشف"}
+                    </Badge>
+                  </td>
                   {canManage ? (
-                    <td>
+                    <td className="flex flex-wrap gap-2 py-2">
+                      <form action={toggleProductActiveAction}>
+                        <input type="hidden" name="productId" value={p.id} />
+                        <input type="hidden" name="nextIsActive" value={(!p.is_active).toString()} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
+                        >
+                          {p.is_active ? "أرشفة" : "إعادة تفعيل"}
+                        </button>
+                      </form>
                       <ModalTrigger label="تعديل" title={`تعديل: ${p.name}`} variant="outline">
                         <ActionForm action={updateProductAction} className="space-y-3">
                           <input type="hidden" name="id" value={p.id} />

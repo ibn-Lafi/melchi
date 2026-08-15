@@ -1,0 +1,215 @@
+import { notFound } from "next/navigation";
+import { Badge, Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { formatCurrency } from "@system2026/utils";
+import { createSupabaseServerClient } from "@system2026/database/server";
+
+type CustomerDetail = {
+  id: string;
+  name: string;
+  shop_name: string | null;
+  phone: string | null;
+  address: string | null;
+  notes: string | null;
+  google_maps_link: string | null;
+  show_in_store: boolean;
+};
+
+type InvoiceRow = {
+  id: string;
+  invoice_number: number;
+  invoice_date: string;
+  total_amount: number;
+  status: string;
+};
+
+type PaymentRow = {
+  id: string;
+  payment_date: string;
+  amount: number;
+  method: string;
+  invoice_id: string | null;
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  paid: "مدفوعة",
+  partial: "جزئي",
+  unpaid: "غير مدفوعة",
+  cancelled: "ملغاة",
+};
+
+const METHOD_LABELS: Record<string, string> = {
+  cash: "نقدًا",
+  check: "شيك",
+  transfer: "تحويل بنكي",
+};
+
+export default async function CustomerDetailPage({ params }: { params: { id: string } }) {
+  const supabase = createSupabaseServerClient();
+
+  const { data: customer } = await supabase
+    .from("customers")
+    .select<
+      "id, name, shop_name, phone, address, notes, google_maps_link, show_in_store",
+      CustomerDetail
+    >("id, name, shop_name, phone, address, notes, google_maps_link, show_in_store")
+    .eq("id", params.id)
+    .single();
+
+  if (!customer) notFound();
+
+  const [{ data: invoices }, { data: payments }, { data: customerReps }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select<"id, invoice_number, invoice_date, total_amount, status", InvoiceRow>(
+        "id, invoice_number, invoice_date, total_amount, status",
+      )
+      .eq("customer_id", customer.id)
+      .order("invoice_number", { ascending: false }),
+    supabase
+      .from("payments")
+      .select<"id, payment_date, amount, method, invoice_id", PaymentRow>(
+        "id, payment_date, amount, method, invoice_id",
+      )
+      .eq("customer_id", customer.id)
+      .order("payment_date", { ascending: false }),
+    supabase
+      .from("customer_reps")
+      .select<"rep_id", { rep_id: string }>("rep_id")
+      .eq("customer_id", customer.id),
+  ]);
+
+  const repIds = (customerReps ?? []).map((cr) => cr.rep_id);
+  const { data: reps } =
+    repIds.length > 0
+      ? await supabase.from("profiles").select<"id, name", { id: string; name: string }>("id, name").in(
+          "id",
+          repIds,
+        )
+      : { data: [] as { id: string; name: string }[] };
+
+  const paidByInvoice = new Map<string, number>();
+  for (const p of payments ?? []) {
+    if (!p.invoice_id) continue;
+    paidByInvoice.set(p.invoice_id, (paidByInvoice.get(p.invoice_id) ?? 0) + p.amount);
+  }
+
+  const totalDebt = (invoices ?? [])
+    .filter((inv) => inv.status === "unpaid" || inv.status === "partial")
+    .reduce((sum, inv) => sum + (inv.total_amount - (paidByInvoice.get(inv.id) ?? 0)), 0);
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "العملاء", customer.shop_name ?? customer.name]} />}
+        title={customer.shop_name ?? customer.name}
+        subtitle="كشف حساب العميل: الفواتير، الدفعات، والرصيد المستحق"
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <h2 className="mb-2 font-semibold">بيانات العميل</h2>
+          <div className="space-y-1 text-sm">
+            <p>
+              <span className="text-foreground/60">الاسم: </span>
+              {customer.name}
+            </p>
+            <p>
+              <span className="text-foreground/60">الجوال: </span>
+              {customer.phone ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">العنوان: </span>
+              {customer.address ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">ملاحظات: </span>
+              {customer.notes ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">المناديب: </span>
+              {(reps ?? []).map((r) => r.name).join("، ") || "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">ظاهر بالمتجر: </span>
+              <Badge variant={customer.show_in_store ? "success" : "muted"}>
+                {customer.show_in_store ? "نعم" : "لا"}
+              </Badge>
+            </p>
+            {customer.google_maps_link ? (
+              <a
+                href={customer.google_maps_link}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block text-primary underline"
+              >
+                فتح الموقع 📍
+              </a>
+            ) : null}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="mb-2 font-semibold">الرصيد المستحق</h2>
+          <p className="text-3xl font-bold">{formatCurrency(totalDebt)}</p>
+          <p className="mt-1 text-sm text-foreground/60">
+            مجموع الفواتير غير المدفوعة/الجزئية بعد خصم الدفعات المسجّلة
+          </p>
+        </Card>
+      </div>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">الفواتير</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-right text-foreground/60">
+              <th className="py-2">رقم الفاتورة</th>
+              <th>التاريخ</th>
+              <th>الإجمالي</th>
+              <th>المتبقي</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(invoices ?? []).map((inv) => (
+              <tr key={inv.id} className="border-b border-border/50">
+                <td className="py-2">#{inv.invoice_number}</td>
+                <td>{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
+                <td>{formatCurrency(inv.total_amount)}</td>
+                <td>
+                  {inv.status === "unpaid" || inv.status === "partial"
+                    ? formatCurrency(inv.total_amount - (paidByInvoice.get(inv.id) ?? 0))
+                    : "—"}
+                </td>
+                <td>{STATUS_LABELS[inv.status] ?? inv.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {(invoices?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد فواتير بعد</p> : null}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">الدفعات المسددة</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-right text-foreground/60">
+              <th className="py-2">التاريخ</th>
+              <th>المبلغ</th>
+              <th>الطريقة</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(payments ?? []).map((p) => (
+              <tr key={p.id} className="border-b border-border/50">
+                <td className="py-2">{new Date(p.payment_date).toLocaleDateString("ar-SA")}</td>
+                <td>{formatCurrency(p.amount)}</td>
+                <td>{METHOD_LABELS[p.method] ?? p.method}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {(payments?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد دفعات بعد</p> : null}
+      </Card>
+    </div>
+  );
+}
