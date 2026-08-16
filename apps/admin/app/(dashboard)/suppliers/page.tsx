@@ -64,6 +64,14 @@ export default async function SuppliersPage() {
                     <Input name="address" />
                   </div>
                   <div>
+                    <label className="mb-1 block text-sm">السجل التجاري (اختياري)</label>
+                    <Input name="commercialRegistrationNumber" dir="ltr" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">الرقم الضريبي (اختياري)</label>
+                    <Input name="vatNumber" dir="ltr" />
+                  </div>
+                  <div>
                     <label className="mb-1 block text-sm">ملاحظات</label>
                     <Input name="notes" />
                   </div>

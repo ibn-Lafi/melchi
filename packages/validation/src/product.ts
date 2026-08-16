@@ -11,6 +11,7 @@ const productFieldsSchema = z.object({
   description: z.string().optional(),
   price: z.number().nonnegative("السعر يجب أن يكون صفر أو أكبر"),
   categoryId: z.string().uuid().optional(),
+  supplierId: z.string().uuid().optional(),
   imageUrl: z.string().url().optional(),
   visibleInStore: z.boolean().default(true),
   hasExpiry: z.boolean().default(false),

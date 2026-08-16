@@ -61,6 +61,7 @@ export type Database = {
           price: number;
           average_cost: number;
           category_id: string | null;
+          supplier_id: string | null;
           image_url: string | null;
           visible_in_store: boolean;
           is_active: boolean;
@@ -77,6 +78,7 @@ export type Database = {
           price: number;
           average_cost?: number;
           category_id?: string | null;
+          supplier_id?: string | null;
           image_url?: string | null;
           visible_in_store?: boolean;
           is_active?: boolean;
@@ -110,10 +112,20 @@ export type Database = {
           phone: string | null;
           address: string | null;
           notes: string | null;
+          commercial_registration_number: string | null;
+          vat_number: string | null;
           created_at: string;
           updated_at: string;
         },
-        { id?: string; name: string; phone?: string | null; address?: string | null; notes?: string | null }
+        {
+          id?: string;
+          name: string;
+          phone?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          commercial_registration_number?: string | null;
+          vat_number?: string | null;
+        }
       >;
       purchase_invoices: Table<
         {
@@ -123,6 +135,7 @@ export type Database = {
           subtotal: number;
           total_amount: number;
           payment_status: Database["public"]["Enums"]["purchase_payment_status"];
+          attachment_path: string | null;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -133,6 +146,7 @@ export type Database = {
           subtotal?: number;
           total_amount?: number;
           payment_status?: Database["public"]["Enums"]["purchase_payment_status"];
+          attachment_path?: string | null;
           created_by: string;
         }
       >;
@@ -480,6 +494,10 @@ export type Database = {
       set_warehouse_stock_quantity: {
         Args: { p_product_id: string; p_new_quantity: number; p_reason?: string | null };
         Returns: number;
+      };
+      set_purchase_invoice_attachment: {
+        Args: { p_purchase_invoice_id: string; p_attachment_path: string };
+        Returns: undefined;
       };
       record_customer_payment: {
         Args: {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { createPurchaseInvoiceSchema } from "@system2026/validation";
+import { uploadPrivateFile } from "../../../lib/upload-private-file";
 
 export type PurchaseActionState = { error?: string; purchaseInvoiceId?: string };
 
@@ -78,8 +79,24 @@ export async function createPurchaseInvoiceAction(
 
   if (error) return { error: error.message };
 
+  // رفع مرفق الفاتورة (اختياري) — عملية غير حرجة تُنفَّذ بعد اعتماد الفاتورة
+  // نفسها؛ فشلها لا يجب أن يُسقط الفاتورة التي اعتُمدت بالفعل بالمعاملة أعلاه.
+  const { path: attachmentPath, error: attachmentError } = await uploadPrivateFile(
+    supabase,
+    formData,
+    "attachment",
+    "purchase-invoice-attachments",
+  );
+  if (attachmentPath) {
+    await supabase.rpc("set_purchase_invoice_attachment", {
+      p_purchase_invoice_id: purchaseInvoiceId,
+      p_attachment_path: attachmentPath,
+    });
+  }
+
   revalidatePath("/purchases");
   revalidatePath("/warehouse");
   revalidatePath("/products");
-  return { purchaseInvoiceId: purchaseInvoiceId ?? undefined };
+  revalidatePath("/suppliers");
+  return { error: attachmentError, purchaseInvoiceId: purchaseInvoiceId ?? undefined };
 }

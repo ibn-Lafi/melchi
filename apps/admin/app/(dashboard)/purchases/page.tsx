@@ -4,7 +4,10 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProductCatalog } from "../../../lib/get-product-catalog";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { hasPermission } from "../../../lib/permissions";
+import { getAttachmentSignedUrl } from "../../../lib/get-attachment-url";
 import { PurchaseForm } from "./purchase-form";
+
+const ATTACHMENTS_BUCKET = "purchase-invoice-attachments";
 
 type PurchaseInvoiceRow = {
   id: string;
@@ -12,6 +15,7 @@ type PurchaseInvoiceRow = {
   total_amount: number;
   payment_status: string;
   supplier_id: string;
+  attachment_path: string | null;
 };
 
 export default async function PurchasesPage() {
@@ -24,9 +28,9 @@ export default async function PurchasesPage() {
       supabase
         .from("purchase_invoices")
         .select<
-          "id, invoice_date, total_amount, payment_status, supplier_id",
+          "id, invoice_date, total_amount, payment_status, supplier_id, attachment_path",
           PurchaseInvoiceRow
-        >("id, invoice_date, total_amount, payment_status, supplier_id")
+        >("id, invoice_date, total_amount, payment_status, supplier_id, attachment_path")
         .order("invoice_date", { ascending: false }),
       supabase.from("suppliers").select<"id, name", { id: string; name: string }>("id, name").order("name"),
       getProductCatalog(),
@@ -36,6 +40,13 @@ export default async function PurchasesPage() {
 
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
   const canCreatePurchase = (suppliers?.length ?? 0) > 0 && (units?.length ?? 0) > 0;
+
+  const attachmentUrls = await Promise.all(
+    (purchaseInvoices ?? []).map((inv) => getAttachmentSignedUrl(supabase, ATTACHMENTS_BUCKET, inv.attachment_path)),
+  );
+  const attachmentUrlByInvoiceId = new Map(
+    (purchaseInvoices ?? []).map((inv, i) => [inv.id, attachmentUrls[i] ?? null]),
+  );
 
   return (
     <div className="space-y-6">
@@ -72,6 +83,7 @@ export default async function PurchasesPage() {
                 <th>المورد</th>
                 <th>الإجمالي</th>
                 <th>حالة الدفع</th>
+                <th>المرفق</th>
               </tr>
             </thead>
             <tbody>
@@ -86,6 +98,20 @@ export default async function PurchasesPage() {
                       : inv.payment_status === "partial"
                         ? "جزئي"
                         : "غير مدفوعة"}
+                  </td>
+                  <td>
+                    {attachmentUrlByInvoiceId.get(inv.id) ? (
+                      <a
+                        href={attachmentUrlByInvoiceId.get(inv.id)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline"
+                      >
+                        عرض المرفق
+                      </a>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                 </tr>
               ))}
