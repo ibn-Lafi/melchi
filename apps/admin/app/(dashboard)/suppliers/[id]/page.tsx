@@ -27,6 +27,7 @@ type SupplierDetail = {
 
 type PurchaseInvoiceRow = {
   id: string;
+  invoice_number: number;
   invoice_date: string;
   total_amount: number;
   payment_status: string;
@@ -111,9 +112,9 @@ export default async function SupplierDetailPage({
     supabase
       .from("purchase_invoices")
       .select<
-        "id, invoice_date, total_amount, payment_status, attachment_path",
+        "id, invoice_number, invoice_date, total_amount, payment_status, attachment_path",
         PurchaseInvoiceRow
-      >("id, invoice_date, total_amount, payment_status, attachment_path")
+      >("id, invoice_number, invoice_date, total_amount, payment_status, attachment_path")
       .eq("supplier_id", supplier.id)
       .order("invoice_date", { ascending: false }),
     supabase
@@ -274,7 +275,6 @@ export default async function SupplierDetailPage({
               {(units?.length ?? 0) > 0 ? (
                 <ActionForm action={createProductAction} className="space-y-3">
                   <input type="hidden" name="supplierId" value={supplier.id} />
-                  <input type="hidden" name="baseUnitId" value={units![0]!.id} />
                   <div>
                     <label className="mb-1 block text-sm">الاسم</label>
                     <Input name="name" required />
@@ -286,6 +286,17 @@ export default async function SupplierDetailPage({
                   <div>
                     <label className="mb-1 block text-sm">سعر الشراء</label>
                     <Input name="price" type="number" step="0.01" min="0" required />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">الوحدة الأساسية</label>
+                    <Select name="baseUnitId" required>
+                      <option value="">اختر وحدة</option>
+                      {(units ?? []).map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </Select>
                   </div>
                 </ActionForm>
               ) : (
@@ -440,7 +451,8 @@ export default async function SupplierDetailPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-right text-foreground/60">
-                <th className="py-2">التاريخ</th>
+                <th className="py-2">رقم الفاتورة</th>
+                <th>التاريخ</th>
                 <th>الإجمالي</th>
                 <th>المتبقي</th>
                 <th>حالة الدفع</th>
@@ -454,7 +466,12 @@ export default async function SupplierDetailPage({
                 const isSettled = inv.payment_status !== "unpaid" && inv.payment_status !== "partial";
                 return (
                   <tr key={inv.id} className="border-b border-border/50">
-                    <td className="py-2">{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
+                    <td className="py-2">
+                      <Link href={`/purchases/${inv.id}`} className="text-primary underline">
+                        #{inv.invoice_number}
+                      </Link>
+                    </td>
+                    <td>{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
                     <td>{formatCurrency(inv.total_amount)}</td>
                     <td>{isSettled ? "—" : formatCurrency(remaining)}</td>
                     <td>{PAYMENT_STATUS_LABELS[inv.payment_status] ?? inv.payment_status}</td>
