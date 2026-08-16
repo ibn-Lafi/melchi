@@ -17,7 +17,7 @@ export default async function ReturnsPage() {
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
 
-  const [{ data: returns }, { data: customers }, { data: reps }, { data: products }] = await Promise.all([
+  const [{ data: returns }, { data: customers }, { data: reps }] = await Promise.all([
     supabase
       .from("return_records")
       .select<
@@ -37,7 +37,6 @@ export default async function ReturnsPage() {
       .select<"id, name", { id: string; name: string }>("id, name")
       .eq("role", "rep")
       .order("name"),
-    supabase.from("products").select<"id, name", { id: string; name: string }>("id, name").order("name"),
   ]);
 
   const customerNameById = new Map((customers ?? []).map((c) => [c.id, c.shop_name ?? c.name]));
@@ -49,16 +48,16 @@ export default async function ReturnsPage() {
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "المرتجعات"]} />}
         title="المرتجعات"
         actions={
-          hasPermission(role, "manage_returns") && (customers?.length ?? 0) > 0 && (products?.length ?? 0) > 0 ? (
+          hasPermission(role, "manage_returns") && (customers?.length ?? 0) > 0 ? (
             <ModalTrigger label="+ تسجيل مرتجع" title="تسجيل مرتجع جديد" size="lg">
-              <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
+              <ReturnForm customers={customers ?? []} reps={reps ?? []} />
             </ModalTrigger>
           ) : null
         }
       />
 
-      {hasPermission(role, "manage_returns") && ((customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0) ? (
-        <p className="text-sm text-foreground/60">أضف عميل ومنتج واحد على الأقل أولًا لتتمكن من تسجيل مرتجع</p>
+      {hasPermission(role, "manage_returns") && (customers?.length ?? 0) === 0 ? (
+        <p className="text-sm text-foreground/60">أضف عميلًا واحدًا على الأقل أولًا لتتمكن من تسجيل مرتجع</p>
       ) : null}
 
       <Card>
