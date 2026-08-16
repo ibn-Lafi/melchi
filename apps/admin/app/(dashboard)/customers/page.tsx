@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Button, Card, Input, LinkButton, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -198,14 +198,15 @@ export default async function CustomersPage({
                   <td>{c.show_in_store ? "نعم" : "لا"}</td>
                   <td>
                     {c.google_maps_link ? (
-                      <a
+                      <LinkButton
                         href={c.google_maps_link}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary underline"
+                        variant="outline"
+                        size="sm"
                       >
-                        فتح الموقع 📍
-                      </a>
+                        فتح الموقع
+                      </LinkButton>
                     ) : (
                       "—"
                     )}
