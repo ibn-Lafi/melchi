@@ -8,6 +8,7 @@ export type DocumentHeaderProps = {
   documentNumber: string | number;
   dateLabel: string;
   timeLabel: string;
+  paymentMethodLabel?: string | null;
   statusLabel?: string | null;
 };
 
@@ -24,6 +25,7 @@ export function DocumentHeader({
   documentNumber,
   dateLabel,
   timeLabel,
+  paymentMethodLabel,
   statusLabel,
 }: DocumentHeaderProps) {
   return (
@@ -47,6 +49,7 @@ export function DocumentHeader({
         <div className="text-left">
           <p className="font-semibold">{dateLabel}</p>
           <p className="text-neutral-500">{timeLabel}</p>
+          {paymentMethodLabel ? <p className="text-neutral-500">طريقة الدفع: {paymentMethodLabel}</p> : null}
           {statusLabel ? (
             <p className="mt-1 inline-block rounded-full bg-neutral-100 px-3 py-0.5 text-[10px] font-medium">
               {statusLabel}

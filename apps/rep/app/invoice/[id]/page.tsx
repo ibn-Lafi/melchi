@@ -178,7 +178,6 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
           companyAddress={settings?.company_address}
           invoiceNumber={invoice.invoice_number}
           invoiceDate={invoice.invoice_date}
-          statusLabel={STATUS_LABELS[invoice.status] ?? invoice.status}
           paymentMethodLabel={PAYMENT_LABELS[invoice.payment_method] ?? invoice.payment_method}
           customerName={customer?.shop_name ?? customer?.name ?? "—"}
           branchName={branch?.name}

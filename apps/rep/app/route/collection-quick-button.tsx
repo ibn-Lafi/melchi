@@ -8,7 +8,7 @@ export function CollectionQuickButton({ customerId }: { customerId: string }) {
     <button
       type="button"
       onClick={() => openCollectionModal(customerId)}
-      className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+      className="shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
     >
       تسجيل تحصيل
     </button>
