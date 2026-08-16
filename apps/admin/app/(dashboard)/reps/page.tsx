@@ -1,4 +1,4 @@
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -89,12 +89,9 @@ export default async function RepsPage() {
                         <form action={toggleRepActiveAction}>
                           <input type="hidden" name="repId" value={rep.id} />
                           <input type="hidden" name="nextIsActive" value={(!rep.is_active).toString()} />
-                          <button
-                            type="submit"
-                            className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
-                          >
+                          <Button type="submit" variant="outline" size="sm">
                             {rep.is_active ? "إيقاف" : "تفعيل"}
-                          </button>
+                          </Button>
                         </form>
                       </td>
                     ) : null}

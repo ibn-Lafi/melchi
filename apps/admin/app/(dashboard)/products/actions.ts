@@ -8,6 +8,7 @@ import {
   createCategorySchema,
   updateCategorySchema,
   createUnitSchema,
+  updateUnitSchema,
 } from "@system2026/validation";
 import { uploadImage } from "../../../lib/upload-image";
 
@@ -203,6 +204,24 @@ export async function createUnitAction(
 
   const supabase = createSupabaseServerClient();
   const { error } = await supabase.from("units").insert({ name: parsed.data.name });
+  if (error) return { error: error.message };
+
+  revalidatePath("/products");
+  return { success: true };
+}
+
+export async function updateUnitAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = updateUnitSchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
+
+  const supabase = createSupabaseServerClient();
+  const { error } = await supabase.from("units").update({ name: parsed.data.name }).eq("id", parsed.data.id);
   if (error) return { error: error.message };
 
   revalidatePath("/products");

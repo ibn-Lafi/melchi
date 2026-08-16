@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { Button, type ButtonVariant } from "./button";
+import { Button, type ButtonSize, type ButtonVariant } from "./button";
 
 // close() يُمرَّر عبر Context (بين مكوّنات client فقط) بدل prop عادي، لأن
 // الصفحات (Server Components) لا يمكنها تمرير دوال لمكوّنات client مباشرة.
@@ -72,18 +72,22 @@ export function ModalTrigger({
   title,
   variant = "default",
   size = "md",
+  buttonSize = "md",
   children,
 }: {
   label: string;
   title: string;
   variant?: ButtonVariant;
+  /** حجم نافذة الـModal نفسها (عرضها) — لا علاقة له بمقاس الزر. */
   size?: ModalSize;
+  /** مقاس زر الفتح نفسه؛ استخدم "sm" داخل صفوف الجداول بجانب شرائح h-9. */
+  buttonSize?: ButtonSize;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button type="button" variant={variant} onClick={() => setOpen(true)}>
+      <Button type="button" variant={variant} size={buttonSize} onClick={() => setOpen(true)}>
         {label}
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title={title} size={size}>

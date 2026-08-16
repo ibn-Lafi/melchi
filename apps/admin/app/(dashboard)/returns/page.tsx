@@ -1,4 +1,4 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -48,7 +48,18 @@ export default async function ReturnsPage() {
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "المرتجعات"]} />}
         title="المرتجعات"
+        actions={
+          hasPermission(role, "manage_returns") && (customers?.length ?? 0) > 0 && (products?.length ?? 0) > 0 ? (
+            <ModalTrigger label="+ تسجيل مرتجع" title="تسجيل مرتجع جديد" size="lg">
+              <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
+            </ModalTrigger>
+          ) : null
+        }
       />
+
+      {hasPermission(role, "manage_returns") && ((customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0) ? (
+        <p className="text-sm text-foreground/60">أضف عميل ومنتج واحد على الأقل أولًا لتتمكن من تسجيل مرتجع</p>
+      ) : null}
 
       <Card>
         <div className="overflow-x-auto">
@@ -75,17 +86,6 @@ export default async function ReturnsPage() {
         </div>
         {(returns?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مرتجعات بعد</p> : null}
       </Card>
-
-      {hasPermission(role, "manage_returns") ? (
-        <Card>
-          <h2 className="mb-3 font-semibold">تسجيل مرتجع جديد</h2>
-          {(customers?.length ?? 0) === 0 || (products?.length ?? 0) === 0 ? (
-            <p className="text-foreground/60">أضف عميل ومنتج واحد على الأقل أولًا</p>
-          ) : (
-            <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
-          )}
-        </Card>
-      ) : null}
     </div>
   );
 }

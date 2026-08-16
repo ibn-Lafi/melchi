@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input, Select } from "@system2026/ui";
+import { Button, Card, Input, Select, useModalClose } from "@system2026/ui";
 import { createReturnAction, type ReturnActionState } from "./actions";
 
 type Customer = { id: string; name: string; shop_name: string | null };
@@ -37,6 +37,13 @@ export function ReturnForm({
 }) {
   const [state, formAction] = useFormState(createReturnAction, initialState);
   const [items, setItems] = useState<LineItem[]>([]);
+  const closeModal = useModalClose();
+
+  useEffect(() => {
+    if (!state.returnId || !closeModal) return;
+    const timer = setTimeout(closeModal, 700);
+    return () => clearTimeout(timer);
+  }, [state.returnId, closeModal]);
 
   function addItem() {
     const first = products[0];

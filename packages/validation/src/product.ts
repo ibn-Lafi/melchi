@@ -66,3 +66,8 @@ export const updateCategorySchema = z.object({
 export const createUnitSchema = z.object({
   name: z.string().min(1, "اسم الوحدة مطلوب"),
 });
+
+export const updateUnitSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "اسم الوحدة مطلوب"),
+});

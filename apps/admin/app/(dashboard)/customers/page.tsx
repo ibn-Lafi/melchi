@@ -4,7 +4,7 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { hasPermission } from "../../../lib/permissions";
-import { createCustomerAction, updateCustomerAction, createCityAction } from "./actions";
+import { createCustomerAction, updateCustomerAction, createCityAction, updateCityAction } from "./actions";
 
 type Customer = {
   id: string;
@@ -217,7 +217,7 @@ export default async function CustomersPage({
                   </td>
                   {canManage ? (
                     <td>
-                      <ModalTrigger label="تعديل" title={`تعديل: ${c.name}`} variant="outline">
+                      <ModalTrigger label="تعديل" title={`تعديل: ${c.name}`} variant="outline" buttonSize="sm">
                         <ActionForm action={updateCustomerAction} className="space-y-3">
                           <input type="hidden" name="id" value={c.id} />
                           <div>
@@ -299,6 +299,32 @@ export default async function CustomersPage({
           </table>
         </div>
         {(customers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد عملاء بعد</p> : null}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">المدن</h2>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(cities ?? []).map((city) => (
+            <div
+              key={city.id}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
+            >
+              <p className="truncate font-medium">{city.name}</p>
+              {canManage ? (
+                <ModalTrigger label="تعديل" title={`تعديل مدينة: ${city.name}`} variant="outline" buttonSize="sm">
+                  <ActionForm action={updateCityAction} className="space-y-3">
+                    <input type="hidden" name="id" value={city.id} />
+                    <div>
+                      <label className="mb-1 block text-sm">الاسم</label>
+                      <Input name="name" defaultValue={city.name} required />
+                    </div>
+                  </ActionForm>
+                </ModalTrigger>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {(cities?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مدن بعد</p> : null}
       </Card>
     </div>
   );

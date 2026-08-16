@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, BarList, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, BarList, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getProfitSummary } from "../../../lib/get-profitability";
@@ -271,10 +271,23 @@ export default async function ReportsPage({
 
       <Card>
         <h2 className="mb-3 font-semibold">تقرير الخسائر (تالف/منتهي الصلاحية)</h2>
-        <p className="mb-2 text-sm text-foreground/60">
+        <p className="mb-4 text-sm text-foreground/60">
           إجمالي قيمة الخسائر بسعر التكلفة (كل الفترات):{" "}
           <span className="font-bold">{formatCurrency(totalLossValue)}</span>
         </p>
+        {lossByProduct.size > 0 ? (
+          <div className="mb-5">
+            <BarList
+              items={Array.from(lossByProduct.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([productId, value]) => ({
+                  label: productNameById.get(productId) ?? "—",
+                  value,
+                  displayValue: formatCurrency(value),
+                }))}
+            />
+          </div>
+        ) : null}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -304,15 +317,30 @@ export default async function ReportsPage({
               <tr className="border-b border-border text-right text-foreground/60">
                 <th className="py-2">المنتج</th>
                 <th>تاريخ الانتهاء</th>
+                <th>المتبقي</th>
               </tr>
             </thead>
             <tbody>
-              {expiringProducts.map((p) => (
-                <tr key={p.id} className="border-b border-border/50">
-                  <td className="py-2">{p.name}</td>
-                  <td>{p.expiry_date}</td>
-                </tr>
-              ))}
+              {expiringProducts.map((p) => {
+                const daysLeft = p.expiry_date
+                  ? Math.ceil((new Date(p.expiry_date).getTime() - today.getTime()) / 86400000)
+                  : null;
+                return (
+                  <tr key={p.id} className="border-b border-border/50">
+                    <td className="py-2">{p.name}</td>
+                    <td>{p.expiry_date}</td>
+                    <td>
+                      {daysLeft !== null ? (
+                        <Badge variant={daysLeft <= 7 ? "danger" : "warning"}>
+                          {daysLeft <= 0 ? "منتهية" : `${daysLeft} يوم`}
+                        </Badge>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

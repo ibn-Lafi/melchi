@@ -1,4 +1,4 @@
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Badge, Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -11,6 +11,7 @@ import {
   toggleProductActiveAction,
   updateCategoryAction,
   updateProductAction,
+  updateUnitAction,
 } from "./actions";
 
 type ProductRow = {
@@ -199,14 +200,11 @@ export default async function ProductsPage() {
                       <form action={toggleProductActiveAction}>
                         <input type="hidden" name="productId" value={p.id} />
                         <input type="hidden" name="nextIsActive" value={(!p.is_active).toString()} />
-                        <button
-                          type="submit"
-                          className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
-                        >
+                        <Button type="submit" variant="outline" size="sm">
                           {p.is_active ? "أرشفة" : "إعادة تفعيل"}
-                        </button>
+                        </Button>
                       </form>
-                      <ModalTrigger label="تعديل" title={`تعديل: ${p.name}`} variant="outline">
+                      <ModalTrigger label="تعديل" title={`تعديل: ${p.name}`} variant="outline" buttonSize="sm">
                         <ActionForm action={updateProductAction} className="space-y-3">
                           <input type="hidden" name="id" value={p.id} />
                           <div>
@@ -313,11 +311,11 @@ export default async function ProductsPage() {
         <p className="mb-3 text-sm text-foreground/60">
           صورة الفئة تظهر بدائرة اختيار الفئة أعلى صفحة المتجر — أضف صورة لكل فئة لأفضل تجربة.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(categories ?? []).map((c) => (
             <div
               key={c.id}
-              className="flex items-center gap-3 rounded-xl border border-border p-3"
+              className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
             >
               {c.image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -329,9 +327,9 @@ export default async function ProductsPage() {
               ) : (
                 <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
               )}
-              <p className="font-medium">{c.name}</p>
+              <p className="flex-1 truncate font-medium">{c.name}</p>
               {canManage ? (
-                <ModalTrigger label="تعديل" title={`تعديل فئة: ${c.name}`} variant="outline">
+                <ModalTrigger label="تعديل" title={`تعديل فئة: ${c.name}`} variant="outline" buttonSize="sm">
                   <ActionForm action={updateCategoryAction} className="space-y-3">
                     <input type="hidden" name="id" value={c.id} />
                     <div>
@@ -358,6 +356,34 @@ export default async function ProductsPage() {
         </div>
         {(categories?.length ?? 0) === 0 ? (
           <p className="py-4 text-foreground/60">لا توجد فئات بعد</p>
+        ) : null}
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-semibold">وحدات القياس</h2>
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(units ?? []).map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
+            >
+              <p className="truncate font-medium">{u.name}</p>
+              {canManage ? (
+                <ModalTrigger label="تعديل" title={`تعديل وحدة: ${u.name}`} variant="outline" buttonSize="sm">
+                  <ActionForm action={updateUnitAction} className="space-y-3">
+                    <input type="hidden" name="id" value={u.id} />
+                    <div>
+                      <label className="mb-1 block text-sm">الاسم</label>
+                      <Input name="name" defaultValue={u.name} required />
+                    </div>
+                  </ActionForm>
+                </ModalTrigger>
+              ) : null}
+            </div>
+          ))}
+        </div>
+        {(units?.length ?? 0) === 0 ? (
+          <p className="py-4 text-foreground/60">لا توجد وحدات قياس بعد</p>
         ) : null}
       </Card>
     </div>
