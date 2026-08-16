@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { updateOwnNameSchema, updateOwnPasswordSchema } from "@system2026/validation";
@@ -38,4 +39,10 @@ export async function updateOwnPasswordAction(
   if (error) return { error: error.message };
 
   return { success: true };
+}
+
+export async function signOutAction() {
+  const supabase = createSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/login");
 }
