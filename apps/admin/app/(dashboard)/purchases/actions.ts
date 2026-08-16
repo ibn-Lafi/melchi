@@ -98,7 +98,6 @@ export async function createPurchaseInvoiceAction(
     });
   }
 
-  revalidatePath("/purchases");
   revalidatePath("/warehouse");
   revalidatePath("/products");
   revalidatePath("/suppliers");

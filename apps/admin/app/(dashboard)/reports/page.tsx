@@ -165,11 +165,11 @@ export default async function ReportsPage({
             <p className="mt-1 text-xs text-primary underline">فتح صفحة التحصيلات ←</p>
           </Card>
         </Link>
-        <Link href="/payables">
+        <Link href="/suppliers#dues">
           <Card className="hover:shadow-card-hover">
             <p className="text-sm text-foreground/60">مستحقات الموردين</p>
             <p className="mt-2 text-2xl font-bold">{formatCurrency(supplierPayables.totalDebt)}</p>
-            <p className="mt-1 text-xs text-primary underline">فتح صفحة المستحقات ←</p>
+            <p className="mt-1 text-xs text-primary underline">فتح صفحة الموردين ←</p>
           </Card>
         </Link>
       </div>
