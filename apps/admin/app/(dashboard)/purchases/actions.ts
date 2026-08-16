@@ -56,6 +56,10 @@ export async function createPurchaseInvoiceAction(
         price: item.price,
         base_unit_id: item.baseUnitId,
         category_id: item.categoryId ?? null,
+        // كل منتج يُنشأ عبر فاتورة شراء يُربط تلقائيًا بمورد هذه الفاتورة —
+        // منتجات المورد قائمة خاصة به (راجع requirements.md)، فلا يجوز أن
+        // يظهر منتج جديد بلا مورد بالكتالوج العام بالخطأ.
+        supplier_id: parsed.data.supplierId,
         visible_in_store: false,
       })
       .select<"id", { id: string }>("id")

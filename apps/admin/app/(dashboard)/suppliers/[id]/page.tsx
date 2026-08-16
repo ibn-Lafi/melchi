@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../../components/action-form";
 import { getCurrentUserRole } from "../../../../lib/get-current-role";
 import { hasPermission } from "../../../../lib/permissions";
-import { getProductCatalog } from "../../../../lib/get-product-catalog";
+import { getProductCatalogForSupplier } from "../../../../lib/get-product-catalog";
 import { getAttachmentSignedUrl } from "../../../../lib/get-attachment-url";
 import { updateSupplierAction } from "../actions";
 import { createProductAction, updateProductAction } from "../../products/actions";
@@ -140,9 +140,10 @@ export default async function SupplierDetailPage({
       .select<"product_id, quantity_available", { product_id: string; quantity_available: number }>(
         "product_id, quantity_available",
       ),
-    getProductCatalog(),
+    getProductCatalogForSupplier(supplier.id),
   ]);
 
+  const catalogBySupplier = { [supplier.id]: catalog };
   const quantityByProductId = new Map((stock ?? []).map((s) => [s.product_id, s.quantity_available]));
   const categoryNameById = new Map((categories ?? []).map((c) => [c.id, c.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
@@ -180,7 +181,7 @@ export default async function SupplierDetailPage({
               {canCreatePurchase ? (
                 <PurchaseForm
                   suppliers={[{ id: supplier.id, name: supplier.name }]}
-                  catalog={catalog}
+                  catalogBySupplier={catalogBySupplier}
                   categories={categories ?? []}
                   units={units ?? []}
                 />
