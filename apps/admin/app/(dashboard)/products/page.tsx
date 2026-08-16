@@ -26,10 +26,12 @@ type ProductRow = {
   has_expiry: boolean;
   expiry_date: string | null;
   category_id: string | null;
+  supplier_id: string | null;
   base_unit_id: string;
 };
 type CategoryRow = { id: string; name: string; image_url: string | null };
 type UnitRow = { id: string; name: string };
+type SupplierRow = { id: string; name: string };
 type StockRow = { product_id: string; quantity_available: number };
 
 export default async function ProductsPage() {
@@ -37,15 +39,15 @@ export default async function ProductsPage() {
   const role = await getCurrentUserRole();
   const canManage = hasPermission(role, "manage_products");
 
-  const [{ data: products }, { data: categories }, { data: units }, { data: stock }] =
+  const [{ data: products }, { data: categories }, { data: units }, { data: suppliers }, { data: stock }] =
     await Promise.all([
       supabase
         .from("products")
         .select<
-          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, base_unit_id",
+          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, supplier_id, base_unit_id",
           ProductRow
         >(
-          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, base_unit_id",
+          "id, name, description, price, average_cost, image_url, visible_in_store, is_active, has_expiry, expiry_date, category_id, supplier_id, base_unit_id",
         )
         .order("name"),
       supabase
@@ -53,6 +55,7 @@ export default async function ProductsPage() {
         .select<"id, name, image_url", CategoryRow>("id, name, image_url")
         .order("name"),
       supabase.from("units").select<"id, name", UnitRow>("id, name").order("name"),
+      supabase.from("suppliers").select<"id, name", SupplierRow>("id, name").order("name"),
       supabase
         .from("warehouse_stock")
         .select<"product_id, quantity_available", StockRow>("product_id, quantity_available"),
@@ -60,6 +63,7 @@ export default async function ProductsPage() {
 
   const categoryNameById = new Map((categories ?? []).map((c) => [c.id, c.name]));
   const unitNameById = new Map((units ?? []).map((u) => [u.id, u.name]));
+  const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
   const quantityByProductId = new Map((stock ?? []).map((s) => [s.product_id, s.quantity_available]));
 
   return (
@@ -133,6 +137,17 @@ export default async function ProductsPage() {
                       ))}
                     </Select>
                   </div>
+                  <div>
+                    <label className="mb-1 block text-sm">المورد (اختياري)</label>
+                    <Select name="supplierId">
+                      <option value="">بدون مورد</option>
+                      {(suppliers ?? []).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="visibleInStore" defaultChecked /> ظاهر بالمتجر
                   </label>
@@ -159,6 +174,7 @@ export default async function ProductsPage() {
                 <th className="py-2">الصورة</th>
                 <th>الاسم</th>
                 <th>الفئة</th>
+                <th>المورد</th>
                 <th>سعر البيع</th>
                 <th>متوسط التكلفة</th>
                 <th>الوحدة الأساسية</th>
@@ -185,6 +201,7 @@ export default async function ProductsPage() {
                   </td>
                   <td>{p.name}</td>
                   <td>{p.category_id ? categoryNameById.get(p.category_id) : "—"}</td>
+                  <td>{p.supplier_id ? supplierNameById.get(p.supplier_id) ?? "—" : "—"}</td>
                   <td>{formatCurrency(p.price)}</td>
                   <td>{formatCurrency(p.average_cost)}</td>
                   <td>{unitNameById.get(p.base_unit_id) ?? "—"}</td>
@@ -272,6 +289,17 @@ export default async function ProductsPage() {
                               {(units ?? []).map((u) => (
                                 <option key={u.id} value={u.id}>
                                   {u.name}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">المورد (اختياري)</label>
+                            <Select name="supplierId" defaultValue={p.supplier_id ?? ""}>
+                              <option value="">بدون مورد</option>
+                              {(suppliers ?? []).map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.name}
                                 </option>
                               ))}
                             </Select>

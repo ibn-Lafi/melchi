@@ -5,7 +5,17 @@ export const createSupplierSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
+  commercialRegistrationNumber: z.string().optional(),
+  vatNumber: z.string().optional(),
 });
+
+export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
+
+export const updateSupplierSchema = createSupplierSchema.extend({
+  id: z.string().uuid(),
+});
+
+export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
 
 const existingProductPurchaseItemSchema = z.object({
   kind: z.literal("existing"),

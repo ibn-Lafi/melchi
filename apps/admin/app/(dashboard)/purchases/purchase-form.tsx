@@ -258,6 +258,12 @@ export function PurchaseForm({
         </Select>
       </div>
 
+      <div>
+        <label className="mb-1 block text-sm font-medium">مرفق الفاتورة (اختياري)</label>
+        <Input name="attachment" type="file" accept="image/*,application/pdf" />
+        <p className="mt-1 text-xs text-foreground/50">صورة أو PDF لمستند فاتورة الشراء الأصلي من المورد</p>
+      </div>
+
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
       {state.purchaseInvoiceId ? <p className="text-sm text-primary">تم اعتماد فاتورة الشراء بنجاح ✓</p> : null}
 
