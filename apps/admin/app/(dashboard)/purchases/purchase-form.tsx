@@ -46,17 +46,19 @@ function SubmitButton() {
 
 export function PurchaseForm({
   suppliers,
-  catalog,
+  catalogBySupplier,
   categories,
   units,
 }: {
   suppliers: Supplier[];
-  catalog: CatalogProduct[];
+  catalogBySupplier: Record<string, CatalogProduct[]>;
   categories: Category[];
   units: Unit[];
 }) {
   const [state, formAction] = useFormState(createPurchaseInvoiceAction, initialState);
+  const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? "");
   const [items, setItems] = useState<LineItem[]>([]);
+  const catalog = useMemo(() => catalogBySupplier[supplierId] ?? [], [catalogBySupplier, supplierId]);
   const productById = useMemo(() => new Map(catalog.map((p) => [p.productId, p])), [catalog]);
   const closeModal = useModalClose();
 
@@ -107,13 +109,26 @@ export function PurchaseForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">المورد</label>
-        <Select name="supplierId" required>
+        <Select
+          name="supplierId"
+          required
+          value={supplierId}
+          onChange={(e) => {
+            setSupplierId(e.target.value);
+            setItems([]);
+          }}
+        >
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
           ))}
         </Select>
+        {suppliers.length > 1 ? (
+          <p className="mt-1 text-xs text-foreground/50">
+            قائمة &quot;منتج موجود&quot; أسفله خاصة بمنتجات هذا المورد فقط
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-2">

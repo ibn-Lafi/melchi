@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, ModalTrigger, PageHeader, Breadcrumb, cn } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
-import { getProductCatalog } from "../../../lib/get-product-catalog";
+import { getProductCatalogGroupedBySupplier } from "../../../lib/get-product-catalog";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { hasPermission } from "../../../lib/permissions";
 import { getAttachmentSignedUrl } from "../../../lib/get-attachment-url";
@@ -58,17 +58,23 @@ export default async function PurchasesPage({
     );
   }
 
-  const [{ data: purchaseInvoices }, { data: suppliers }, { data: payments }, catalog, { data: categories }, { data: units }] =
-    await Promise.all([
-      purchaseInvoicesQuery,
-      supabase.from("suppliers").select<"id, name", { id: string; name: string }>("id, name").order("name"),
-      supabase
-        .from("supplier_payments")
-        .select<"purchase_invoice_id, amount", SupplierPaymentRow>("purchase_invoice_id, amount"),
-      getProductCatalog(),
-      supabase.from("categories").select<"id, name", { id: string; name: string }>("id, name").order("name"),
-      supabase.from("units").select<"id, name", { id: string; name: string }>("id, name").order("name"),
-    ]);
+  const [
+    { data: purchaseInvoices },
+    { data: suppliers },
+    { data: payments },
+    catalogBySupplier,
+    { data: categories },
+    { data: units },
+  ] = await Promise.all([
+    purchaseInvoicesQuery,
+    supabase.from("suppliers").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+    supabase
+      .from("supplier_payments")
+      .select<"purchase_invoice_id, amount", SupplierPaymentRow>("purchase_invoice_id, amount"),
+    getProductCatalogGroupedBySupplier(),
+    supabase.from("categories").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+    supabase.from("units").select<"id, name", { id: string; name: string }>("id, name").order("name"),
+  ]);
 
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
   const canCreatePurchase = (suppliers?.length ?? 0) > 0 && (units?.length ?? 0) > 0;
@@ -98,7 +104,7 @@ export default async function PurchasesPage({
               {canCreatePurchase ? (
                 <PurchaseForm
                   suppliers={suppliers ?? []}
-                  catalog={catalog}
+                  catalogBySupplier={catalogBySupplier}
                   categories={categories ?? []}
                   units={units ?? []}
                 />
