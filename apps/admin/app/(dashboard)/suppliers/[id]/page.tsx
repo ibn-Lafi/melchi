@@ -271,56 +271,26 @@ export default async function SupplierDetailPage({
           <h2 className="font-semibold">المنتجات</h2>
           {canManage ? (
             <ModalTrigger label="+ إضافة منتج" title={`إضافة منتج — ${supplier.name}`}>
-              <ActionForm action={createProductAction} className="space-y-3">
-                <input type="hidden" name="supplierId" value={supplier.id} />
-                <div>
-                  <label className="mb-1 block text-sm">الاسم</label>
-                  <Input name="name" required />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">الوصف</label>
-                  <Input name="description" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">صورة المنتج</label>
-                  <Input name="image" type="file" accept="image/*" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">
-                    سعر البيع <span className="text-foreground/50">(شامل ضريبة القيمة المضافة)</span>
-                  </label>
-                  <Input name="price" type="number" step="0.01" min="0" required />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">الكمية بالمخزون (اختياري)</label>
-                  <Input name="quantity" type="number" step="1" min="0" placeholder="0" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">الفئة</label>
-                  <Select name="categoryId">
-                    <option value="">بدون فئة</option>
-                    {(categories ?? []).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm">الوحدة الأساسية</label>
-                  <Select name="baseUnitId" required>
-                    <option value="">اختر وحدة</option>
-                    {(units ?? []).map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="visibleInStore" defaultChecked /> ظاهر بالمتجر
-                </label>
-              </ActionForm>
+              {(units?.length ?? 0) > 0 ? (
+                <ActionForm action={createProductAction} className="space-y-3">
+                  <input type="hidden" name="supplierId" value={supplier.id} />
+                  <input type="hidden" name="baseUnitId" value={units![0]!.id} />
+                  <div>
+                    <label className="mb-1 block text-sm">الاسم</label>
+                    <Input name="name" required />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">الوصف</label>
+                    <Input name="description" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">سعر الشراء</label>
+                    <Input name="price" type="number" step="0.01" min="0" required />
+                  </div>
+                </ActionForm>
+              ) : (
+                <p className="text-sm text-foreground/60">أضف وحدة قياس واحدة على الأقل أولًا من صفحة المنتجات</p>
+              )}
             </ModalTrigger>
           ) : null}
         </div>

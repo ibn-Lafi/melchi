@@ -29,7 +29,6 @@ export async function recordSupplierPaymentAction(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/payables");
   revalidatePath("/suppliers");
   return { success: true };
 }
