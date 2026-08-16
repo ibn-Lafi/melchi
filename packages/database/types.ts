@@ -130,6 +130,7 @@ export type Database = {
       purchase_invoices: Table<
         {
           id: string;
+          invoice_number: number;
           supplier_id: string;
           invoice_date: string;
           subtotal: number;
@@ -142,6 +143,7 @@ export type Database = {
         },
         {
           id?: string;
+          invoice_number?: number;
           supplier_id: string;
           subtotal?: number;
           total_amount?: number;
