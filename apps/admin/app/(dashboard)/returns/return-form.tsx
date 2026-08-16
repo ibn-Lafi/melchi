@@ -3,40 +3,50 @@
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Button, Card, Input, Select, useModalClose } from "@system2026/ui";
-import { createReturnAction, type ReturnActionState } from "./actions";
+import {
+  createReturnAction,
+  getCustomerInvoicesAction,
+  getInvoiceReturnableItemsAction,
+  type CustomerInvoice,
+  type ReturnableItem,
+  type ReturnActionState,
+} from "./actions";
 
 type Customer = { id: string; name: string; shop_name: string | null };
 type Rep = { id: string; name: string };
-type Product = { id: string; name: string };
-type LineItem = {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  condition: "resalable" | "damaged" | "expired";
-};
+type Condition = "resalable" | "damaged" | "expired";
+
+const CONDITIONS: { value: Condition; label: string }[] = [
+  { value: "resalable", label: "سليم (يرجع للمخزون)" },
+  { value: "damaged", label: "تالف" },
+  { value: "expired", label: "منتهي الصلاحية" },
+];
 
 const initialState: ReturnActionState = {};
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending || disabled}>
       {pending ? "جارٍ التسجيل..." : "تسجيل المرتجع"}
     </Button>
   );
 }
 
-export function ReturnForm({
-  customers,
-  reps,
-  products,
-}: {
-  customers: Customer[];
-  reps: Rep[];
-  products: Product[];
-}) {
+// تدفّق موجّه: عميل ← فاتورة سابقة له ← تحديد كمية/حالة الإرجاع من بنود
+// تلك الفاتورة فعليًا (بدل اختيار منتج حر بكمية حرة) — يمنع اختيار منتج
+// غير موجود بالفاتورة أو كمية أكبر من المباعة فعليًا.
+export function ReturnForm({ customers, reps }: { customers: Customer[]; reps: Rep[] }) {
   const [state, formAction] = useFormState(createReturnAction, initialState);
-  const [items, setItems] = useState<LineItem[]>([]);
+  const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
+  const [repId, setRepId] = useState("");
+  const [invoices, setInvoices] = useState<CustomerInvoice[] | null>(null);
+  const [invoiceId, setInvoiceId] = useState("");
+  const [items, setItems] = useState<ReturnableItem[] | null>(null);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [conditions, setConditions] = useState<Record<string, Condition>>({});
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(false);
   const closeModal = useModalClose();
 
   useEffect(() => {
@@ -45,27 +55,52 @@ export function ReturnForm({
     return () => clearTimeout(timer);
   }, [state.returnId, closeModal]);
 
-  function addItem() {
-    const first = products[0];
-    if (!first) return;
-    setItems((prev) => [...prev, { productId: first.id, quantity: 1, unitPrice: 0, condition: "resalable" }]);
-  }
+  useEffect(() => {
+    if (!customerId) return;
+    setInvoices(null);
+    setInvoiceId("");
+    setItems(null);
+    setLoadingInvoices(true);
+    getCustomerInvoicesAction(customerId)
+      .then(setInvoices)
+      .finally(() => setLoadingInvoices(false));
+  }, [customerId]);
 
-  function updateItem(index: number, patch: Partial<LineItem>) {
-    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
-  }
+  useEffect(() => {
+    if (!invoiceId) return;
+    setItems(null);
+    setQuantities({});
+    setConditions({});
+    setLoadingItems(true);
+    getInvoiceReturnableItemsAction(invoiceId)
+      .then((rows) => {
+        setItems(rows);
+        setConditions(Object.fromEntries(rows.map((r) => [r.productId, "resalable" as Condition])));
+      })
+      .finally(() => setLoadingItems(false));
+  }, [invoiceId]);
 
-  function removeItem(index: number) {
-    setItems((prev) => prev.filter((_, i) => i !== index));
-  }
+  const selectedLines = (items ?? [])
+    .map((item) => ({ item, quantity: quantities[item.productId] ?? 0 }))
+    .filter((line) => line.quantity > 0);
+
+  const returnItemsPayload = selectedLines.map((line) => ({
+    productId: line.item.productId,
+    quantity: line.quantity,
+    unitPrice: line.item.unitPrice,
+    condition: conditions[line.item.productId] ?? "resalable",
+  }));
 
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="items" value={JSON.stringify(items)} />
+      <input type="hidden" name="customerId" value={customerId} />
+      <input type="hidden" name="invoiceId" value={invoiceId} />
+      <input type="hidden" name="repId" value={repId} />
+      <input type="hidden" name="items" value={JSON.stringify(returnItemsPayload)} />
 
       <div>
         <label className="mb-1 block text-sm font-medium">العميل</label>
-        <Select name="customerId" required>
+        <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
           {customers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.shop_name ?? c.name}
@@ -75,8 +110,26 @@ export function ReturnForm({
       </div>
 
       <div>
+        <label className="mb-1 block text-sm font-medium">الفاتورة</label>
+        {loadingInvoices ? (
+          <p className="text-sm text-foreground/60">جارٍ التحميل...</p>
+        ) : (invoices?.length ?? 0) === 0 ? (
+          <p className="text-sm text-foreground/60">لا توجد فواتير سابقة لهذا العميل</p>
+        ) : (
+          <Select value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)}>
+            <option value="">اختر فاتورة</option>
+            {invoices?.map((inv) => (
+              <option key={inv.id} value={inv.id}>
+                فاتورة #{inv.invoiceNumber} — {new Date(inv.invoiceDate).toLocaleDateString("ar-SA")}
+              </option>
+            ))}
+          </Select>
+        )}
+      </div>
+
+      <div>
         <label className="mb-1 block text-sm font-medium">المندوب (إن كانت البضاعة السليمة سترجع لرصيده)</label>
-        <Select name="repId">
+        <Select value={repId} onChange={(e) => setRepId(e.target.value)}>
           <option value="">بدون تحديد</option>
           {reps.map((r) => (
             <option key={r.id} value={r.id}>
@@ -86,69 +139,64 @@ export function ReturnForm({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        {items.map((item, index) => (
-          <Card key={index} className="grid grid-cols-12 items-end gap-2">
-            <div className="col-span-3">
-              <label className="mb-1 block text-xs">المنتج</label>
-              <Select value={item.productId} onChange={(e) => updateItem(index, { productId: e.target.value })}>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-xs">الكمية</label>
-              <Input
-                type="number"
-                min={1}
-                value={item.quantity}
-                onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-xs">سعر البيع الأصلي</label>
-              <Input
-                type="number"
-                step="0.01"
-                value={item.unitPrice}
-                onChange={(e) => updateItem(index, { unitPrice: Number(e.target.value) })}
-              />
-            </div>
-            <div className="col-span-4">
-              <label className="mb-1 block text-xs">الحالة</label>
-              <Select
-                value={item.condition}
-                onChange={(e) => updateItem(index, { condition: e.target.value as LineItem["condition"] })}
-              >
-                <option value="resalable">سليم (يرجع للمخزون)</option>
-                <option value="damaged">تالف</option>
-                <option value="expired">منتهي الصلاحية</option>
-              </Select>
-            </div>
-            <div className="col-span-1">
-              <button
-                type="button"
-                aria-label="حذف"
-                onClick={() => removeItem(index)}
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-foreground/60 transition-colors hover:border-primary hover:text-primary"
-              >
-                ✕
-              </button>
-            </div>
-          </Card>
-        ))}
-        <Button type="button" variant="outline" onClick={addItem}>
-          + إضافة منتج
-        </Button>
-      </div>
+      {invoiceId ? (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">حدد المنتج والكمية والحالة من بنود الفاتورة</p>
+          {loadingItems ? (
+            <p className="text-sm text-foreground/60">جارٍ التحميل...</p>
+          ) : (items?.length ?? 0) === 0 ? (
+            <p className="text-sm text-foreground/60">لا توجد بنود قابلة للإرجاع بهذه الفاتورة</p>
+          ) : (
+            items?.map((item) => (
+              <Card key={item.productId} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold">{item.productName}</p>
+                  <span className="text-xs text-foreground/60">
+                    الحد الأقصى: {item.maxQuantity} {item.unitName}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="mb-1 block text-xs text-foreground/60">الكمية المرتجعة</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={item.maxQuantity}
+                      value={quantities[item.productId] ?? 0}
+                      onChange={(e) => {
+                        const raw = Number(e.target.value);
+                        const clamped = Math.max(0, Math.min(item.maxQuantity, Number.isFinite(raw) ? raw : 0));
+                        setQuantities((prev) => ({ ...prev, [item.productId]: clamped }));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-foreground/60">الحالة</label>
+                    <Select
+                      value={conditions[item.productId] ?? "resalable"}
+                      onChange={(e) =>
+                        setConditions((prev) => ({ ...prev, [item.productId]: e.target.value as Condition }))
+                      }
+                      disabled={(quantities[item.productId] ?? 0) === 0}
+                    >
+                      {CONDITIONS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : null}
 
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
       {state.returnId ? <p className="text-sm text-primary">تم تسجيل المرتجع بنجاح ✓</p> : null}
 
-      <SubmitButton />
+      <SubmitButton disabled={!invoiceId || returnItemsPayload.length === 0} />
     </form>
   );
 }

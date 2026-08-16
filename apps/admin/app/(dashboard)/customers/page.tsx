@@ -24,7 +24,6 @@ type Customer = {
 type CustomerRepRow = { customer_id: string; rep_id: string };
 type Rep = { id: string; name: string };
 type City = { id: string; name: string };
-type Product = { id: string; name: string };
 type UnpaidInvoiceRow = { id: string; invoice_number: number; customer_id: string; total_amount: number };
 type CustomerPaymentRow = { invoice_id: string | null; amount: number };
 
@@ -68,7 +67,6 @@ export default async function CustomersPage({
     { data: customerReps },
     { data: reps },
     { data: cities },
-    { data: products },
     { data: unpaidInvoices },
     { data: customerPayments },
   ] = await Promise.all([
@@ -81,7 +79,6 @@ export default async function CustomersPage({
       .eq("is_active", true)
       .order("name"),
     supabase.from("cities").select<"id, name", City>("id, name").order("name"),
-    supabase.from("products").select<"id, name", Product>("id, name").order("name"),
     supabase
       .from("invoices")
       .select<"id, invoice_number, customer_id, total_amount", UnpaidInvoiceRow>(
@@ -128,9 +125,9 @@ export default async function CustomersPage({
                 <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
               </ModalTrigger>
             ) : null}
-            {canReturn && (customers?.length ?? 0) > 0 && (products?.length ?? 0) > 0 ? (
+            {canReturn && (customers?.length ?? 0) > 0 ? (
               <ModalTrigger label="+ تسجيل مرتجع" title="تسجيل مرتجع جديد" variant="outline" size="lg">
-                <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
+                <ReturnForm customers={customers ?? []} reps={reps ?? []} />
               </ModalTrigger>
             ) : null}
             {canManage ? (
