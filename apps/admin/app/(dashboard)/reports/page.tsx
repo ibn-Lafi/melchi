@@ -158,11 +158,11 @@ export default async function ReportsPage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/collections">
+        <Link href="/customers">
           <Card className="hover:shadow-card-hover">
             <p className="text-sm text-foreground/60">ديون العملاء المستحقة</p>
             <p className="mt-2 text-2xl font-bold">{formatCurrency(customerDebt.totalDebt)}</p>
-            <p className="mt-1 text-xs text-primary underline">فتح صفحة التحصيلات ←</p>
+            <p className="mt-1 text-xs text-primary underline">فتح صفحة العملاء ←</p>
           </Card>
         </Link>
         <Link href="/suppliers#dues">

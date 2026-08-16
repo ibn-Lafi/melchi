@@ -1,4 +1,4 @@
-import { Card } from "@system2026/ui";
+import { Card, LinkButton } from "@system2026/ui";
 import type { StorePointOfSale } from "../lib/get-catalog";
 
 export function PointsOfSaleSection({ locations }: { locations: StorePointOfSale[] }) {
@@ -12,14 +12,16 @@ export function PointsOfSaleSection({ locations }: { locations: StorePointOfSale
           <Card key={location.id}>
             <p className="font-semibold">{location.shop_name}</p>
             {location.google_maps_link ? (
-              <a
+              <LinkButton
                 href={location.google_maps_link}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-block text-sm text-primary underline"
+                variant="outline"
+                size="sm"
+                className="mt-2"
               >
-                فتح الموقع 📍
-              </a>
+                فتح الموقع
+              </LinkButton>
             ) : null}
           </Card>
         ))}

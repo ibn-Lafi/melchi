@@ -29,6 +29,6 @@ export async function recordCustomerPaymentAction(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/collections");
+  revalidatePath("/customers");
   return { success: true };
 }

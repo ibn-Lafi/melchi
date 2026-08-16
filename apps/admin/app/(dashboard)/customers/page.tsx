@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Button, Card, Input, LinkButton, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
 import { hasPermission } from "../../../lib/permissions";
 import { createCustomerAction, updateCustomerAction, createCityAction, updateCityAction } from "./actions";
+import { PaymentForm } from "../collections/payment-form";
+import { ReturnForm } from "../returns/return-form";
 
 type Customer = {
   id: string;
@@ -22,6 +24,9 @@ type Customer = {
 type CustomerRepRow = { customer_id: string; rep_id: string };
 type Rep = { id: string; name: string };
 type City = { id: string; name: string };
+type Product = { id: string; name: string };
+type UnpaidInvoiceRow = { id: string; invoice_number: number; customer_id: string; total_amount: number };
+type CustomerPaymentRow = { invoice_id: string | null; amount: number };
 
 function CitySelect({ cities, defaultValue }: { cities: City[]; defaultValue?: string | null }) {
   return (
@@ -44,6 +49,8 @@ export default async function CustomersPage({
   const supabase = createSupabaseServerClient();
   const role = await getCurrentUserRole();
   const canManage = hasPermission(role, "manage_customers");
+  const canCollect = hasPermission(role, "manage_collections");
+  const canReturn = hasPermission(role, "manage_returns");
 
   let customersQuery = supabase
     .from("customers")
@@ -56,20 +63,33 @@ export default async function CustomersPage({
     .order("name");
   if (searchParams.cityId) customersQuery = customersQuery.eq("city_id", searchParams.cityId);
 
-  const [{ data: customers }, { data: customerReps }, { data: reps }, { data: cities }] =
-    await Promise.all([
-      customersQuery,
-      supabase
-        .from("customer_reps")
-        .select<"customer_id, rep_id", CustomerRepRow>("customer_id, rep_id"),
-      supabase
-        .from("profiles")
-        .select<"id, name", Rep>("id, name")
-        .eq("role", "rep")
-        .eq("is_active", true)
-        .order("name"),
-      supabase.from("cities").select<"id, name", City>("id, name").order("name"),
-    ]);
+  const [
+    { data: customers },
+    { data: customerReps },
+    { data: reps },
+    { data: cities },
+    { data: products },
+    { data: unpaidInvoices },
+    { data: customerPayments },
+  ] = await Promise.all([
+    customersQuery,
+    supabase.from("customer_reps").select<"customer_id, rep_id", CustomerRepRow>("customer_id, rep_id"),
+    supabase
+      .from("profiles")
+      .select<"id, name", Rep>("id, name")
+      .eq("role", "rep")
+      .eq("is_active", true)
+      .order("name"),
+    supabase.from("cities").select<"id, name", City>("id, name").order("name"),
+    supabase.from("products").select<"id, name", Product>("id, name").order("name"),
+    supabase
+      .from("invoices")
+      .select<"id, invoice_number, customer_id, total_amount", UnpaidInvoiceRow>(
+        "id, invoice_number, customer_id, total_amount",
+      )
+      .in("status", ["unpaid", "partial"]),
+    supabase.from("payments").select<"invoice_id, amount", CustomerPaymentRow>("invoice_id, amount"),
+  ]);
 
   const repNameById = new Map((reps ?? []).map((r) => [r.id, r.name]));
   const cityNameById = new Map((cities ?? []).map((c) => [c.id, c.name]));
@@ -82,6 +102,19 @@ export default async function CustomersPage({
     repsByCustomer.set(cr.customer_id, list);
   }
 
+  const paidByInvoice = new Map<string, number>();
+  for (const p of customerPayments ?? []) {
+    if (!p.invoice_id) continue;
+    paidByInvoice.set(p.invoice_id, (paidByInvoice.get(p.invoice_id) ?? 0) + p.amount);
+  }
+  const invoicesByCustomer: Record<string, { id: string; invoice_number: number; remaining: number }[]> = {};
+  for (const inv of unpaidInvoices ?? []) {
+    const remaining = inv.total_amount - (paidByInvoice.get(inv.id) ?? 0);
+    if (remaining <= 0) continue;
+    invoicesByCustomer[inv.customer_id] ??= [];
+    invoicesByCustomer[inv.customer_id]!.push({ id: inv.id, invoice_number: inv.invoice_number, remaining });
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -89,14 +122,64 @@ export default async function CustomersPage({
         title="العملاء"
         subtitle="إدارة العملاء وربطهم بالمناديب"
         actions={
-          canManage ? (
-            <>
-              <ModalTrigger label="+ مدينة" title="إضافة مدينة" variant="outline">
-                <ActionForm action={createCityAction} className="space-y-3">
-                  <Input name="name" placeholder="اسم المدينة" required />
-                </ActionForm>
+          <>
+            {canCollect && (customers?.length ?? 0) > 0 ? (
+              <ModalTrigger label="+ تسجيل تحصيل" title="تسجيل تحصيل" variant="outline">
+                <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
               </ModalTrigger>
-              <ModalTrigger label="+ إضافة عميل" title="إضافة عميل">
+            ) : null}
+            {canReturn && (customers?.length ?? 0) > 0 && (products?.length ?? 0) > 0 ? (
+              <ModalTrigger label="+ تسجيل مرتجع" title="تسجيل مرتجع جديد" variant="outline" size="lg">
+                <ReturnForm customers={customers ?? []} reps={reps ?? []} products={products ?? []} />
+              </ModalTrigger>
+            ) : null}
+            {canManage ? (
+              <>
+                <ModalTrigger label="+ مدينة" title="المدن" variant="outline" size="lg">
+                  <div className="space-y-5">
+                    <ActionForm action={createCityAction} className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-sm">اسم المدينة الجديدة</label>
+                        <Input name="name" placeholder="مثال: الرياض" required />
+                      </div>
+                    </ActionForm>
+
+                    <div className="border-t border-border pt-5">
+                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground/50">
+                        المدن الحالية ({cities?.length ?? 0})
+                      </h3>
+                      {(cities?.length ?? 0) === 0 ? (
+                        <p className="text-sm text-foreground/60">لا توجد مدن بعد</p>
+                      ) : (
+                        <div className="max-h-72 space-y-2 overflow-y-auto">
+                          {(cities ?? []).map((city) => (
+                            <div
+                              key={city.id}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-2.5"
+                            >
+                              <p className="truncate text-sm font-medium">{city.name}</p>
+                              <ModalTrigger
+                                label="تعديل"
+                                title={`تعديل مدينة: ${city.name}`}
+                                variant="outline"
+                                buttonSize="sm"
+                              >
+                                <ActionForm action={updateCityAction} className="space-y-3">
+                                  <input type="hidden" name="id" value={city.id} />
+                                  <div>
+                                    <label className="mb-1 block text-sm">الاسم</label>
+                                    <Input name="name" defaultValue={city.name} required />
+                                  </div>
+                                </ActionForm>
+                              </ModalTrigger>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </ModalTrigger>
+                <ModalTrigger label="+ إضافة عميل" title="إضافة عميل">
                 <ActionForm action={createCustomerAction} className="space-y-3">
                   <div>
                     <label className="mb-1 block text-sm">اسم السجل</label>
@@ -148,9 +231,10 @@ export default async function CustomersPage({
                     </div>
                   </div>
                 </ActionForm>
-              </ModalTrigger>
-            </>
-          ) : null
+                </ModalTrigger>
+              </>
+            ) : null}
+          </>
         }
       />
 
@@ -198,14 +282,15 @@ export default async function CustomersPage({
                   <td>{c.show_in_store ? "نعم" : "لا"}</td>
                   <td>
                     {c.google_maps_link ? (
-                      <a
+                      <LinkButton
                         href={c.google_maps_link}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary underline"
+                        variant="outline"
+                        size="sm"
                       >
-                        فتح الموقع 📍
-                      </a>
+                        فتح الموقع
+                      </LinkButton>
                     ) : (
                       "—"
                     )}
@@ -299,32 +384,6 @@ export default async function CustomersPage({
           </table>
         </div>
         {(customers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد عملاء بعد</p> : null}
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold">المدن</h2>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(cities ?? []).map((city) => (
-            <div
-              key={city.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
-            >
-              <p className="truncate font-medium">{city.name}</p>
-              {canManage ? (
-                <ModalTrigger label="تعديل" title={`تعديل مدينة: ${city.name}`} variant="outline" buttonSize="sm">
-                  <ActionForm action={updateCityAction} className="space-y-3">
-                    <input type="hidden" name="id" value={city.id} />
-                    <div>
-                      <label className="mb-1 block text-sm">الاسم</label>
-                      <Input name="name" defaultValue={city.name} required />
-                    </div>
-                  </ActionForm>
-                </ModalTrigger>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        {(cities?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مدن بعد</p> : null}
       </Card>
     </div>
   );

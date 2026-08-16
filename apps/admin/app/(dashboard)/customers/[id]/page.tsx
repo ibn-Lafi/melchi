@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Badge, Card, Input, LinkButton, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../../components/action-form";
@@ -237,14 +237,16 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               </Badge>
             </p>
             {customer.google_maps_link ? (
-              <a
+              <LinkButton
                 href={customer.google_maps_link}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-block text-primary underline"
+                variant="outline"
+                size="sm"
+                className="mt-2"
               >
-                فتح الموقع 📍
-              </a>
+                فتح الموقع
+              </LinkButton>
             ) : null}
           </div>
         </Card>

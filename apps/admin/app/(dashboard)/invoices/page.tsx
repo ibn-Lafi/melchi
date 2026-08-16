@@ -120,14 +120,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Inv
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير"]} />}
         title="الفواتير"
-        subtitle="كل فواتير البيع، مع طلبات التعديل والمرتجعات والتحصيلات"
-        actions={
-          <>
-            <LinkButton href="/invoice-requests">طلبات تعديل الفواتير</LinkButton>
-            <LinkButton href="/returns">المرتجعات</LinkButton>
-            <LinkButton href="/collections">التحصيلات</LinkButton>
-          </>
-        }
+        subtitle="كل فواتير البيع — تسجيل المرتجعات والتحصيلات متاح الآن من صفحة العملاء"
+        actions={<LinkButton href="/invoice-requests">طلبات تعديل الفواتير</LinkButton>}
       />
 
       <Card>

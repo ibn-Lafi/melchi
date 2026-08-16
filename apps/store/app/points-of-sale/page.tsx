@@ -1,3 +1,4 @@
+import { LinkButton } from "@system2026/ui";
 import { getStorePointsOfSale } from "../../lib/get-catalog";
 
 export default async function PointsOfSalePage() {
@@ -14,14 +15,16 @@ export default async function PointsOfSalePage() {
             <div key={location.id} className="rounded-2xl border border-border p-5">
               <p className="font-semibold">{location.shop_name}</p>
               {location.google_maps_link ? (
-                <a
+                <LinkButton
                   href={location.google_maps_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-block text-sm text-primary underline"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
                 >
-                  فتح الموقع 📍
-                </a>
+                  فتح الموقع
+                </LinkButton>
               ) : null}
             </div>
           ))}
