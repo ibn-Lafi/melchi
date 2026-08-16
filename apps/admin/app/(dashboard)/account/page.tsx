@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { Badge, Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Button, Card, Input, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { PERMISSION_LABELS, STAFF_ROLE_LABELS, permissionsForRole, type StaffRole } from "../../../lib/permissions";
-import { updateOwnNameAction, updateOwnPasswordAction } from "./actions";
+import { updateOwnNameAction, updateOwnPasswordAction, signOutAction } from "./actions";
 
 type Profile = { name: string; email: string | null; role: StaffRole };
 
@@ -71,6 +71,16 @@ export default async function AccountPage() {
             <ActionForm action={updateOwnPasswordAction} submitLabel="تحديث كلمة المرور">
               <Input name="password" type="password" minLength={6} placeholder="كلمة مرور جديدة" required />
             </ActionForm>
+          </Card>
+
+          <Card>
+            <h2 className="mb-1 font-semibold">تسجيل الخروج</h2>
+            <p className="mb-3 text-sm text-foreground/60">سيتم إنهاء جلستك الحالية وتحويلك لصفحة تسجيل الدخول</p>
+            <form action={signOutAction}>
+              <Button type="submit" variant="destructive" className="w-full">
+                تسجيل خروج
+              </Button>
+            </form>
           </Card>
         </div>
       </div>
