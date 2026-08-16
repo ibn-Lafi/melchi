@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input } from "@system2026/ui";
+import { Button, Card, Input, Select } from "@system2026/ui";
 import { recordCustomerPaymentAction } from "./actions";
 import type { ActionState } from "../../../components/action-form";
 
@@ -36,29 +36,24 @@ export function PaymentForm({
       <form action={formAction} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm">العميل</label>
-          <select
-            name="customerId"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-          >
+          <Select name="customerId" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.shop_name ?? c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <label className="mb-1 block text-sm">الفاتورة (اختياري)</label>
-          <select name="invoiceId" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+          <Select name="invoiceId">
             <option value="">بدون ربط بفاتورة محددة</option>
             {invoices.map((inv) => (
               <option key={inv.id} value={inv.id}>
                 فاتورة #{inv.invoice_number} — متبقٍ {inv.remaining.toFixed(2)} ر.س
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <label className="mb-1 block text-sm">المبلغ</label>
@@ -66,11 +61,11 @@ export function PaymentForm({
         </div>
         <div>
           <label className="mb-1 block text-sm">طريقة الدفع</label>
-          <select name="method" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+          <Select name="method">
             <option value="cash">نقدًا</option>
             <option value="check">شيك</option>
             <option value="transfer">تحويل بنكي</option>
-          </select>
+          </Select>
         </div>
         {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
         {state.success ? <p className="text-sm text-primary">تم تسجيل التحصيل بنجاح ✓</p> : null}

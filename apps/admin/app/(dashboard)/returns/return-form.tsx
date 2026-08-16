@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input } from "@system2026/ui";
+import { Button, Card, Input, Select } from "@system2026/ui";
 import { createReturnAction, type ReturnActionState } from "./actions";
 
 type Customer = { id: string; name: string; shop_name: string | null };
@@ -58,25 +58,25 @@ export function ReturnForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">العميل</label>
-        <select name="customerId" required className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+        <Select name="customerId" required>
           {customers.map((c) => (
             <option key={c.id} value={c.id}>
               {c.shop_name ?? c.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium">المندوب (إن كانت البضاعة السليمة سترجع لرصيده)</label>
-        <select name="repId" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+        <Select name="repId">
           <option value="">بدون تحديد</option>
           {reps.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -84,17 +84,13 @@ export function ReturnForm({
           <Card key={index} className="grid grid-cols-12 items-end gap-2">
             <div className="col-span-3">
               <label className="mb-1 block text-xs">المنتج</label>
-              <select
-                value={item.productId}
-                onChange={(e) => updateItem(index, { productId: e.target.value })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-              >
+              <Select value={item.productId} onChange={(e) => updateItem(index, { productId: e.target.value })}>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-xs">الكمية</label>
@@ -116,20 +112,24 @@ export function ReturnForm({
             </div>
             <div className="col-span-4">
               <label className="mb-1 block text-xs">الحالة</label>
-              <select
+              <Select
                 value={item.condition}
                 onChange={(e) => updateItem(index, { condition: e.target.value as LineItem["condition"] })}
-                className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
               >
                 <option value="resalable">سليم (يرجع للمخزون)</option>
                 <option value="damaged">تالف</option>
                 <option value="expired">منتهي الصلاحية</option>
-              </select>
+              </Select>
             </div>
             <div className="col-span-1">
-              <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
-                حذف
-              </Button>
+              <button
+                type="button"
+                aria-label="حذف"
+                onClick={() => removeItem(index)}
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-foreground/60 transition-colors hover:border-primary hover:text-primary"
+              >
+                ✕
+              </button>
             </div>
           </Card>
         ))}

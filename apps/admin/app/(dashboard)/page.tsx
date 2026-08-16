@@ -70,7 +70,7 @@ export default async function DashboardHomePage() {
   ];
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الرئيسية"]} />}
         title="الرئيسية"

@@ -51,26 +51,28 @@ export default async function ReturnsPage() {
       />
 
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">التاريخ</th>
-              <th>العميل</th>
-              <th>المندوب</th>
-              <th>قيمة التسوية</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(returns ?? []).map((r) => (
-              <tr key={r.id} className="border-b border-border/50">
-                <td className="py-2">{new Date(r.return_date).toLocaleString("ar-SA")}</td>
-                <td>{customerNameById.get(r.customer_id) ?? "—"}</td>
-                <td>{r.rep_id ? repNameById.get(r.rep_id) ?? "—" : "—"}</td>
-                <td>{formatCurrency(r.total_credit_amount)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">التاريخ</th>
+                <th>العميل</th>
+                <th>المندوب</th>
+                <th>قيمة التسوية</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(returns ?? []).map((r) => (
+                <tr key={r.id} className="border-b border-border/50">
+                  <td className="py-2">{new Date(r.return_date).toLocaleString("ar-SA")}</td>
+                  <td>{customerNameById.get(r.customer_id) ?? "—"}</td>
+                  <td>{r.rep_id ? repNameById.get(r.rep_id) ?? "—" : "—"}</td>
+                  <td>{formatCurrency(r.total_credit_amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(returns?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد مرتجعات بعد</p> : null}
       </Card>
 

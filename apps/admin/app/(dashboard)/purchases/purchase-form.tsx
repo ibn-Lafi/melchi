@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Card, Input, useModalClose } from "@system2026/ui";
+import { Button, Card, Input, Select, useModalClose } from "@system2026/ui";
 import type { CatalogProduct } from "../../../lib/get-product-catalog";
 import { createPurchaseInvoiceAction, type PurchaseActionState } from "./actions";
 
@@ -107,13 +107,13 @@ export function PurchaseForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">المورد</label>
-        <select name="supplierId" required className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+        <Select name="supplierId" required>
           {suppliers.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -148,34 +148,29 @@ export function PurchaseForm({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="mb-1 block text-xs">المنتج</label>
-                  <select
+                  <Select
                     value={item.productId}
                     onChange={(e) => {
                       const p = productById.get(e.target.value);
                       updateItem(index, { productId: e.target.value, unitId: p?.units[0]?.unitId ?? "" });
                     }}
-                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
                   >
                     {catalog.map((p) => (
                       <option key={p.productId} value={p.productId}>
                         {p.productName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs">الوحدة</label>
-                  <select
-                    value={item.unitId}
-                    onChange={(e) => updateItem(index, { unitId: e.target.value })}
-                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-                  >
+                  <Select value={item.unitId} onChange={(e) => updateItem(index, { unitId: e.target.value })}>
                     {productById.get(item.productId)?.units.map((u) => (
                       <option key={u.unitId} value={u.unitId}>
                         {u.unitName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             ) : (
@@ -191,32 +186,24 @@ export function PurchaseForm({
                 </div>
                 <div>
                   <label className="mb-1 block text-xs">الفئة (اختياري)</label>
-                  <select
-                    value={item.categoryId}
-                    onChange={(e) => updateItem(index, { categoryId: e.target.value })}
-                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-                  >
+                  <Select value={item.categoryId} onChange={(e) => updateItem(index, { categoryId: e.target.value })}>
                     <option value="">بدون فئة</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs">الوحدة الأساسية</label>
-                  <select
-                    value={item.baseUnitId}
-                    onChange={(e) => updateItem(index, { baseUnitId: e.target.value })}
-                    className="h-10 w-full rounded-md border border-border bg-background px-2 text-sm"
-                  >
+                  <Select value={item.baseUnitId} onChange={(e) => updateItem(index, { baseUnitId: e.target.value })}>
                     {units.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="col-span-2">
                   <label className="mb-1 block text-xs">سعر البيع</label>
@@ -264,11 +251,11 @@ export function PurchaseForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium">حالة الدفع</label>
-        <select name="paymentStatus" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+        <Select name="paymentStatus">
           <option value="unpaid">غير مدفوعة</option>
           <option value="partial">مدفوعة جزئيًا</option>
           <option value="paid">مدفوعة بالكامل</option>
-        </select>
+        </Select>
       </div>
 
       {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}

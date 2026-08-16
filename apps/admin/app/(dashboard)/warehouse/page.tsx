@@ -1,4 +1,4 @@
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -65,18 +65,14 @@ export default async function WarehousePage() {
               <ActionForm action={adjustStockQuantityAction} className="space-y-3">
                 <div>
                   <label className="mb-1 block text-sm">المنتج</label>
-                  <select
-                    name="productId"
-                    required
-                    className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm"
-                  >
+                  <Select name="productId" required>
                     <option value="">اختر منتجًا</option>
                     {(products ?? []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm">الكمية الجديدة</label>
@@ -94,52 +90,56 @@ export default async function WarehousePage() {
 
       <Card>
         <h2 className="mb-3 font-semibold">الأرصدة الحالية</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المنتج</th>
-              <th>الكمية المتاحة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(stock ?? []).map((s) => (
-              <tr key={s.id} className="border-b border-border/50">
-                <td className="py-2">{productNameById.get(s.product_id) ?? "—"}</td>
-                <td>{s.quantity_available}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المنتج</th>
+                <th>الكمية المتاحة</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(stock ?? []).map((s) => (
+                <tr key={s.id} className="border-b border-border/50">
+                  <td className="py-2">{productNameById.get(s.product_id) ?? "—"}</td>
+                  <td>{s.quantity_available}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(stock?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد أرصدة بعد</p> : null}
       </Card>
 
       <Card>
         <h2 className="mb-3 font-semibold">آخر حركات المخزون (المخزن المركزي)</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">التاريخ</th>
-              <th>المنتج</th>
-              <th>النوع</th>
-              <th>التغيير</th>
-              <th>الرصيد بعدها</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(movements ?? []).map((m) => (
-              <tr key={m.id} className="border-b border-border/50">
-                <td className="py-2">{new Date(m.created_at).toLocaleString("ar-SA")}</td>
-                <td>{productNameById.get(m.product_id) ?? "—"}</td>
-                <td>{MOVEMENT_LABELS[m.movement_type] ?? m.movement_type}</td>
-                <td className={m.quantity_change < 0 ? "text-destructive" : "text-primary"}>
-                  {m.quantity_change > 0 ? "+" : ""}
-                  {m.quantity_change}
-                </td>
-                <td>{m.balance_after}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">التاريخ</th>
+                <th>المنتج</th>
+                <th>النوع</th>
+                <th>التغيير</th>
+                <th>الرصيد بعدها</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(movements ?? []).map((m) => (
+                <tr key={m.id} className="border-b border-border/50">
+                  <td className="py-2">{new Date(m.created_at).toLocaleString("ar-SA")}</td>
+                  <td>{productNameById.get(m.product_id) ?? "—"}</td>
+                  <td>{MOVEMENT_LABELS[m.movement_type] ?? m.movement_type}</td>
+                  <td className={m.quantity_change < 0 ? "text-destructive" : "text-primary"}>
+                    {m.quantity_change > 0 ? "+" : ""}
+                    {m.quantity_change}
+                  </td>
+                  <td>{m.balance_after}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(movements?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد حركات بعد</p> : null}
       </Card>
     </div>
