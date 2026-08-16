@@ -154,6 +154,7 @@ export default async function SupplierDetailPage({
     if (!p.purchase_invoice_id) continue;
     paidByInvoice.set(p.purchase_invoice_id, (paidByInvoice.get(p.purchase_invoice_id) ?? 0) + p.amount);
   }
+  const invoiceNumberById = new Map((allPurchaseInvoices ?? []).map((inv) => [inv.id, inv.invoice_number]));
 
   const totalOwed = (allPurchaseInvoices ?? [])
     .filter((inv) => inv.payment_status === "unpaid" || inv.payment_status === "partial")
@@ -520,6 +521,7 @@ export default async function SupplierDetailPage({
             <thead>
               <tr className="border-b border-border text-right text-foreground/60">
                 <th className="py-2">التاريخ</th>
+                <th>رقم الفاتورة</th>
                 <th>المبلغ</th>
                 <th>الطريقة</th>
               </tr>
@@ -528,6 +530,15 @@ export default async function SupplierDetailPage({
               {(payments ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-border/50">
                   <td className="py-2">{new Date(p.payment_date).toLocaleDateString("ar-SA")}</td>
+                  <td>
+                    {p.purchase_invoice_id ? (
+                      <Link href={`/purchases/${p.purchase_invoice_id}`} className="text-primary underline">
+                        #{invoiceNumberById.get(p.purchase_invoice_id) ?? "—"}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td>{formatCurrency(p.amount)}</td>
                   <td>{METHOD_LABELS[p.method] ?? p.method}</td>
                 </tr>
