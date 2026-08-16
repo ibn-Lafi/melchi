@@ -304,7 +304,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                     </td>
                     {canManage ? (
                       <td>
-                        <ModalTrigger label="تعديل" title={`تعديل: ${b.name}`} variant="outline">
+                        <ModalTrigger label="تعديل" title={`تعديل: ${b.name}`} variant="outline" buttonSize="sm">
                           <ActionForm action={updateBranchAction} className="space-y-3">
                             <input type="hidden" name="id" value={b.id} />
                             <input type="hidden" name="customerId" value={customer.id} />

@@ -6,6 +6,7 @@ import {
   createCustomerSchema,
   updateCustomerSchema,
   createCitySchema,
+  updateCitySchema,
   createBranchSchema,
   updateBranchSchema,
 } from "@system2026/validation";
@@ -133,6 +134,24 @@ export async function createCityAction(
 
   const supabase = createSupabaseServerClient();
   const { error } = await supabase.from("cities").insert({ name: parsed.data.name });
+  if (error) return { error: error.message };
+
+  revalidatePath("/customers");
+  return { success: true };
+}
+
+export async function updateCityAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = updateCitySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "بيانات غير صالحة" };
+
+  const supabase = createSupabaseServerClient();
+  const { error } = await supabase.from("cities").update({ name: parsed.data.name }).eq("id", parsed.data.id);
   if (error) return { error: error.message };
 
   revalidatePath("/customers");

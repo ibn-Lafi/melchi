@@ -26,6 +26,11 @@ export const createCitySchema = z.object({
   name: z.string().min(1, "اسم المدينة مطلوب"),
 });
 
+export const updateCitySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "اسم المدينة مطلوب"),
+});
+
 export const branchFieldsSchema = z.object({
   name: z.string().min(1, "اسم الفرع مطلوب"),
   shopName: z.string().optional(),

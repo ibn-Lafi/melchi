@@ -1,4 +1,4 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -53,7 +53,18 @@ export default async function CollectionsPage() {
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الفواتير", "التحصيلات"]} />}
         title="التحصيلات"
+        actions={
+          canManage && (customers?.length ?? 0) > 0 ? (
+            <ModalTrigger label="+ تسجيل تحصيل" title="تسجيل تحصيل">
+              <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
+            </ModalTrigger>
+          ) : null
+        }
       />
+
+      {canManage && (customers?.length ?? 0) === 0 ? (
+        <p className="text-sm text-foreground/60">أضف عميلًا واحدًا على الأقل أولًا لتتمكن من تسجيل تحصيل</p>
+      ) : null}
 
       <Card>
         <h2 className="mb-3 font-semibold">ديون العملاء المستحقة</h2>
@@ -79,17 +90,6 @@ export default async function CollectionsPage() {
           <p className="py-4 text-foreground/60">لا توجد ديون مستحقة حاليًا</p>
         ) : null}
       </Card>
-
-      {canManage ? (
-        <Card>
-          <h2 className="mb-3 font-semibold">تسجيل تحصيل</h2>
-          {(customers?.length ?? 0) === 0 ? (
-            <p className="text-foreground/60">لا يوجد عملاء بعد</p>
-          ) : (
-            <PaymentForm customers={customers ?? []} invoicesByCustomer={invoicesByCustomer} />
-          )}
-        </Card>
-      ) : null}
     </div>
   );
 }

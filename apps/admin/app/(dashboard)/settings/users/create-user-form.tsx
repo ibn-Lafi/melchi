@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Button, Input, useModalClose } from "@system2026/ui";
+import { Button, Input, Select, useModalClose } from "@system2026/ui";
 import {
   ASSIGNABLE_STAFF_ROLES,
   PERMISSION_LABELS,
@@ -50,18 +50,13 @@ export function CreateUserForm() {
       </div>
       <div>
         <label className="mb-1 block text-sm">الدور</label>
-        <select
-          name="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value as StaffRole)}
-          className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm"
-        >
+        <Select name="role" value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
           {ASSIGNABLE_STAFF_ROLES.map((r) => (
             <option key={r} value={r}>
               {STAFF_ROLE_LABELS[r]}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="rounded-xl border border-border bg-muted/40 p-3">

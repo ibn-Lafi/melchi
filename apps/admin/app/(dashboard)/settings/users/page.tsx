@@ -1,4 +1,4 @@
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Badge, Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../../components/action-form";
 import { getCurrentUserRole } from "../../../../lib/get-current-role";
@@ -69,17 +69,14 @@ export default async function UsersPage() {
                         <form action={toggleStaffUserActiveAction}>
                           <input type="hidden" name="userId" value={u.id} />
                           <input type="hidden" name="nextIsActive" value={(!u.is_active).toString()} />
-                          <button
-                            type="submit"
-                            className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
-                          >
+                          <Button type="submit" variant="outline" size="sm">
                             {u.is_active ? "إيقاف" : "تفعيل"}
-                          </button>
+                          </Button>
                         </form>
                       ) : null}
 
                       {u.role !== "admin" ? (
-                        <ModalTrigger label="تعديل" title={`تعديل: ${u.name}`} variant="outline">
+                        <ModalTrigger label="تعديل" title={`تعديل: ${u.name}`} variant="outline" buttonSize="sm">
                           <div className="space-y-6">
                             <div>
                               <h3 className="mb-2 text-sm font-semibold">تغيير الدور</h3>

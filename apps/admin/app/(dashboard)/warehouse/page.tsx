@@ -1,4 +1,4 @@
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -102,7 +102,15 @@ export default async function WarehousePage() {
               {(stock ?? []).map((s) => (
                 <tr key={s.id} className="border-b border-border/50">
                   <td className="py-2">{productNameById.get(s.product_id) ?? "—"}</td>
-                  <td>{s.quantity_available}</td>
+                  <td>
+                    {s.quantity_available === 0 ? (
+                      <Badge variant="danger">نفدت الكمية</Badge>
+                    ) : s.quantity_available < 10 ? (
+                      <Badge variant="warning">{s.quantity_available} — كمية منخفضة</Badge>
+                    ) : (
+                      s.quantity_available
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

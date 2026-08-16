@@ -1,4 +1,4 @@
-import { Card, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -51,7 +51,18 @@ export default async function PayablesPage() {
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "الموردين", "المستحقات"]} />}
         title="مستحقات الموردين"
+        actions={
+          hasPermission(role, "manage_purchases") && (suppliers?.length ?? 0) > 0 ? (
+            <ModalTrigger label="+ تسجيل دفعة" title="تسجيل دفعة لمورد">
+              <SupplierPaymentForm suppliers={suppliers ?? []} invoicesBySupplier={invoicesBySupplier} />
+            </ModalTrigger>
+          ) : null
+        }
       />
+
+      {hasPermission(role, "manage_purchases") && (suppliers?.length ?? 0) === 0 ? (
+        <p className="text-sm text-foreground/60">أضف موردًا واحدًا على الأقل أولًا لتتمكن من تسجيل دفعة</p>
+      ) : null}
 
       <Card>
         <div className="overflow-x-auto">
@@ -76,17 +87,6 @@ export default async function PayablesPage() {
           <p className="py-4 text-foreground/60">لا توجد مستحقات حاليًا</p>
         ) : null}
       </Card>
-
-      {hasPermission(role, "manage_purchases") ? (
-        <Card>
-          <h2 className="mb-3 font-semibold">تسجيل دفعة لمورد</h2>
-          {(suppliers?.length ?? 0) === 0 ? (
-            <p className="text-foreground/60">لا يوجد موردين بعد</p>
-          ) : (
-            <SupplierPaymentForm suppliers={suppliers ?? []} invoicesBySupplier={invoicesBySupplier} />
-          )}
-        </Card>
-      ) : null}
     </div>
   );
 }
