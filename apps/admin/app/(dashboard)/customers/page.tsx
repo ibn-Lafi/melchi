@@ -14,6 +14,8 @@ type Customer = {
   address: string | null;
   notes: string | null;
   google_maps_link: string | null;
+  commercial_registration_number: string | null;
+  vat_number: string | null;
   show_in_store: boolean;
   city_id: string | null;
 };
@@ -48,9 +50,11 @@ export default async function CustomersPage({
   let customersQuery = supabase
     .from("customers")
     .select<
-      "id, name, shop_name, phone, address, notes, google_maps_link, show_in_store, city_id",
+      "id, name, shop_name, phone, address, notes, google_maps_link, commercial_registration_number, vat_number, show_in_store, city_id",
       Customer
-    >("id, name, shop_name, phone, address, notes, google_maps_link, show_in_store, city_id")
+    >(
+      "id, name, shop_name, phone, address, notes, google_maps_link, commercial_registration_number, vat_number, show_in_store, city_id",
+    )
     .order("name");
   if (searchParams.cityId) customersQuery = customersQuery.eq("city_id", searchParams.cityId);
 
@@ -123,6 +127,14 @@ export default async function CustomersPage({
                   <div>
                     <label className="mb-1 block text-sm">رابط جوجل ماب</label>
                     <Input name="googleMapsLink" dir="ltr" placeholder="https://maps.google.com/..." />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">السجل التجاري (اختياري)</label>
+                    <Input name="commercialRegistrationNumber" dir="ltr" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">الرقم الضريبي (اختياري)</label>
+                    <Input name="vatNumber" dir="ltr" />
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="showInStore" /> ظاهر بصفحة نقاط البيع العامة
@@ -246,6 +258,18 @@ export default async function CustomersPage({
                               defaultValue={c.google_maps_link ?? ""}
                               placeholder="https://maps.google.com/..."
                             />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">السجل التجاري (اختياري)</label>
+                            <Input
+                              name="commercialRegistrationNumber"
+                              dir="ltr"
+                              defaultValue={c.commercial_registration_number ?? ""}
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-sm">الرقم الضريبي (اختياري)</label>
+                            <Input name="vatNumber" dir="ltr" defaultValue={c.vat_number ?? ""} />
                           </div>
                           <label className="flex items-center gap-2 text-sm">
                             <input

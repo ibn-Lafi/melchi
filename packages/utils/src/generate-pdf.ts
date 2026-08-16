@@ -5,9 +5,25 @@ export async function generateElementPdf(elementId: string, fileName: string): P
   const element = document.getElementById(elementId);
   if (!element) throw new Error(`العنصر المطلوب تصديره غير موجود: ${elementId}`);
 
+  // انتظار اكتمال تحميل الخطوط قبل الالتقاط — بدون هذا، قد يلتقط html2canvas
+  // العنصر أثناء تبديل الخط الاحتياطي بخط Cairo المتغيّر (خاصة بمتصفحات
+  // WebKit/iOS)، ما يُنتج نصًا عربيًا مشوّهًا (حروف بترتيب/شكل خاطئ).
+  await document.fonts.ready;
+
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
 
-  const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+  // letterRendering: true — يرسم كل حرف بموضعه المقاس على حدة بدل الاعتماد
+  // على تنفيذ html2canvas الداخلي لتشكيل النص المعقّد (bidi/عربي)، وهو الحل
+  // الموثّق لمشكلة تشوّه النص العربي متعدد الأسطر بـ html2canvas خصوصًا مع
+  // خطوط متغيّرة (Variable Fonts) على محرك WebKit. الخيار مدعوم فعليًا وقت
+  // التشغيل لكنه غائب عن تعريفات TypeScript المرفقة بالحزمة (فجوة معروفة
+  // بحزمة html2canvas@1.4.1)، لذا cast محلي موثّق بدل تعطيل الفحص بالكامل.
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    ...({ letterRendering: true } as Record<string, unknown>),
+  });
   const imageData = canvas.toDataURL("image/png");
 
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });

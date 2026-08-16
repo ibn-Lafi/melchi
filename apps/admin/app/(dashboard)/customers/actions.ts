@@ -25,6 +25,8 @@ export async function createCustomerAction(
     cityId: formData.get("cityId") || undefined,
     notes: formData.get("notes") || undefined,
     googleMapsLink: formData.get("googleMapsLink") || undefined,
+    commercialRegistrationNumber: formData.get("commercialRegistrationNumber") || undefined,
+    vatNumber: formData.get("vatNumber") || undefined,
     showInStore: formData.get("showInStore") === "on",
     repIds,
   });
@@ -42,6 +44,8 @@ export async function createCustomerAction(
       city_id: parsed.data.cityId ?? null,
       notes: parsed.data.notes ?? null,
       google_maps_link: parsed.data.googleMapsLink ?? null,
+      commercial_registration_number: parsed.data.commercialRegistrationNumber ?? null,
+      vat_number: parsed.data.vatNumber ?? null,
       show_in_store: parsed.data.showInStore,
     })
     .select<"id", { id: string }>("id")
@@ -75,6 +79,8 @@ export async function updateCustomerAction(
     cityId: formData.get("cityId") || undefined,
     notes: formData.get("notes") || undefined,
     googleMapsLink: formData.get("googleMapsLink") || undefined,
+    commercialRegistrationNumber: formData.get("commercialRegistrationNumber") || undefined,
+    vatNumber: formData.get("vatNumber") || undefined,
     showInStore: formData.get("showInStore") === "on",
     repIds,
   });
@@ -92,6 +98,8 @@ export async function updateCustomerAction(
       city_id: parsed.data.cityId ?? null,
       notes: parsed.data.notes ?? null,
       google_maps_link: parsed.data.googleMapsLink ?? null,
+      commercial_registration_number: parsed.data.commercialRegistrationNumber ?? null,
+      vat_number: parsed.data.vatNumber ?? null,
       show_in_store: parsed.data.showInStore,
     })
     .eq("id", parsed.data.id);

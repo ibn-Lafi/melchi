@@ -6,7 +6,6 @@ export type InvoicePrintItem = {
   productName: string;
   unitName: string;
   quantity: number;
-  listUnitPrice: number;
   unitPrice: number;
   subtotal: number;
 };
@@ -20,6 +19,9 @@ export type InvoicePrintProps = {
   invoiceDate: string;
   paymentMethodLabel: string;
   customerName: string;
+  customerCommercialRegistration?: string | null;
+  customerVatNumber?: string | null;
+  customerAddress?: string | null;
   branchName?: string | null;
   repName?: string | null;
   discountPercentage: number;
@@ -45,6 +47,9 @@ export function InvoicePrintDocument({
   invoiceDate,
   paymentMethodLabel,
   customerName,
+  customerCommercialRegistration,
+  customerVatNumber,
+  customerAddress,
   branchName,
   repName,
   discountPercentage,
@@ -83,11 +88,16 @@ export function InvoicePrintDocument({
         paymentMethodLabel={paymentMethodLabel}
       />
 
-      {/* ===== مصدرة إلى ===== */}
+      {/* ===== مصدرة إلى (بيانات العميل) ===== */}
       <div className="mt-5 border-t border-neutral-200 pt-4">
         <p className="mb-1 font-bold underline decoration-neutral-300 underline-offset-4">مصدرة إلى:</p>
         <p className="font-semibold">{customerName}</p>
         {branchName ? <p className="text-neutral-600">فرع: {branchName}</p> : null}
+        {customerCommercialRegistration ? (
+          <p className="text-neutral-600">السجل التجاري: {customerCommercialRegistration}</p>
+        ) : null}
+        {customerVatNumber ? <p className="text-neutral-600">الرقم الضريبي: {customerVatNumber}</p> : null}
+        {customerAddress ? <p className="text-neutral-600">الموقع: {customerAddress}</p> : null}
       </div>
 
       {/* ===== جدول المنتجات ===== */}
@@ -98,40 +108,38 @@ export function InvoicePrintDocument({
             <th className="text-right font-semibold">الوحدة</th>
             <th className="text-right font-semibold">الكمية</th>
             <th className="text-right font-semibold">السعر</th>
+            <th className="text-right font-semibold">الضريبة</th>
             <th className="pl-2 text-left font-semibold">الإجمالي</th>
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.id} className="border-b border-neutral-200">
-              <td className="py-2 pr-2">{item.productName}</td>
-              <td>{item.unitName}</td>
-              <td>{item.quantity}</td>
-              <td>
-                {formatCurrency(item.unitPrice)}
-                {item.listUnitPrice > item.unitPrice ? (
-                  <span className="mr-1 text-neutral-400 line-through">
-                    {formatCurrency(item.listUnitPrice)}
-                  </span>
-                ) : null}
-              </td>
-              <td className="pl-2 text-left font-medium">{formatCurrency(item.subtotal)}</td>
-            </tr>
-          ))}
+          {items.map((item) => {
+            const itemVat = Math.round(item.subtotal * 0.15 * 100) / 100;
+            return (
+              <tr key={item.id} className="border-b border-neutral-200">
+                <td className="py-2 pr-2">{item.productName}</td>
+                <td>{item.unitName}</td>
+                <td>{item.quantity}</td>
+                <td>{formatCurrency(item.unitPrice)}</td>
+                <td>{formatCurrency(itemVat)}</td>
+                <td className="pl-2 text-left font-medium">{formatCurrency(item.subtotal)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
-      {/* ===== المجاميع — بنفس نمط صندوق جدول المنتجات (حدود وخلفية وخط عريض) ===== */}
-      <div className="mt-5 mr-auto w-72 overflow-hidden rounded-lg border border-neutral-300">
-        <div className="flex justify-between border-b border-neutral-200 bg-neutral-50 px-3 py-2 font-semibold text-neutral-700">
+      {/* ===== المجاميع — بنفس ترتيب/عرض جدول المنتجات، بلا صندوق منفصل ===== */}
+      <div className="mt-2 w-full border-t border-neutral-300">
+        <div className="flex justify-between border-b border-neutral-200 py-2 font-semibold text-neutral-700">
           <span>الإجمالي الفرعي (غير شامل الضريبة)</span>
           <span>{formatCurrency(subtotal)}</span>
         </div>
-        <div className="flex justify-between border-b border-neutral-200 px-3 py-2 font-semibold text-neutral-700">
+        <div className="flex justify-between border-b border-neutral-200 py-2 font-semibold text-neutral-700">
           <span>ضريبة القيمة المضافة (15%)</span>
           <span>{formatCurrency(vatAmount)}</span>
         </div>
-        <div className="flex justify-between bg-neutral-50 px-3 py-2.5 text-sm font-extrabold">
+        <div className="flex justify-between py-2.5 text-sm font-extrabold">
           <span>إجمالي الفاتورة</span>
           <span>{formatCurrency(totalAmount)}</span>
         </div>
@@ -139,7 +147,7 @@ export function InvoicePrintDocument({
 
       {/* ===== تفاصيل الفاتورة (بعد الإجمالي) ===== */}
       {repName || discountPercentage > 0 ? (
-        <div className="mt-5 border-t border-neutral-200 pt-3">
+        <div className="mt-3 border-t border-neutral-200 pt-3">
           <p className="mb-1 font-bold underline decoration-neutral-300 underline-offset-4">تفاصيل الفاتورة:</p>
           {repName ? (
             <p>
@@ -158,8 +166,8 @@ export function InvoicePrintDocument({
 
       {/* ===== ملاحظات ===== */}
       {notes ? (
-        <div className="mt-5 rounded-lg border-r-4 border-neutral-300 bg-neutral-50 px-4 py-3">
-          <p className="mb-1 font-bold text-neutral-700">ملاحظات</p>
+        <div className="mt-5 border-t border-neutral-200 pt-3">
+          <p className="mb-1 font-bold">ملاحظات:</p>
           <p className="whitespace-pre-wrap leading-relaxed text-neutral-700">{notes}</p>
         </div>
       ) : null}
