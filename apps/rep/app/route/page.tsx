@@ -43,13 +43,13 @@ export default async function RoutePage() {
               {customer.address ? (
                 <p className="text-sm text-muted-foreground">{customer.address}</p>
               ) : null}
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <div className="-mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {customer.google_maps_link ? (
                   <a
                     href={customer.google_maps_link}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+                    className="shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
                   >
                     فتح الموقع 📍
                   </a>

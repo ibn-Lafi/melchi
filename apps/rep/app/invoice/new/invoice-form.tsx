@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Button, Card, Input, Select, cn } from "@system2026/ui";
-import { calculateVat, calculateTotalWithVat, formatCurrency } from "@system2026/utils";
+import {
+  calculateVat,
+  calculateTotalWithVat,
+  extractNetPriceFromVatInclusive,
+  formatCurrency,
+} from "@system2026/utils";
 import type { RepCatalogProduct } from "../../../lib/get-rep-catalog";
 import { createInvoiceAction, type CreateInvoiceActionState } from "./actions";
 
@@ -125,11 +130,17 @@ export function InvoiceForm({
     updateItem(index, { unitId, listUnitPrice: unit?.price ?? item.listUnitPrice });
   }
 
+  // سعر الكتالوج (listUnitPrice) شامل الضريبة كما أدخله الأدمن — هذا هو
+  // السعر بعد الخصم الذي يُعرض للمندوب/العميل. المجموع الصافي والضريبة
+  // بالأسفل يُستخرجان من داخل هذا السعر الشامل (net = gross / 1.15)، بنفس
+  // منطق RPC create_invoice_with_stock_check تمامًا (راجع migration
+  // 20260816090000)، حتى تطابق المعاينة هنا الفاتورة الفعلية بعد الحفظ.
   const discountedUnitPrice = (listPrice: number) =>
     Math.round(listPrice * (1 - discountPercentage / 100) * 100) / 100;
 
   const subtotal = items.reduce(
-    (sum, item) => sum + item.quantityInUnit * discountedUnitPrice(item.listUnitPrice),
+    (sum, item) =>
+      sum + item.quantityInUnit * extractNetPriceFromVatInclusive(discountedUnitPrice(item.listUnitPrice)),
     0,
   );
   const vatAmount = calculateVat(subtotal);

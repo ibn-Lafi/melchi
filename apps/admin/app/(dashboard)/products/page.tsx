@@ -103,7 +103,9 @@ export default async function ProductsPage() {
                     <Input name="image" type="file" accept="image/*" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm">سعر البيع</label>
+                    <label className="mb-1 block text-sm">
+                      سعر البيع <span className="text-foreground/50">(شامل ضريبة القيمة المضافة)</span>
+                    </label>
                     <Input name="price" type="number" step="0.01" min="0" required />
                   </div>
                   <div>
@@ -230,7 +232,9 @@ export default async function ProductsPage() {
                             <Input name="image" type="file" accept="image/*" />
                           </div>
                           <div>
-                            <label className="mb-1 block text-sm">سعر البيع</label>
+                            <label className="mb-1 block text-sm">
+                              سعر البيع <span className="text-foreground/50">(شامل ضريبة القيمة المضافة)</span>
+                            </label>
                             <Input
                               name="price"
                               type="number"

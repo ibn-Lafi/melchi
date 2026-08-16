@@ -120,9 +120,12 @@ select pg_temp.assert_true(
   'invoice_number الأول يجب أن يكون 1'
 );
 select pg_temp.assert_true(
-  (select (subtotal, vat_amount, total_amount) = (100, 15, 115)
+  (select (subtotal, vat_amount, total_amount) = (87, 13.05, 100.05)
      from public.invoices where id = :'invoice1_invoice_id'),
-  'مجاميع الفاتورة (subtotal/vat/total) يجب أن تكون 100/15/115'
+  -- سعر المنتج 5 شامل الضريبة (raجع migration 20260816090000): صافي
+  -- الوحدة = 5/1.15 = 4.35، × 20 = 87 subtotal، والضريبة 13.05، والإجمالي
+  -- 100.05 (يطابق 20×5 تقريبًا، وليس 100+15%)
+  'مجاميع الفاتورة (subtotal/vat/total) يجب أن تكون 87/13.05/100.05 (سعر شامل الضريبة)'
 );
 select pg_temp.assert_true(
   (select status from public.invoices where id = :'invoice1_invoice_id') = 'unpaid',
@@ -319,13 +322,16 @@ select pg_temp.assert_true(
   'نسبة الخصم المحفوظة بالفاتورة يجب أن تكون 25'
 );
 select pg_temp.assert_true(
-  (select (subtotal, vat_amount, total_amount) = (15, 2.25, 17.25)
+  (select (subtotal, vat_amount, total_amount) = (13.04, 1.96, 15.00)
      from public.invoices where id = :'invoice5_invoice_id'),
-  'مع خصم 25% على سعر 5: السعر الفعلي 3.75 × 4 = 15، والضريبة 2.25، والإجمالي 17.25'
+  -- سعر 5 شامل الضريبة، بعد خصم 25% = 3.75 (شامل) للوحدة — يُستخرج منها
+  -- صافي 3.75/1.15 = 3.26، × 4 = 13.04 subtotal، وضريبة 1.96، وإجمالي 15.00
+  -- (يطابق 4×3.75 تمامًا، وهو السعر الذي يدفعه العميل فعليًا)
+  'مع خصم 25% على سعر 5 شامل الضريبة: صافي 3.26 × 4 = 13.04، والضريبة 1.96، والإجمالي 15.00'
 );
 select pg_temp.assert_true(
-  (select unit_price from public.invoice_items where invoice_id = :'invoice5_invoice_id') = 3.75,
-  'سعر الوحدة المحفوظ ببند الفاتورة يجب أن يعكس الخصم (5 × (1-25%) = 3.75)'
+  (select unit_price from public.invoice_items where invoice_id = :'invoice5_invoice_id') = 3.26,
+  'سعر الوحدة الصافي المحفوظ ببند الفاتورة (3.75 شامل بعد الخصم ÷ 1.15 = 3.26)'
 );
 
 do $$
