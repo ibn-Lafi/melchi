@@ -88,7 +88,16 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
       .eq("invoice_id", invoice.id),
     supabase
       .from("customers")
-      .select<"name, shop_name", { name: string; shop_name: string | null }>("name, shop_name")
+      .select<
+        "name, shop_name, commercial_registration_number, vat_number, address",
+        {
+          name: string;
+          shop_name: string | null;
+          commercial_registration_number: string | null;
+          vat_number: string | null;
+          address: string | null;
+        }
+      >("name, shop_name, commercial_registration_number, vat_number, address")
       .eq("id", invoice.customer_id)
       .single(),
     supabase.from("products").select<"id, name", { id: string; name: string }>("id, name"),
@@ -128,10 +137,6 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
     unitName: unitNameById.get(item.unit_id) ?? "—",
     quantity: item.quantity_in_unit,
     unitPrice: item.unit_price,
-    listUnitPrice:
-      invoice.discount_percentage > 0
-        ? Math.round((item.unit_price / (1 - invoice.discount_percentage / 100)) * 100) / 100
-        : item.unit_price,
     subtotal: item.subtotal,
   }));
 
@@ -180,6 +185,9 @@ export default async function RepInvoiceDetailPage({ params }: { params: { id: s
           invoiceDate={invoice.invoice_date}
           paymentMethodLabel={PAYMENT_LABELS[invoice.payment_method] ?? invoice.payment_method}
           customerName={customer?.shop_name ?? customer?.name ?? "—"}
+          customerCommercialRegistration={customer?.commercial_registration_number}
+          customerVatNumber={customer?.vat_number}
+          customerAddress={customer?.address}
           branchName={branch?.name}
           discountPercentage={invoice.discount_percentage}
           items={printItems}

@@ -231,6 +231,8 @@ export type Database = {
           address: string | null;
           notes: string | null;
           google_maps_link: string | null;
+          commercial_registration_number: string | null;
+          vat_number: string | null;
           show_in_store: boolean;
           city_id: string | null;
           created_at: string;
@@ -244,6 +246,8 @@ export type Database = {
           address?: string | null;
           notes?: string | null;
           google_maps_link?: string | null;
+          commercial_registration_number?: string | null;
+          vat_number?: string | null;
           show_in_store?: boolean;
           city_id?: string | null;
         }

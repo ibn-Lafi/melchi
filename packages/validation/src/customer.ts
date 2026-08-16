@@ -8,6 +8,8 @@ export const createCustomerSchema = z.object({
   cityId: z.string().uuid().optional(),
   notes: z.string().optional(),
   googleMapsLink: z.string().url("رابط جوجل ماب غير صالح").optional(),
+  commercialRegistrationNumber: z.string().optional(),
+  vatNumber: z.string().optional(),
   showInStore: z.boolean().default(false),
   repIds: z.array(z.string().uuid()).default([]),
 });

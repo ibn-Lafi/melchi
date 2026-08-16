@@ -15,6 +15,8 @@ type CustomerDetail = {
   address: string | null;
   notes: string | null;
   google_maps_link: string | null;
+  commercial_registration_number: string | null;
+  vat_number: string | null;
   show_in_store: boolean;
   city_id: string | null;
 };
@@ -124,9 +126,11 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   const { data: customer } = await supabase
     .from("customers")
     .select<
-      "id, name, shop_name, phone, address, notes, google_maps_link, show_in_store, city_id",
+      "id, name, shop_name, phone, address, notes, google_maps_link, commercial_registration_number, vat_number, show_in_store, city_id",
       CustomerDetail
-    >("id, name, shop_name, phone, address, notes, google_maps_link, show_in_store, city_id")
+    >(
+      "id, name, shop_name, phone, address, notes, google_maps_link, commercial_registration_number, vat_number, show_in_store, city_id",
+    )
     .eq("id", params.id)
     .single();
 
@@ -211,6 +215,14 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
             <p>
               <span className="text-foreground/60">المدينة: </span>
               {customer.city_id ? cityNameById.get(customer.city_id) ?? "—" : "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">السجل التجاري: </span>
+              {customer.commercial_registration_number ?? "—"}
+            </p>
+            <p>
+              <span className="text-foreground/60">الرقم الضريبي: </span>
+              {customer.vat_number ?? "—"}
             </p>
             <p>
               <span className="text-foreground/60">ملاحظات: </span>
