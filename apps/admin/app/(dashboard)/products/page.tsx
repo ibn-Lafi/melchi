@@ -1,4 +1,4 @@
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -30,8 +30,6 @@ type ProductRow = {
 type CategoryRow = { id: string; name: string; image_url: string | null };
 type UnitRow = { id: string; name: string };
 type StockRow = { product_id: string; quantity_available: number };
-
-const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm";
 
 export default async function ProductsPage() {
   const supabase = createSupabaseServerClient();
@@ -114,25 +112,25 @@ export default async function ProductsPage() {
                   </div>
                   <div>
                     <label className="mb-1 block text-sm">الفئة</label>
-                    <select name="categoryId" className={SELECT_CLASS}>
+                    <Select name="categoryId">
                       <option value="">بدون فئة</option>
                       {(categories ?? []).map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <div>
                     <label className="mb-1 block text-sm">الوحدة الأساسية</label>
-                    <select name="baseUnitId" required className={SELECT_CLASS}>
+                    <Select name="baseUnitId" required>
                       <option value="">اختر وحدة</option>
                       {(units ?? []).map((u) => (
                         <option key={u.id} value={u.id}>
                           {u.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" name="visibleInStore" defaultChecked /> ظاهر بالمتجر
@@ -203,7 +201,7 @@ export default async function ProductsPage() {
                         <input type="hidden" name="nextIsActive" value={(!p.is_active).toString()} />
                         <button
                           type="submit"
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
+                          className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
                         >
                           {p.is_active ? "أرشفة" : "إعادة تفعيل"}
                         </button>
@@ -260,34 +258,25 @@ export default async function ProductsPage() {
                           </div>
                           <div>
                             <label className="mb-1 block text-sm">الفئة</label>
-                            <select
-                              name="categoryId"
-                              defaultValue={p.category_id ?? ""}
-                              className={SELECT_CLASS}
-                            >
+                            <Select name="categoryId" defaultValue={p.category_id ?? ""}>
                               <option value="">بدون فئة</option>
                               {(categories ?? []).map((c) => (
                                 <option key={c.id} value={c.id}>
                                   {c.name}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           </div>
                           <div>
                             <label className="mb-1 block text-sm">الوحدة الأساسية</label>
-                            <select
-                              name="baseUnitId"
-                              required
-                              defaultValue={p.base_unit_id}
-                              className={SELECT_CLASS}
-                            >
+                            <Select name="baseUnitId" required defaultValue={p.base_unit_id}>
                               <option value="">اختر وحدة</option>
                               {(units ?? []).map((u) => (
                                 <option key={u.id} value={u.id}>
                                   {u.name}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           </div>
                           <label className="flex items-center gap-2 text-sm">
                             <input

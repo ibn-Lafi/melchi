@@ -62,28 +62,34 @@ export default async function PurchasesPage() {
       ) : null}
 
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">التاريخ</th>
-              <th>المورد</th>
-              <th>الإجمالي</th>
-              <th>حالة الدفع</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(purchaseInvoices ?? []).map((inv) => (
-              <tr key={inv.id} className="border-b border-border/50">
-                <td className="py-2">{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
-                <td>{supplierNameById.get(inv.supplier_id) ?? "—"}</td>
-                <td>{formatCurrency(inv.total_amount)}</td>
-                <td>
-                  {inv.payment_status === "paid" ? "مدفوعة" : inv.payment_status === "partial" ? "جزئي" : "غير مدفوعة"}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">التاريخ</th>
+                <th>المورد</th>
+                <th>الإجمالي</th>
+                <th>حالة الدفع</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(purchaseInvoices ?? []).map((inv) => (
+                <tr key={inv.id} className="border-b border-border/50">
+                  <td className="py-2">{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
+                  <td>{supplierNameById.get(inv.supplier_id) ?? "—"}</td>
+                  <td>{formatCurrency(inv.total_amount)}</td>
+                  <td>
+                    {inv.payment_status === "paid"
+                      ? "مدفوعة"
+                      : inv.payment_status === "partial"
+                        ? "جزئي"
+                        : "غير مدفوعة"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(purchaseInvoices?.length ?? 0) === 0 ? (
           <p className="py-4 text-foreground/60">لا توجد فواتير شراء بعد</p>
         ) : null}

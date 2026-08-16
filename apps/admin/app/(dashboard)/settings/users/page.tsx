@@ -1,4 +1,4 @@
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../../components/action-form";
 import { getCurrentUserRole } from "../../../../lib/get-current-role";
@@ -13,8 +13,6 @@ import { CreateUserForm } from "./create-user-form";
 import { changeUserPasswordAction, changeUserRoleAction, toggleStaffUserActiveAction } from "./actions";
 
 type StaffUser = { id: string; name: string; email: string | null; role: StaffRole; is_active: boolean };
-
-const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm";
 
 export default async function UsersPage() {
   const supabase = createSupabaseServerClient();
@@ -73,7 +71,7 @@ export default async function UsersPage() {
                           <input type="hidden" name="nextIsActive" value={(!u.is_active).toString()} />
                           <button
                             type="submit"
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
+                            className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
                           >
                             {u.is_active ? "إيقاف" : "تفعيل"}
                           </button>
@@ -87,13 +85,13 @@ export default async function UsersPage() {
                               <h3 className="mb-2 text-sm font-semibold">تغيير الدور</h3>
                               <ActionForm action={changeUserRoleAction} submitLabel="حفظ الدور">
                                 <input type="hidden" name="userId" value={u.id} />
-                                <select name="role" defaultValue={u.role} className={SELECT_CLASS}>
+                                <Select name="role" defaultValue={u.role}>
                                   {ASSIGNABLE_STAFF_ROLES.map((r) => (
                                     <option key={r} value={r}>
                                       {STAFF_ROLE_LABELS[r]}
                                     </option>
                                   ))}
-                                </select>
+                                </Select>
                               </ActionForm>
                             </div>
                             <div className="border-t border-border pt-4">

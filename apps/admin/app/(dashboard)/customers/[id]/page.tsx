@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Badge, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../../components/action-form";
@@ -34,18 +34,16 @@ type BranchRow = {
 
 type City = { id: string; name: string };
 
-const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm";
-
 function CitySelect({ cities, defaultValue }: { cities: City[]; defaultValue?: string | null }) {
   return (
-    <select name="cityId" defaultValue={defaultValue ?? ""} className={SELECT_CLASS}>
+    <Select name="cityId" defaultValue={defaultValue ?? ""}>
       <option value="">بدون مدينة</option>
       {cities.map((city) => (
         <option key={city.id} value={city.id}>
           {city.name}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -325,55 +323,59 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
       <Card>
         <h2 className="mb-3 font-semibold">الفواتير</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">رقم الفاتورة</th>
-              <th>التاريخ</th>
-              <th>الإجمالي</th>
-              <th>المتبقي</th>
-              <th>الحالة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(invoices ?? []).map((inv) => (
-              <tr key={inv.id} className="border-b border-border/50">
-                <td className="py-2">#{inv.invoice_number}</td>
-                <td>{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
-                <td>{formatCurrency(inv.total_amount)}</td>
-                <td>
-                  {inv.status === "unpaid" || inv.status === "partial"
-                    ? formatCurrency(inv.total_amount - (paidByInvoice.get(inv.id) ?? 0))
-                    : "—"}
-                </td>
-                <td>{STATUS_LABELS[inv.status] ?? inv.status}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">رقم الفاتورة</th>
+                <th>التاريخ</th>
+                <th>الإجمالي</th>
+                <th>المتبقي</th>
+                <th>الحالة</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(invoices ?? []).map((inv) => (
+                <tr key={inv.id} className="border-b border-border/50">
+                  <td className="py-2">#{inv.invoice_number}</td>
+                  <td>{new Date(inv.invoice_date).toLocaleDateString("ar-SA")}</td>
+                  <td>{formatCurrency(inv.total_amount)}</td>
+                  <td>
+                    {inv.status === "unpaid" || inv.status === "partial"
+                      ? formatCurrency(inv.total_amount - (paidByInvoice.get(inv.id) ?? 0))
+                      : "—"}
+                  </td>
+                  <td>{STATUS_LABELS[inv.status] ?? inv.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(invoices?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد فواتير بعد</p> : null}
       </Card>
 
       <Card>
         <h2 className="mb-3 font-semibold">الدفعات المسددة</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">التاريخ</th>
-              <th>المبلغ</th>
-              <th>الطريقة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(payments ?? []).map((p) => (
-              <tr key={p.id} className="border-b border-border/50">
-                <td className="py-2">{new Date(p.payment_date).toLocaleDateString("ar-SA")}</td>
-                <td>{formatCurrency(p.amount)}</td>
-                <td>{METHOD_LABELS[p.method] ?? p.method}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">التاريخ</th>
+                <th>المبلغ</th>
+                <th>الطريقة</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(payments ?? []).map((p) => (
+                <tr key={p.id} className="border-b border-border/50">
+                  <td className="py-2">{new Date(p.payment_date).toLocaleDateString("ar-SA")}</td>
+                  <td>{formatCurrency(p.amount)}</td>
+                  <td>{METHOD_LABELS[p.method] ?? p.method}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {(payments?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا توجد دفعات بعد</p> : null}
       </Card>
     </div>

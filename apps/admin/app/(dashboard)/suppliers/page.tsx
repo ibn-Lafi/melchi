@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, Input, LinkButton, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { formatCurrency } from "@system2026/utils";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
@@ -46,18 +46,8 @@ export default async function SuppliersPage() {
         subtitle="متابعة الموردين وفواتير الشراء ومستحقاتهم"
         actions={
           <>
-            <Link
-              href="/purchases"
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              فواتير الشراء
-            </Link>
-            <Link
-              href="/payables"
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              مستحقات الموردين
-            </Link>
+            <LinkButton href="/purchases">فواتير الشراء</LinkButton>
+            <LinkButton href="/payables">مستحقات الموردين</LinkButton>
             {hasPermission(role, "manage_purchases") ? (
               <ModalTrigger label="+ إضافة مورد" title="إضافة مورد">
                 <ActionForm action={createSupplierAction} className="space-y-3">
@@ -85,41 +75,42 @@ export default async function SuppliersPage() {
       />
 
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">الاسم</th>
-              <th>الجوال</th>
-              <th>إجمالي المشتريات</th>
-              <th>المسدد</th>
-              <th>المستحق</th>
-              <th>كشف الحساب</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(suppliers ?? []).map((s) => {
-              const purchased = totalPurchasedBySupplier.get(s.id) ?? 0;
-              const paid = totalPaidBySupplier.get(s.id) ?? 0;
-              return (
-                <tr key={s.id} className="border-b border-border/50">
-                  <td className="py-2">{s.name}</td>
-                  <td>{s.phone ?? "—"}</td>
-                  <td>{formatCurrency(purchased)}</td>
-                  <td>{formatCurrency(paid)}</td>
-                  <td className="font-semibold">{formatCurrency(purchased - paid)}</td>
-                  <td>
-                    <Link href={`/suppliers/${s.id}`} className="text-primary underline">
-                      عرض
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">الاسم</th>
+                <th>الجوال</th>
+                <th>إجمالي المشتريات</th>
+                <th>المسدد</th>
+                <th>المستحق</th>
+                <th>كشف الحساب</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(suppliers ?? []).map((s) => {
+                const purchased = totalPurchasedBySupplier.get(s.id) ?? 0;
+                const paid = totalPaidBySupplier.get(s.id) ?? 0;
+                return (
+                  <tr key={s.id} className="border-b border-border/50">
+                    <td className="py-2">{s.name}</td>
+                    <td>{s.phone ?? "—"}</td>
+                    <td>{formatCurrency(purchased)}</td>
+                    <td>{formatCurrency(paid)}</td>
+                    <td className="font-semibold">{formatCurrency(purchased - paid)}</td>
+                    <td>
+                      <Link href={`/suppliers/${s.id}`} className="text-primary underline">
+                        عرض
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {(suppliers?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد موردين بعد</p> : null}
       </Card>
-
     </div>
   );
 }

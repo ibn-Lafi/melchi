@@ -56,55 +56,56 @@ export default async function RepsPage() {
       />
 
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">الاسم</th>
-              <th>البريد الإلكتروني</th>
-              <th>الجوال</th>
-              <th>إجمالي المبيعات</th>
-              <th>إجمالي الربح</th>
-              <th>الحالة</th>
-              {canManage ? <th></th> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {(reps ?? []).map((rep) => {
-              const stats = profitSummary.byRep.get(rep.id);
-              return (
-                <tr key={rep.id} className="border-b border-border/50">
-                  <td className="py-2">{rep.name}</td>
-                  <td dir="ltr">{rep.email ?? "—"}</td>
-                  <td>{rep.phone ?? "—"}</td>
-                  <td>{formatCurrency(stats?.sales ?? 0)}</td>
-                  <td>{formatCurrency(stats?.profit ?? 0)}</td>
-                  <td>
-                    <Badge variant={rep.is_active ? "success" : "muted"}>
-                      {rep.is_active ? "نشط" : "موقوف"}
-                    </Badge>
-                  </td>
-                  {canManage ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>الجوال</th>
+                <th>إجمالي المبيعات</th>
+                <th>إجمالي الربح</th>
+                <th>الحالة</th>
+                {canManage ? <th></th> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {(reps ?? []).map((rep) => {
+                const stats = profitSummary.byRep.get(rep.id);
+                return (
+                  <tr key={rep.id} className="border-b border-border/50">
+                    <td className="py-2">{rep.name}</td>
+                    <td dir="ltr">{rep.email ?? "—"}</td>
+                    <td>{rep.phone ?? "—"}</td>
+                    <td>{formatCurrency(stats?.sales ?? 0)}</td>
+                    <td>{formatCurrency(stats?.profit ?? 0)}</td>
                     <td>
-                      <form action={toggleRepActiveAction}>
-                        <input type="hidden" name="repId" value={rep.id} />
-                        <input type="hidden" name="nextIsActive" value={(!rep.is_active).toString()} />
-                        <button
-                          type="submit"
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
-                        >
-                          {rep.is_active ? "إيقاف" : "تفعيل"}
-                        </button>
-                      </form>
+                      <Badge variant={rep.is_active ? "success" : "muted"}>
+                        {rep.is_active ? "نشط" : "موقوف"}
+                      </Badge>
                     </td>
-                  ) : null}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    {canManage ? (
+                      <td>
+                        <form action={toggleRepActiveAction}>
+                          <input type="hidden" name="repId" value={rep.id} />
+                          <input type="hidden" name="nextIsActive" value={(!rep.is_active).toString()} />
+                          <button
+                            type="submit"
+                            className="inline-flex h-9 items-center justify-center rounded-full border border-border px-3 text-xs font-medium transition-colors hover:bg-muted"
+                          >
+                            {rep.is_active ? "إيقاف" : "تفعيل"}
+                          </button>
+                        </form>
+                      </td>
+                    ) : null}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {(reps?.length ?? 0) === 0 ? <p className="py-4 text-foreground/60">لا يوجد مناديب بعد</p> : null}
       </Card>
-
     </div>
   );
 }

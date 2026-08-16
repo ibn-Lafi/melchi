@@ -57,22 +57,24 @@ export default async function CollectionsPage() {
 
       <Card>
         <h2 className="mb-3 font-semibold">ديون العملاء المستحقة</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">العميل</th>
-              <th>المبلغ المستحق</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customersWithDebt.map(([customerId, debt]) => (
-              <tr key={customerId} className="border-b border-border/50">
-                <td className="py-2">{customerNameById.get(customerId) ?? "—"}</td>
-                <td className="font-semibold">{formatCurrency(debt)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">العميل</th>
+                <th>المبلغ المستحق</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {customersWithDebt.map(([customerId, debt]) => (
+                <tr key={customerId} className="border-b border-border/50">
+                  <td className="py-2">{customerNameById.get(customerId) ?? "—"}</td>
+                  <td className="font-semibold">{formatCurrency(debt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {customersWithDebt.length === 0 ? (
           <p className="py-4 text-foreground/60">لا توجد ديون مستحقة حاليًا</p>
         ) : null}

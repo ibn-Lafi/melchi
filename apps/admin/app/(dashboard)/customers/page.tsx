@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Button, Card, Input, ModalTrigger, PageHeader, Breadcrumb, Select } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -23,18 +23,16 @@ type CustomerRepRow = { customer_id: string; rep_id: string };
 type Rep = { id: string; name: string };
 type City = { id: string; name: string };
 
-const SELECT_CLASS = "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm";
-
 function CitySelect({ cities, defaultValue }: { cities: City[]; defaultValue?: string | null }) {
   return (
-    <select name="cityId" defaultValue={defaultValue ?? ""} className={SELECT_CLASS}>
+    <Select name="cityId" defaultValue={defaultValue ?? ""}>
       <option value="">بدون مدينة</option>
       {cities.map((city) => (
         <option key={city.id} value={city.id}>
           {city.name}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -160,22 +158,18 @@ export default async function CustomersPage({
         <form className="mb-4 flex flex-wrap items-end gap-3 text-sm">
           <div>
             <label className="mb-1 block text-xs text-foreground/60">فلترة حسب المدينة</label>
-            <select
-              name="cityId"
-              defaultValue={searchParams.cityId ?? ""}
-              className="h-10 rounded-md border border-border bg-background px-3"
-            >
+            <Select name="cityId" defaultValue={searchParams.cityId ?? ""} className="w-auto">
               <option value="">كل المدن</option>
               {(cities ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
-          <button type="submit" className="h-10 rounded-md border border-border px-3">
+          <Button type="submit" variant="outline">
             فلترة
-          </button>
+          </Button>
         </form>
 
         <div className="overflow-x-auto">

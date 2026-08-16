@@ -100,7 +100,7 @@ export default async function ReportsPage({
   monthAgo.setDate(monthAgo.getDate() - 29);
 
   const periodLinkClass =
-    "inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-medium transition-colors hover:bg-muted";
+    "inline-flex h-9 items-center justify-center rounded-full border border-border px-4 text-sm font-medium transition-colors hover:bg-muted";
 
   return (
     <div className="space-y-6">
@@ -130,14 +130,14 @@ export default async function ReportsPage({
               type="date"
               name="from"
               defaultValue={searchParams.from ?? ""}
-              className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
+              className="h-9 rounded-full border border-border bg-background px-3 text-sm"
             />
             <span className="text-foreground/50">إلى</span>
             <input
               type="date"
               name="to"
               defaultValue={searchParams.to ?? ""}
-              className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
+              className="h-9 rounded-full border border-border bg-background px-3 text-sm"
             />
             <button type="submit" className={periodLinkClass}>
               تطبيق
@@ -204,28 +204,30 @@ export default async function ReportsPage({
 
       <Card>
         <h2 className="mb-3 font-semibold">تفاصيل أفضل المنتجات ربحًا</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المنتج</th>
-              <th>الكمية المباعة</th>
-              <th>المبيعات</th>
-              <th>الربح</th>
-              <th>هامش الربح</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topProductsByProfit.map(([productId, stats]) => (
-              <tr key={productId} className="border-b border-border/50">
-                <td className="py-2">{productNameById.get(productId) ?? "—"}</td>
-                <td>{stats.quantity}</td>
-                <td>{formatCurrency(stats.sales)}</td>
-                <td>{formatCurrency(stats.profit)}</td>
-                <td>{stats.sales > 0 ? `${((stats.profit / stats.sales) * 100).toFixed(1)}%` : "—"}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المنتج</th>
+                <th>الكمية المباعة</th>
+                <th>المبيعات</th>
+                <th>الربح</th>
+                <th>هامش الربح</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {topProductsByProfit.map(([productId, stats]) => (
+                <tr key={productId} className="border-b border-border/50">
+                  <td className="py-2">{productNameById.get(productId) ?? "—"}</td>
+                  <td>{stats.quantity}</td>
+                  <td>{formatCurrency(stats.sales)}</td>
+                  <td>{formatCurrency(stats.profit)}</td>
+                  <td>{stats.sales > 0 ? `${((stats.profit / stats.sales) * 100).toFixed(1)}%` : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {topProductsByProfit.length === 0 ? <p className="py-4 text-foreground/60">لا توجد بيانات لهذه الفترة</p> : null}
       </Card>
 
@@ -244,24 +246,26 @@ export default async function ReportsPage({
 
       <Card>
         <h2 className="mb-3 font-semibold">تفاصيل الربح حسب المندوب</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المندوب</th>
-              <th>المبيعات</th>
-              <th>الربح</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topReps.map(([repId, stats]) => (
-              <tr key={repId} className="border-b border-border/50">
-                <td className="py-2">{repNameById.get(repId) ?? "—"}</td>
-                <td>{formatCurrency(stats.sales)}</td>
-                <td>{formatCurrency(stats.profit)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المندوب</th>
+                <th>المبيعات</th>
+                <th>الربح</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {topReps.map(([repId, stats]) => (
+                <tr key={repId} className="border-b border-border/50">
+                  <td className="py-2">{repNameById.get(repId) ?? "—"}</td>
+                  <td>{formatCurrency(stats.sales)}</td>
+                  <td>{formatCurrency(stats.profit)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {topReps.length === 0 ? <p className="py-4 text-foreground/60">لا توجد بيانات لهذه الفترة</p> : null}
       </Card>
 
@@ -271,43 +275,47 @@ export default async function ReportsPage({
           إجمالي قيمة الخسائر بسعر التكلفة (كل الفترات):{" "}
           <span className="font-bold">{formatCurrency(totalLossValue)}</span>
         </p>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المنتج</th>
-              <th>قيمة الخسارة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from(lossByProduct.entries()).map(([productId, value]) => (
-              <tr key={productId} className="border-b border-border/50">
-                <td className="py-2">{productNameById.get(productId) ?? "—"}</td>
-                <td>{formatCurrency(value)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المنتج</th>
+                <th>قيمة الخسارة</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Array.from(lossByProduct.entries()).map(([productId, value]) => (
+                <tr key={productId} className="border-b border-border/50">
+                  <td className="py-2">{productNameById.get(productId) ?? "—"}</td>
+                  <td>{formatCurrency(value)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {lossByProduct.size === 0 ? <p className="py-4 text-foreground/60">لا توجد خسائر مسجّلة</p> : null}
       </Card>
 
       <Card>
         <h2 className="mb-3 font-semibold">تقرير قرب انتهاء الصلاحية (خلال {thresholdDays} يوم)</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المنتج</th>
-              <th>تاريخ الانتهاء</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expiringProducts.map((p) => (
-              <tr key={p.id} className="border-b border-border/50">
-                <td className="py-2">{p.name}</td>
-                <td>{p.expiry_date}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المنتج</th>
+                <th>تاريخ الانتهاء</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {expiringProducts.map((p) => (
+                <tr key={p.id} className="border-b border-border/50">
+                  <td className="py-2">{p.name}</td>
+                  <td>{p.expiry_date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {expiringProducts.length === 0 ? (
           <p className="py-4 text-foreground/60">لا توجد منتجات قريبة من الانتهاء</p>
         ) : null}

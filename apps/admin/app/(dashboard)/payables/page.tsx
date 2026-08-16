@@ -54,22 +54,24 @@ export default async function PayablesPage() {
       />
 
       <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-right text-foreground/60">
-              <th className="py-2">المورد</th>
-              <th>المستحق</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suppliersWithDebt.map(([supplierId, owed]) => (
-              <tr key={supplierId} className="border-b border-border/50">
-                <td className="py-2">{supplierNameById.get(supplierId) ?? "—"}</td>
-                <td className="font-semibold">{formatCurrency(owed)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-right text-foreground/60">
+                <th className="py-2">المورد</th>
+                <th>المستحق</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {suppliersWithDebt.map(([supplierId, owed]) => (
+                <tr key={supplierId} className="border-b border-border/50">
+                  <td className="py-2">{supplierNameById.get(supplierId) ?? "—"}</td>
+                  <td className="font-semibold">{formatCurrency(owed)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {suppliersWithDebt.length === 0 ? (
           <p className="py-4 text-foreground/60">لا توجد مستحقات حاليًا</p>
         ) : null}
