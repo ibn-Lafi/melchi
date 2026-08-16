@@ -75,21 +75,109 @@ export default async function ProductsPage() {
         actions={
           canManage ? (
             <>
-              <ModalTrigger label="+ فئة" title="إضافة فئة" variant="outline">
-                <ActionForm action={createCategoryAction} className="space-y-3">
-                  <Input name="name" placeholder="اسم الفئة" required />
-                  <div>
-                    <label className="mb-1 block text-sm">
-                      صورة الفئة (تظهر بدائرة اختيار الفئة بالمتجر)
-                    </label>
-                    <Input name="image" type="file" accept="image/*" />
+              <ModalTrigger label="+ فئة" title="الفئات" variant="outline" size="lg">
+                <div className="space-y-6">
+                  <ActionForm action={createCategoryAction} className="space-y-3">
+                    <h3 className="text-sm font-semibold">إضافة فئة جديدة</h3>
+                    <Input name="name" placeholder="اسم الفئة" required />
+                    <div>
+                      <label className="mb-1 block text-sm">
+                        صورة الفئة (تظهر بدائرة اختيار الفئة بالمتجر)
+                      </label>
+                      <Input name="image" type="file" accept="image/*" />
+                    </div>
+                  </ActionForm>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold">الفئات الحالية</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {(categories ?? []).map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
+                        >
+                          {c.image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={c.image_url}
+                              alt={c.name}
+                              className="h-12 w-12 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
+                          )}
+                          <p className="flex-1 truncate font-medium">{c.name}</p>
+                          <ModalTrigger
+                            label="تعديل"
+                            title={`تعديل فئة: ${c.name}`}
+                            variant="outline"
+                            buttonSize="sm"
+                          >
+                            <ActionForm action={updateCategoryAction} className="space-y-3">
+                              <input type="hidden" name="id" value={c.id} />
+                              <div>
+                                <label className="mb-1 block text-sm">الاسم</label>
+                                <Input name="name" defaultValue={c.name} required />
+                              </div>
+                              <div>
+                                <label className="mb-1 block text-sm">الصورة</label>
+                                {c.image_url ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={c.image_url}
+                                    alt={c.name}
+                                    className="mb-2 h-16 w-16 rounded-full object-cover"
+                                  />
+                                ) : null}
+                                <Input name="image" type="file" accept="image/*" />
+                              </div>
+                            </ActionForm>
+                          </ModalTrigger>
+                        </div>
+                      ))}
+                    </div>
+                    {(categories?.length ?? 0) === 0 ? (
+                      <p className="py-4 text-foreground/60">لا توجد فئات بعد</p>
+                    ) : null}
                   </div>
-                </ActionForm>
+                </div>
               </ModalTrigger>
-              <ModalTrigger label="+ وحدة قياس" title="إضافة وحدة قياس" variant="outline">
-                <ActionForm action={createUnitAction} className="space-y-3">
-                  <Input name="name" placeholder="مثال: كرتون" required />
-                </ActionForm>
+              <ModalTrigger label="+ وحدة قياس" title="وحدات القياس" variant="outline" size="lg">
+                <div className="space-y-6">
+                  <ActionForm action={createUnitAction} className="space-y-3">
+                    <h3 className="text-sm font-semibold">إضافة وحدة قياس جديدة</h3>
+                    <Input name="name" placeholder="مثال: كرتون" required />
+                  </ActionForm>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold">الوحدات الحالية</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {(units ?? []).map((u) => (
+                        <div
+                          key={u.id}
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
+                        >
+                          <p className="truncate font-medium">{u.name}</p>
+                          <ModalTrigger
+                            label="تعديل"
+                            title={`تعديل وحدة: ${u.name}`}
+                            variant="outline"
+                            buttonSize="sm"
+                          >
+                            <ActionForm action={updateUnitAction} className="space-y-3">
+                              <input type="hidden" name="id" value={u.id} />
+                              <div>
+                                <label className="mb-1 block text-sm">الاسم</label>
+                                <Input name="name" defaultValue={u.name} required />
+                              </div>
+                            </ActionForm>
+                          </ModalTrigger>
+                        </div>
+                      ))}
+                    </div>
+                    {(units?.length ?? 0) === 0 ? (
+                      <p className="py-4 text-foreground/60">لا توجد وحدات قياس بعد</p>
+                    ) : null}
+                  </div>
+                </div>
               </ModalTrigger>
               <ModalTrigger label="+ إضافة منتج" title="إضافة منتج جديد">
                 <ActionForm action={createProductAction} className="space-y-3">
@@ -308,87 +396,6 @@ export default async function ProductsPage() {
             <p className="py-4 text-foreground/60">لا توجد منتجات بعد</p>
           ) : null}
         </div>
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold">الفئات</h2>
-        <p className="mb-3 text-sm text-foreground/60">
-          صورة الفئة تظهر بدائرة اختيار الفئة أعلى صفحة المتجر — أضف صورة لكل فئة لأفضل تجربة.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {(categories ?? []).map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
-            >
-              {c.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={c.image_url}
-                  alt={c.name}
-                  className="h-12 w-12 shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <div className="h-12 w-12 shrink-0 rounded-full bg-muted" />
-              )}
-              <p className="flex-1 truncate font-medium">{c.name}</p>
-              {canManage ? (
-                <ModalTrigger label="تعديل" title={`تعديل فئة: ${c.name}`} variant="outline" buttonSize="sm">
-                  <ActionForm action={updateCategoryAction} className="space-y-3">
-                    <input type="hidden" name="id" value={c.id} />
-                    <div>
-                      <label className="mb-1 block text-sm">الاسم</label>
-                      <Input name="name" defaultValue={c.name} required />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm">الصورة</label>
-                      {c.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={c.image_url}
-                          alt={c.name}
-                          className="mb-2 h-16 w-16 rounded-full object-cover"
-                        />
-                      ) : null}
-                      <Input name="image" type="file" accept="image/*" />
-                    </div>
-                  </ActionForm>
-                </ModalTrigger>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        {(categories?.length ?? 0) === 0 ? (
-          <p className="py-4 text-foreground/60">لا توجد فئات بعد</p>
-        ) : null}
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold">وحدات القياس</h2>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(units ?? []).map((u) => (
-            <div
-              key={u.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3 shadow-card"
-            >
-              <p className="truncate font-medium">{u.name}</p>
-              {canManage ? (
-                <ModalTrigger label="تعديل" title={`تعديل وحدة: ${u.name}`} variant="outline" buttonSize="sm">
-                  <ActionForm action={updateUnitAction} className="space-y-3">
-                    <input type="hidden" name="id" value={u.id} />
-                    <div>
-                      <label className="mb-1 block text-sm">الاسم</label>
-                      <Input name="name" defaultValue={u.name} required />
-                    </div>
-                  </ActionForm>
-                </ModalTrigger>
-              ) : null}
-            </div>
-          ))}
-        </div>
-        {(units?.length ?? 0) === 0 ? (
-          <p className="py-4 text-foreground/60">لا توجد وحدات قياس بعد</p>
-        ) : null}
       </Card>
     </div>
   );
