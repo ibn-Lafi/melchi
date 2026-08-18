@@ -24,13 +24,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body>
-        <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between p-4 lg:max-w-6xl lg:px-6 xl:max-w-7xl">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+        <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
+          <nav className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5 lg:max-w-6xl lg:px-8 lg:py-5 xl:max-w-7xl">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-primary text-base font-extrabold text-primary-foreground lg:h-[42px] lg:w-[42px] lg:rounded-[13px]">
                 و
               </span>
-              <span className="text-lg font-bold">المتجر</span>
+              <span className="text-[17px] font-extrabold tracking-tight lg:text-[19px]">المتجر</span>
+            </Link>
+            <Link
+              href="/points-of-sale"
+              className="flex h-[38px] items-center gap-2 rounded-full border border-border px-3.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-foreground lg:h-11 lg:px-[18px] lg:text-sm"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 22s7-6.2 7-12.4A7 7 0 0 0 5 9.6C5 15.8 12 22 12 22Z" />
+                <circle cx="12" cy="9.6" r="2.4" />
+              </svg>
+              <span className="hidden sm:inline">نقاط البيع</span>
             </Link>
           </nav>
         </header>
