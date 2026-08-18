@@ -2,7 +2,7 @@ import Link from "next/link";
 import { formatCurrency } from "@system2026/utils";
 import type { StoreProduct } from "../lib/get-catalog";
 
-function PlaceholderIcon() {
+export function PlaceholderIcon() {
   return (
     <svg
       width="40"
@@ -26,7 +26,7 @@ function PlaceholderIcon() {
 export function ProductCard({ product }: { product: StoreProduct }) {
   return (
     <Link href={`/product/${product.id}`} className="group flex flex-col gap-2.5">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[22px] bg-muted shadow-[0_12px_22px_-10px_hsl(20_10%_15%/0.22)] transition-transform group-active:scale-[0.98]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[18px] border border-border bg-muted transition-transform group-active:scale-[0.98]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
@@ -37,9 +37,9 @@ export function ProductCard({ product }: { product: StoreProduct }) {
         )}
       </div>
       <div className="flex flex-col gap-0.5 px-0.5">
-        <p className="line-clamp-2 text-[14.5px] font-bold leading-snug">{product.name}</p>
+        <p className="line-clamp-2 text-[14px] font-extrabold leading-snug">{product.name}</p>
         <p className="text-xs text-muted-foreground">/ {product.base_unit_name}</p>
-        <p className="mt-1 text-[16.5px] font-extrabold">{formatCurrency(product.price)}</p>
+        <p className="mt-1 text-[16px] font-black">{formatCurrency(product.price)}</p>
       </div>
     </Link>
   );
