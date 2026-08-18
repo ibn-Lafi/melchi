@@ -2,18 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* هوية بصرية هادئة ودافئة (راجع لوحة التصميم المعتمدة) — لون طيني واحد
+   يُستخدم بحذر (زر الطلب + الحالة النشطة فقط)، بقية الواجهة محايدة دافئة. */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 9%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 42%;
-  --border: 0 0% 89%;
-  --ring: 0 0% 9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 100%;
-  --destructive: 0 0% 9%;
-  --destructive-foreground: 0 0% 100%;
-  --radius: 1rem;
+  --background: 30 20% 98%;
+  --foreground: 20 10% 15%;
+  --muted: 30 15% 95%;
+  --muted-foreground: 25 8% 42%;
+  --border: 30 12% 89%;
+  --ring: 18 55% 42%;
+  --primary: 18 55% 42%;
+  --primary-foreground: 30 25% 99%;
+  --destructive: 6 60% 42%;
+  --destructive-foreground: 30 25% 99%;
+  --radius: 1.375rem;
 }
 
 body {
@@ -24,8 +26,8 @@ body {
 }
 
 ::selection {
-  background: hsl(var(--foreground));
-  color: hsl(var(--background));
+  background: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
 }
 
 /* شريط تمرير أفقي رفيع لصفوف الفئات وغيرها */

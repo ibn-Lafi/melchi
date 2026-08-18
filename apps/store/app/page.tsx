@@ -11,16 +11,16 @@ export default async function HomePage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl p-4 lg:max-w-6xl lg:p-6 xl:max-w-7xl">
-      <h1 className="mb-5 text-2xl font-bold lg:text-3xl">منتجاتنا</h1>
+    <main className="mx-auto max-w-5xl px-5 pb-16 pt-6 lg:max-w-6xl lg:px-8 lg:pt-10 xl:max-w-7xl">
+      <h1 className="mb-1 text-[24px] font-extrabold tracking-tight lg:text-[32px]">منتجاتنا</h1>
 
       {categories.length > 0 ? (
-        <div className="mb-6 lg:mb-8">
+        <div className="mb-6 mt-5 lg:mb-8 lg:mt-8">
           <CategoryPills categories={categories} />
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
