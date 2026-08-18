@@ -13,7 +13,12 @@ export type StoreProduct = {
 
 export type StoreCategory = { id: string; name: string; image_url: string | null };
 
-export type StorePointOfSale = { id: string; shop_name: string | null; google_maps_link: string | null };
+export type StorePointOfSale = {
+  id: string;
+  shop_name: string | null;
+  google_maps_link: string | null;
+  city_name: string | null;
+};
 
 export async function getStoreProducts(categoryId?: string): Promise<StoreProduct[]> {
   const supabase = createSupabaseServerClient();

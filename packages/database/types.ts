@@ -451,7 +451,7 @@ export type Database = {
     };
     Views: {
       public_store_locations: {
-        Row: { id: string; shop_name: string | null; google_maps_link: string | null };
+        Row: { id: string; shop_name: string | null; google_maps_link: string | null; city_name: string | null };
         Relationships: [];
       };
       public_products: {
