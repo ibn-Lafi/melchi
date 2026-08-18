@@ -12,7 +12,7 @@ export default async function CategoryPage({ params }: { params: { slug: string 
 
   return (
     <main className="mx-auto max-w-5xl px-5 pb-16 pt-6 lg:max-w-6xl lg:px-8 lg:pt-10 xl:max-w-7xl">
-      <h1 className="mb-1 text-[24px] font-extrabold tracking-tight lg:text-[32px]">{category?.name ?? "الفئة"}</h1>
+      <h1 className="mb-1 text-[24px] font-black tracking-tight lg:text-[32px]">{category?.name ?? "الفئة"}</h1>
 
       <div className="mb-6 mt-5 lg:mb-8 lg:mt-8">
         <CategoryPills categories={categories} />

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@system2026/utils";
 import { getStoreProduct } from "../../../lib/get-catalog";
-import { buildWhatsAppOrderLink } from "../../../lib/whatsapp";
+import { WaveDivider } from "../../../components/wave-divider";
 
 function PlaceholderIcon() {
   return (
@@ -15,7 +15,7 @@ function PlaceholderIcon() {
       strokeWidth="1.1"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-muted-foreground/50"
+      className="text-background/45"
       aria-hidden="true"
     >
       <path d="M21 8.5 12 4 3 8.5 12 13l9-4.5Z" />
@@ -30,9 +30,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
   if (!product) notFound();
 
   return (
-    <main className="mx-auto max-w-2xl pb-28">
-      {/* الصورة الرئيسية */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-b-[32px] bg-muted sm:aspect-[16/10]">
+    <main className="mx-auto max-w-2xl pb-12">
+      {/* الصورة الرئيسية (خلفية سوداء) */}
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-foreground sm:aspect-[16/10]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
         <Link
           href="/"
           aria-label="العودة للمتجر"
-          className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/85 text-foreground shadow-[0_4px_12px_hsl(20_10%_15%/0.12)] backdrop-blur"
+          className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-background/40 text-background"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />
@@ -53,17 +53,19 @@ export default async function ProductPage({ params }: { params: { id: string } }
         </Link>
 
         {product.category_name ? (
-          <span className="absolute bottom-4 end-4 rounded-full bg-background/90 px-3.5 py-1.5 text-[12.5px] font-semibold text-foreground backdrop-blur">
+          <span className="absolute bottom-9 end-4 rounded-full border-[1.5px] border-background/40 px-3.5 py-1.5 text-[12.5px] font-bold text-background">
             {product.category_name}
           </span>
         ) : null}
+
+        <WaveDivider position="bottom" fill="white" />
       </div>
 
       {/* بطاقة المحتوى */}
-      <div className="-mt-6 flex flex-col gap-4 rounded-t-[28px] bg-background px-5 pt-7 sm:mt-0 sm:rounded-none sm:px-6 sm:pt-8">
+      <div className="flex flex-col gap-4 px-5 pt-7 sm:px-6 sm:pt-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-[24px] font-extrabold leading-snug tracking-tight">{product.name}</h1>
-          <span className="w-fit rounded-full bg-primary/10 px-3 py-1.5 text-[12.5px] font-bold text-primary">
+          <h1 className="text-[23px] font-black leading-snug tracking-tight">{product.name}</h1>
+          <span className="w-fit rounded-full border-[1.5px] border-foreground px-3 py-1.5 text-[12.5px] font-extrabold">
             الوحدة: {product.base_unit_name}
           </span>
         </div>
@@ -75,23 +77,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
         <div className="h-px w-full bg-border" />
 
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[28px] font-extrabold">{formatCurrency(product.price)}</span>
+          <span className="text-[28px] font-black">{formatCurrency(product.price)}</span>
           <span className="text-[13.5px] text-muted-foreground">/ {product.base_unit_name}</span>
-        </div>
-      </div>
-
-      {/* شريط الطلب الثابت */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background/95 px-5 pb-[calc(1.1rem+env(safe-area-inset-bottom))] pt-3.5 shadow-[0_-8px_20px_hsl(20_10%_15%/0.05)] backdrop-blur">
-        <div className="mx-auto max-w-2xl">
-          <a href={buildWhatsAppOrderLink(product.name)} target="_blank" rel="noreferrer" className="block">
-            <span className="flex h-[52px] items-center justify-center gap-2.5 rounded-full bg-primary text-[15px] font-bold text-primary-foreground transition-opacity active:opacity-90">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 20l1.4-4.2A8 8 0 1 1 8.8 19L4 20Z" />
-                <path d="M9 10.2c0 2.6 2.2 4.8 4.8 4.8" />
-              </svg>
-              <span>اطلب عبر واتساب</span>
-            </span>
-          </a>
         </div>
       </div>
     </main>

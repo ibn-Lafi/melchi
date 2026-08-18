@@ -2,20 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* هوية بصرية هادئة ودافئة (راجع لوحة التصميم المعتمدة) — لون طيني واحد
-   يُستخدم بحذر (زر الطلب + الحالة النشطة فقط)، بقية الواجهة محايدة دافئة. */
+/* هوية "ميلتشي" الجريئة بالأسود والأبيض (راجع لوحة التصميم المعتمدة) —
+   بلا لون إضافي: الأسود نفسه هو "اللون المميز" (أزرار كبسولة، أقسام كاملة،
+   حلقات الحالة النشطة)، مع تباين طباعي حاد وفواصل موجية بين الأقسام. */
 :root {
-  --background: 30 20% 98%;
-  --foreground: 20 10% 15%;
-  --muted: 30 15% 95%;
-  --muted-foreground: 25 8% 42%;
-  --border: 30 12% 89%;
-  --ring: 18 55% 42%;
-  --primary: 18 55% 42%;
-  --primary-foreground: 30 25% 99%;
-  --destructive: 6 60% 42%;
-  --destructive-foreground: 30 25% 99%;
-  --radius: 1.375rem;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 42%;
+  --border: 0 0% 88%;
+  --ring: 0 0% 4%;
+  --primary: 0 0% 4%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 0% 4%;
+  --destructive-foreground: 0 0% 100%;
+  --radius: 1.125rem;
 }
 
 body {
@@ -26,8 +27,8 @@ body {
 }
 
 ::selection {
-  background: hsl(var(--primary) / 0.25);
-  color: hsl(var(--foreground));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 /* شريط تمرير أفقي رفيع لصفوف الفئات وغيرها */

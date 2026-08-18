@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@system2026/ui";
 import type { StoreCategory } from "../lib/get-catalog";
 
+type Variant = "light" | "dark";
+
 function GridIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -22,23 +24,31 @@ function CategoryAvatar({
   label,
   imageUrl,
   isAll,
+  variant,
 }: {
   href: string;
   isActive: boolean;
   label: string;
   imageUrl: string | null;
   isAll?: boolean;
+  variant: Variant;
 }) {
+  const isDark = variant === "dark";
+
   return (
     <Link href={href} className="flex shrink-0 flex-col items-center gap-2 lg:gap-2.5">
       <span
         className={cn(
-          "flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-full transition-all lg:h-[84px] lg:w-[84px]",
-          isActive && isAll
-            ? "bg-primary text-primary-foreground ring-2 ring-offset-2 ring-offset-background ring-primary"
-            : isActive
-              ? "bg-muted ring-2 ring-offset-2 ring-offset-background ring-primary"
-              : "bg-muted text-muted-foreground",
+          "flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full transition-all lg:h-[76px] lg:w-[76px]",
+          isDark
+            ? isActive && isAll
+              ? "bg-background text-foreground"
+              : "border-[1.5px] border-background/35 text-background"
+            : isActive && isAll
+              ? "bg-primary text-primary-foreground ring-2 ring-offset-2 ring-offset-background ring-primary"
+              : isActive
+                ? "bg-muted ring-2 ring-offset-2 ring-offset-background ring-primary"
+                : "bg-muted text-muted-foreground",
         )}
       >
         {imageUrl ? (
@@ -53,7 +63,13 @@ function CategoryAvatar({
       <span
         className={cn(
           "max-w-[4.75rem] truncate text-[12.5px] lg:max-w-[6rem] lg:text-sm",
-          isActive ? "font-bold text-foreground" : "font-medium text-muted-foreground",
+          isDark
+            ? isActive
+              ? "font-bold text-background"
+              : "font-medium text-background/70"
+            : isActive
+              ? "font-bold text-foreground"
+              : "font-medium text-muted-foreground",
         )}
       >
         {label}
@@ -62,12 +78,18 @@ function CategoryAvatar({
   );
 }
 
-export function CategoryPills({ categories }: { categories: StoreCategory[] }) {
+export function CategoryPills({
+  categories,
+  variant = "light",
+}: {
+  categories: StoreCategory[];
+  variant?: Variant;
+}) {
   const pathname = usePathname();
 
   return (
     <div className="flex gap-5 overflow-x-auto pb-1 scrollbar-none lg:flex-wrap lg:overflow-visible lg:gap-8">
-      <CategoryAvatar href="/" isActive={pathname === "/"} label="الكل" imageUrl={null} isAll />
+      <CategoryAvatar href="/" isActive={pathname === "/"} label="الكل" imageUrl={null} isAll variant={variant} />
       {categories.map((category) => {
         const href = `/category/${category.id}`;
         return (
@@ -77,6 +99,7 @@ export function CategoryPills({ categories }: { categories: StoreCategory[] }) {
             isActive={pathname === href}
             label={category.name}
             imageUrl={category.image_url}
+            variant={variant}
           />
         );
       })}
