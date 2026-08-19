@@ -13,6 +13,12 @@ export function createSupabaseServerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Next.js يخزّن استدعاءات fetch افتراضيًا (Data Cache)، حتى داخل مسار
+      // يُعامَل كديناميكي — بدون هذا، بيانات حساسة للوقت (مخزون، فواتير،
+      // نقاط بيع) قد تبقى قديمة رغم نجاح النشر وتحديث قاعدة البيانات فعليًا.
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();
