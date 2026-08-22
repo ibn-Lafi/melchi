@@ -38,6 +38,45 @@ export const updateStoreThemeSchema = z.object({
   customHtml: z.string().optional(),
 });
 
+export const SECTION_TYPES = ["promo_banner", "features", "testimonials"] as const;
+export type SectionType = (typeof SECTION_TYPES)[number];
+
+export const SECTION_LABELS: Record<SectionType, string> = {
+  promo_banner: "بانر دعائي",
+  features: "مميزاتنا",
+  testimonials: "آراء العملاء",
+};
+
+export const moveSectionSchema = z.object({
+  sectionType: z.enum(SECTION_TYPES),
+  direction: z.enum(["up", "down"]),
+});
+
+export const updatePromoBannerContentSchema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  buttonLabel: z.string().optional(),
+  buttonUrl: z.string().url("رابط غير صالح").optional().or(z.literal("")),
+});
+
+export const updateFeaturesContentSchema = z.object({
+  title1: z.string().optional(),
+  desc1: z.string().optional(),
+  title2: z.string().optional(),
+  desc2: z.string().optional(),
+  title3: z.string().optional(),
+  desc3: z.string().optional(),
+});
+
+export const updateTestimonialsContentSchema = z.object({
+  name1: z.string().optional(),
+  text1: z.string().optional(),
+  name2: z.string().optional(),
+  text2: z.string().optional(),
+  name3: z.string().optional(),
+  text3: z.string().optional(),
+});
+
 export type UpdateCompanyInfoInput = z.infer<typeof updateCompanyInfoSchema>;
 export type UpdateInvoiceGracePeriodInput = z.infer<typeof updateInvoiceGracePeriodSchema>;
 export type UpdateExpiryAlertThresholdInput = z.infer<typeof updateExpiryAlertThresholdSchema>;
@@ -45,3 +84,6 @@ export type UpdateStoreBrandingInput = z.infer<typeof updateStoreBrandingSchema>
 export type UpdateStoreSocialLinksInput = z.infer<typeof updateStoreSocialLinksSchema>;
 export type UpdateStoreHomepageSectionsInput = z.infer<typeof updateStoreHomepageSectionsSchema>;
 export type UpdateStoreThemeInput = z.infer<typeof updateStoreThemeSchema>;
+export type UpdatePromoBannerContentInput = z.infer<typeof updatePromoBannerContentSchema>;
+export type UpdateFeaturesContentInput = z.infer<typeof updateFeaturesContentSchema>;
+export type UpdateTestimonialsContentInput = z.infer<typeof updateTestimonialsContentSchema>;

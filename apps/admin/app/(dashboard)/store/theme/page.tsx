@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Card, Button, PageHeader, Breadcrumb } from "@system2026/ui";
+import { Card, Button, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { getCurrentUserRole } from "../../../../lib/get-current-role";
 import { hasPermission } from "../../../../lib/permissions";
 import { ThemeForm } from "./theme-form";
+import { SectionsPanel } from "./sections-panel";
 
 type ThemeSettings = { custom_css: string | null; custom_html: string | null };
 
@@ -19,12 +20,14 @@ export default async function StoreThemePage() {
     .eq("id", 1)
     .single();
 
+  const isCustomized = Boolean(settings?.custom_css || settings?.custom_html);
+
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumb={<Breadcrumb items={["لوحة التحكم", "المتجر الإلكتروني", "تصميم المتجر"]} />}
         title="تصميم المتجر"
-        subtitle="اختر الثيم الافتراضي، أو فعّل التخصيص لتضيف CSS/HTML خاص بك"
+        subtitle="الثيم الافتراضي، تخصيص بالكود، وأقسام جاهزة للصفحة الرئيسية"
         actions={
           <Link href="/store">
             <Button variant="outline">رجوع لإعدادات المتجر</Button>
@@ -33,15 +36,34 @@ export default async function StoreThemePage() {
       />
 
       <Card>
-        <h2 className="font-semibold">تصميم المتجر</h2>
+        <h2 className="font-semibold">الثيم الافتراضي</h2>
         <p className="mt-1 text-sm text-foreground/60">
-          هذا الكود يُنفَّذ مباشرة على المتجر الفعلي لكل الزوار — تأكد من صحته قبل الحفظ. لا تلصق كودًا من مصدر لا
-          تثق به.
+          {isCustomized
+            ? "التخصيص بالكود مفعّل حاليًا، لذا الثيم الافتراضي معطّل بالمتجر."
+            : "هذا هو ثيم المتجر المعمول به حاليًا."}
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <div className="flex h-20 w-32 shrink-0 overflow-hidden rounded-xl border border-border shadow-sm">
+            <div className="flex-1 bg-foreground" />
+            <div className="flex-1 bg-background" />
+          </div>
+          <div className="text-sm text-foreground/70">
+            <p className="font-medium text-foreground">أبيض وأسود</p>
+            <p>خلفية بيضاء، عناصر داكنة، بدون ألوان إضافية</p>
+          </div>
+        </div>
         <div className="mt-4">
-          <ThemeForm customCss={settings?.custom_css ?? null} customHtml={settings?.custom_html ?? null} />
+          <ModalTrigger label="تخصيص بالكود" title="تخصيص التصميم بالكود" variant="outline" size="lg">
+            <p className="mb-3 text-sm text-foreground/60">
+              هذا الكود يُنفَّذ مباشرة على المتجر الفعلي لكل الزوار — تأكد من صحته قبل الحفظ. لا تلصق كودًا من مصدر
+              لا تثق به.
+            </p>
+            <ThemeForm customCss={settings?.custom_css ?? null} customHtml={settings?.custom_html ?? null} />
+          </ModalTrigger>
         </div>
       </Card>
+
+      <SectionsPanel />
     </div>
   );
 }
