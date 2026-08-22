@@ -84,6 +84,21 @@ export async function waitForProjectReady(
   throw new Error(`مشروع Supabase (${projectRef}) لم يصبح جاهزًا خلال ${timeoutMs}ms`);
 }
 
+/**
+ * يعيد ضبط كلمة مرور قاعدة بيانات مشروع موجود مسبقًا (لإعادة الاتصال
+ * المباشر بها عند استئناف تزويد فشل بمحاولة سابقة — كلمة المرور الأصلية
+ * لا تُخزَّن أبدًا، فهذه هي طريقة استرجاع القدرة على الاتصال بدل حفظ سر
+ * دائم). تحقّق من مسار الـ endpoint الفعلي وقت أول تشغيل حقيقي.
+ */
+export async function resetProjectDbPassword(projectRef: string): Promise<string> {
+  const newPassword = randomBytes(24).toString("base64url");
+  await managementApiFetch(`/projects/${projectRef}/db/reset-password`, {
+    method: "POST",
+    body: JSON.stringify({ password: newPassword }),
+  });
+  return newPassword;
+}
+
 type ApiKeysResponse = Array<{ name: string; api_key: string }>;
 
 /** يجلب anon key و service_role key الخاصين بمشروع جاهز. */

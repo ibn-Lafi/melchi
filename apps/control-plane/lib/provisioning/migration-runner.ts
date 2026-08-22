@@ -18,20 +18,34 @@ function listMigrationFiles(): string[] {
     .sort();
 }
 
-/** يشغّل كل migrations/*.sql بالترتيب على مشروع Supabase عميل جديد، ضمن معاملة واحدة لكل ملف. يرمي فور أول فشل مع اسم الملف. */
-export async function runTenantMigrations(connectionString: string): Promise<void> {
+/**
+ * يشغّل migrations/*.sql بالترتيب على مشروع Supabase عميل جديد. يدعم
+ * الاستئناف بعد فشل جزئي (resumeAfter: اسم آخر ملف نجح تطبيقه بمحاولة
+ * سابقة — يبدأ بعده مباشرة بدل تكرار "الجدول موجود مسبقًا")، ويبلّغ
+ * onFileApplied فور نجاح كل ملف حتى يحفظ orchestrator التقدّم أولًا بأول.
+ */
+export async function runTenantMigrations(
+  connectionString: string,
+  options: { resumeAfter?: string | null; onFileApplied?: (fileName: string) => Promise<void> } = {},
+): Promise<void> {
   const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
   await client.connect();
 
   try {
     const files = listMigrationFiles();
-    for (const file of files) {
+    const startIndex = options.resumeAfter ? files.indexOf(options.resumeAfter) + 1 : 0;
+    if (options.resumeAfter && startIndex === 0) {
+      throw new Error(`ملف migration المرجعي للاستئناف غير موجود ضمن القائمة الحالية: ${options.resumeAfter}`);
+    }
+
+    for (const file of files.slice(startIndex)) {
       const sql = readFileSync(path.join(TENANT_MIGRATIONS_DIR, file), "utf-8");
       try {
         await client.query(sql);
       } catch (error) {
         throw new Error(`فشل تشغيل migration "${file}": ${(error as Error).message}`);
       }
+      await options.onFileApplied?.(file);
     }
   } finally {
     await client.end();
