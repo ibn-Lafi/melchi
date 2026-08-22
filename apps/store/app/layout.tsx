@@ -29,6 +29,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
+      {settings.custom_css ? (
+        <head>
+          {/* CSS مخصص من لوحة تحكم المتجر — يتجاوز متغيرات الثيم الافتراضي بـ globals.css */}
+          <style dangerouslySetInnerHTML={{ __html: settings.custom_css }} />
+        </head>
+      ) : null}
       <body>
         {children}
         <Footer settings={settings} />

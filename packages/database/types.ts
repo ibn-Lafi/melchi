@@ -460,6 +460,8 @@ export type Database = {
           instagram_url: string | null;
           tiktok_url: string | null;
           show_points_of_sale_section: boolean;
+          custom_css: string | null;
+          custom_html: string | null;
           updated_at: string;
           updated_by: string | null;
         },
@@ -474,6 +476,8 @@ export type Database = {
           instagram_url?: string | null;
           tiktok_url?: string | null;
           show_points_of_sale_section?: boolean;
+          custom_css?: string | null;
+          custom_html?: string | null;
           updated_by?: string | null;
         }
       >;
@@ -494,6 +498,8 @@ export type Database = {
           instagram_url: string | null;
           tiktok_url: string | null;
           show_points_of_sale_section: boolean;
+          custom_css: string | null;
+          custom_html: string | null;
         };
         Relationships: [];
       };
