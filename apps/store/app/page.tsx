@@ -1,10 +1,15 @@
 import { getStoreProducts, getStorePointsOfSale } from "../lib/get-catalog";
+import { getStoreSettings } from "../lib/get-store-settings";
 import { ProductCard } from "../components/product-card";
 import { PointsOfSaleSection } from "../components/points-of-sale-section";
 import { WaveDivider } from "../components/wave-divider";
 
 export default async function HomePage() {
-  const [products, locations] = await Promise.all([getStoreProducts(), getStorePointsOfSale()]);
+  const [products, locations, settings] = await Promise.all([
+    getStoreProducts(),
+    getStorePointsOfSale(),
+    getStoreSettings(),
+  ]);
 
   return (
     <main className="pb-16">
@@ -12,10 +17,8 @@ export default async function HomePage() {
       <section className="relative bg-foreground px-5 pb-14 pt-8 text-background lg:px-8 lg:pb-20 lg:pt-14">
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl">
           <div className="max-w-md">
-            <span className="text-[12px] font-bold tracking-[0.15em] text-background/60">MELCHI</span>
-            <h1 className="mt-2.5 text-[28px] font-black leading-[1.25] lg:text-[42px]">
-              كل ما يحتاجه محلك، بضغطة
-            </h1>
+            <span className="text-[12px] font-bold tracking-[0.15em] text-background/60">{settings.hero_kicker}</span>
+            <h1 className="mt-2.5 text-[28px] font-black leading-[1.25] lg:text-[42px]">{settings.hero_title}</h1>
           </div>
         </div>
         <WaveDivider position="bottom" fill="white" />
@@ -34,7 +37,7 @@ export default async function HomePage() {
         ) : null}
       </div>
 
-      <PointsOfSaleSection locations={locations} />
+      {settings.show_points_of_sale_section ? <PointsOfSaleSection locations={locations} /> : null}
     </main>
   );
 }

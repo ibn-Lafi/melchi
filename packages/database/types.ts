@@ -448,10 +448,53 @@ export type Database = {
         },
         never // trigger فقط
       >;
+      store_settings: Table<
+        {
+          id: number;
+          store_name: string;
+          logo_url: string | null;
+          hero_kicker: string;
+          hero_title: string;
+          site_description: string;
+          whatsapp_number: string | null;
+          instagram_url: string | null;
+          tiktok_url: string | null;
+          show_points_of_sale_section: boolean;
+          updated_at: string;
+          updated_by: string | null;
+        },
+        never, // لا INSERT مباشر — صف وحيد عبر seed migration فقط
+        {
+          store_name?: string;
+          logo_url?: string | null;
+          hero_kicker?: string;
+          hero_title?: string;
+          site_description?: string;
+          whatsapp_number?: string | null;
+          instagram_url?: string | null;
+          tiktok_url?: string | null;
+          show_points_of_sale_section?: boolean;
+          updated_by?: string | null;
+        }
+      >;
     };
     Views: {
       public_store_locations: {
         Row: { id: string; shop_name: string | null; google_maps_link: string | null; city_name: string | null };
+        Relationships: [];
+      };
+      public_store_settings: {
+        Row: {
+          store_name: string;
+          logo_url: string | null;
+          hero_kicker: string;
+          hero_title: string;
+          site_description: string;
+          whatsapp_number: string | null;
+          instagram_url: string | null;
+          tiktok_url: string | null;
+          show_points_of_sale_section: boolean;
+        };
         Relationships: [];
       };
       public_products: {

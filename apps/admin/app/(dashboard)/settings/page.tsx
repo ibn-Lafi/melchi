@@ -85,6 +85,18 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
+          <h2 className="font-semibold">المتجر الإلكتروني</h2>
+          <p className="mt-1 text-sm text-foreground/60">
+            التحكم بهوية المتجر العام (apps/store): الشعار، النصوص، روابط التواصل الاجتماعي، وأقسام الرئيسية
+          </p>
+          <div className="mt-4">
+            <Link href="/settings/store">
+              <Button variant="outline">فتح لوحة تحكم المتجر</Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card>
           <h2 className="font-semibold">المستخدمون</h2>
           <p className="mt-1 text-sm text-foreground/60">
             إضافة موظفي لوحة التحكم، تحديد أدوارهم وصلاحياتهم، وتفعيل/إيقاف حساباتهم
