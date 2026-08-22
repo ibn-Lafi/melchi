@@ -7,8 +7,8 @@ import {
   updateStoreSocialLinksSchema,
   updateStoreHomepageSectionsSchema,
 } from "@system2026/validation";
-import { uploadImage } from "../../../../lib/upload-image";
-import type { ActionState } from "../../../../components/action-form";
+import { uploadImage } from "../../../lib/upload-image";
+import type { ActionState } from "../../../components/action-form";
 
 export async function updateStoreBrandingAction(
   _prevState: ActionState,
@@ -39,7 +39,7 @@ export async function updateStoreBrandingAction(
     .eq("id", 1);
 
   if (error) return { error: error.message };
-  revalidatePath("/settings/store");
+  revalidatePath("/store");
   return { success: true };
 }
 
@@ -63,7 +63,7 @@ export async function updateStoreLogoAction(
     .eq("id", 1);
 
   if (error) return { error: error.message };
-  revalidatePath("/settings/store");
+  revalidatePath("/store");
   return { success: true };
 }
 
@@ -94,7 +94,7 @@ export async function updateStoreSocialLinksAction(
     .eq("id", 1);
 
   if (error) return { error: error.message };
-  revalidatePath("/settings/store");
+  revalidatePath("/store");
   return { success: true };
 }
 
@@ -121,6 +121,6 @@ export async function updateStoreHomepageSectionsAction(
     .eq("id", 1);
 
   if (error) return { error: error.message };
-  revalidatePath("/settings/store");
+  revalidatePath("/store");
   return { success: true };
 }

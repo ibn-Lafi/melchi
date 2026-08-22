@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
-import { ActionForm } from "../../../../components/action-form";
-import { getCurrentUserRole } from "../../../../lib/get-current-role";
-import { hasPermission } from "../../../../lib/permissions";
+import { ActionForm } from "../../../components/action-form";
+import { getCurrentUserRole } from "../../../lib/get-current-role";
+import { hasPermission } from "../../../lib/permissions";
 import {
   updateStoreBrandingAction,
   updateStoreLogoAction,
@@ -42,7 +42,7 @@ export default async function StoreControlPanelPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={["لوحة التحكم", "الإعدادات", "المتجر الإلكتروني"]} />}
+        breadcrumb={<Breadcrumb items={["لوحة التحكم", "المتجر الإلكتروني"]} />}
         title="التحكم بالمتجر الإلكتروني"
         subtitle="الهوية، الشعار، النصوص، روابط التواصل الاجتماعي، وأقسام الصفحة الرئيسية للمتجر العام"
       />
