@@ -11,6 +11,8 @@ export type StoreSettings = {
   instagram_url: string | null;
   tiktok_url: string | null;
   show_points_of_sale_section: boolean;
+  custom_css: string | null;
+  custom_html: string | null;
 };
 
 const DEFAULT_STORE_SETTINGS: StoreSettings = {
@@ -23,6 +25,8 @@ const DEFAULT_STORE_SETTINGS: StoreSettings = {
   instagram_url: null,
   tiktok_url: null,
   show_points_of_sale_section: true,
+  custom_css: null,
+  custom_html: null,
 };
 
 export const getStoreSettings = cache(async (): Promise<StoreSettings> => {

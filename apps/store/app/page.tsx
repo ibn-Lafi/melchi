@@ -37,6 +37,13 @@ export default async function HomePage() {
         ) : null}
       </div>
 
+      {settings.custom_html ? (
+        <div
+          className="mx-auto max-w-5xl px-5 lg:max-w-6xl lg:px-8 xl:max-w-7xl"
+          dangerouslySetInnerHTML={{ __html: settings.custom_html }}
+        />
+      ) : null}
+
       {settings.show_points_of_sale_section ? <PointsOfSaleSection locations={locations} /> : null}
     </main>
   );

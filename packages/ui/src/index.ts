@@ -2,6 +2,7 @@ export * from "./cn";
 export * from "./button";
 export * from "./link-button";
 export * from "./input";
+export * from "./textarea";
 export * from "./select";
 export * from "./card";
 export * from "./badge";

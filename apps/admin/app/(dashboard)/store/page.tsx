@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { Card, Input, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
+import Link from "next/link";
+import { Card, Input, Button, ModalTrigger, PageHeader, Breadcrumb } from "@system2026/ui";
 import { createSupabaseServerClient } from "@system2026/database/server";
 import { ActionForm } from "../../../components/action-form";
 import { getCurrentUserRole } from "../../../lib/get-current-role";
@@ -155,6 +156,18 @@ export default async function StoreControlPanelPage() {
                 إظهار قسم &quot;قريب منك دائمًا&quot; (نقاط البيع)
               </label>
             </ActionForm>
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="font-semibold">الثيم</h2>
+          <p className="mt-1 text-sm text-foreground/60">
+            الثيم الافتراضي بالمتجر، مع إمكانية تجاوزه بكود CSS مخصص، وإضافة قسم بمحتوى HTML حر
+          </p>
+          <div className="mt-4">
+            <Link href="/store/theme">
+              <Button variant="outline">فتح إعدادات الثيم</Button>
+            </Link>
           </div>
         </Card>
       </div>

@@ -32,9 +32,15 @@ export const updateStoreHomepageSectionsSchema = z.object({
   showPointsOfSaleSection: z.boolean().default(true),
 });
 
+export const updateStoreThemeSchema = z.object({
+  customCss: z.string().optional(),
+  customHtml: z.string().optional(),
+});
+
 export type UpdateCompanyInfoInput = z.infer<typeof updateCompanyInfoSchema>;
 export type UpdateInvoiceGracePeriodInput = z.infer<typeof updateInvoiceGracePeriodSchema>;
 export type UpdateExpiryAlertThresholdInput = z.infer<typeof updateExpiryAlertThresholdSchema>;
 export type UpdateStoreBrandingInput = z.infer<typeof updateStoreBrandingSchema>;
 export type UpdateStoreSocialLinksInput = z.infer<typeof updateStoreSocialLinksSchema>;
 export type UpdateStoreHomepageSectionsInput = z.infer<typeof updateStoreHomepageSectionsSchema>;
+export type UpdateStoreThemeInput = z.infer<typeof updateStoreThemeSchema>;
