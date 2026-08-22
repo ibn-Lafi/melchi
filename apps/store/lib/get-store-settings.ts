@@ -1,0 +1,32 @@
+import { cache } from "react";
+import { createSupabaseServerClient } from "@system2026/database/server";
+
+export type StoreSettings = {
+  store_name: string;
+  logo_url: string | null;
+  hero_kicker: string;
+  hero_title: string;
+  site_description: string;
+  whatsapp_number: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  show_points_of_sale_section: boolean;
+};
+
+const DEFAULT_STORE_SETTINGS: StoreSettings = {
+  store_name: "ميلتشي",
+  logo_url: null,
+  hero_kicker: "MELCHI",
+  hero_title: "كل ما يحتاجه محلك، بضغطة",
+  site_description: "تصفّح منتجاتنا وتسوّق مباشرة",
+  whatsapp_number: null,
+  instagram_url: null,
+  tiktok_url: null,
+  show_points_of_sale_section: true,
+};
+
+export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
+  const supabase = createSupabaseServerClient();
+  const { data } = await supabase.from("public_store_settings").select("*").single();
+  return data ?? DEFAULT_STORE_SETTINGS;
+});
