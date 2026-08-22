@@ -481,6 +481,23 @@ export type Database = {
           updated_by?: string | null;
         }
       >;
+      store_sections: Table<
+        {
+          id: string;
+          section_type: "promo_banner" | "features" | "testimonials";
+          enabled: boolean;
+          display_order: number;
+          content: Json;
+          created_at: string;
+          updated_at: string;
+        },
+        never, // لا INSERT/DELETE — 3 صفوف ثابتة عبر seed migration فقط
+        {
+          enabled?: boolean;
+          display_order?: number;
+          content?: Json;
+        }
+      >;
     };
     Views: {
       public_store_locations: {
@@ -500,6 +517,14 @@ export type Database = {
           show_points_of_sale_section: boolean;
           custom_css: string | null;
           custom_html: string | null;
+        };
+        Relationships: [];
+      };
+      public_store_sections: {
+        Row: {
+          section_type: "promo_banner" | "features" | "testimonials";
+          display_order: number;
+          content: Json;
         };
         Relationships: [];
       };

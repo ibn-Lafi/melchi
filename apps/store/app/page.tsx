@@ -1,14 +1,17 @@
 import { getStoreProducts, getStorePointsOfSale } from "../lib/get-catalog";
 import { getStoreSettings } from "../lib/get-store-settings";
+import { getStoreSections } from "../lib/get-store-sections";
 import { ProductCard } from "../components/product-card";
 import { PointsOfSaleSection } from "../components/points-of-sale-section";
+import { StoreSections } from "../components/store-sections";
 import { WaveDivider } from "../components/wave-divider";
 
 export default async function HomePage() {
-  const [products, locations, settings] = await Promise.all([
+  const [products, locations, settings, sections] = await Promise.all([
     getStoreProducts(),
     getStorePointsOfSale(),
     getStoreSettings(),
+    getStoreSections(),
   ]);
 
   return (
@@ -36,6 +39,8 @@ export default async function HomePage() {
           <p className="py-12 text-center text-muted-foreground">لا توجد منتجات حاليًا</p>
         ) : null}
       </div>
+
+      <StoreSections sections={sections} />
 
       {settings.custom_html ? (
         <div
