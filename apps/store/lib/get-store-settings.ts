@@ -16,11 +16,11 @@ export type StoreSettings = {
 };
 
 const DEFAULT_STORE_SETTINGS: StoreSettings = {
-  store_name: "ميلتشي",
+  store_name: "متجري",
   logo_url: null,
-  hero_kicker: "MELCHI",
-  hero_title: "كل ما يحتاجه محلك، بضغطة",
-  site_description: "تصفّح منتجاتنا وتسوّق مباشرة",
+  hero_kicker: "STORE",
+  hero_title: "مرحبًا بك في متجرنا",
+  site_description: "تصفّح منتجاتنا وتسوّق بسهولة",
   whatsapp_number: null,
   instagram_url: null,
   tiktok_url: null,
