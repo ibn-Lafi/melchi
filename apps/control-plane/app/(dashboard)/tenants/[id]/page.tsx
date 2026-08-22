@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, PageHeader, Breadcrumb, Button } from "@system2026/ui";
-import { createControlPlaneClient } from "../../../lib/provisioning/control-plane-db";
-import { PROVISIONING_STEPS, type ProvisioningStepName } from "../../../lib/provisioning/types";
+import { createControlPlaneClient } from "../../../../lib/provisioning/control-plane-db";
+import { PROVISIONING_STEPS, type ProvisioningStepName } from "../../../../lib/provisioning/types";
 import { retryProvisioningAction } from "./actions";
 
 export const dynamic = "force-dynamic";

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { retryTenantProvisioning } from "../../../lib/provisioning/orchestrator";
+import { retryTenantProvisioning } from "../../../../lib/provisioning/orchestrator";
 
 // إعادة محاولة تزويد فاشل — نموذج بزر واحد بلا تأكيد إضافي (توقيع بمعامل
 // واحد لأنه <form action> مباشر وليس عبر useFormState). فشل الخطوة نفسها

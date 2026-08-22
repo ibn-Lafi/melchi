@@ -1,34 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { updateSupabaseSession } from "@system2026/database/middleware";
 
-// حماية وصول أساسية للوحة التحكم المركزية — تعرض بيانات عملاء حساسة (أسماء
-// شركات، بريد إلكتروني، مراجع بنية تحتية) وستُنشر بنطاق عام على Railway.
-// مشغّل واحد فقط بهذه المرحلة (لا نظام صلاحيات متعدد الأدوار بعد)، فكلمة
-// مرور واحدة عبر Basic Auth كافية حاليًا — يجب استبدالها بنظام دخول حقيقي
-// لو أُضيف مشغّلون آخرون لاحقًا.
-export function middleware(request: NextRequest) {
-  const password = process.env.CONTROL_PLANE_ADMIN_PASSWORD;
-  if (!password) {
-    // بلا هذا المتغيّر لا حماية إطلاقًا — مقبول فقط أثناء التطوير المحلي.
-    // بالنشر الفعلي على Railway يجب ضبطه دائمًا.
-    return NextResponse.next();
+// نفس نمط apps/admin/middleware.ts بالضبط — تسجيل دخول عادي عبر Supabase
+// Auth (بريد/كلمة مرور)، وليس مفتاحًا/كلمة مرور ثابتة مشتركة. لا يوجد
+// جدول profiles/أدوار هنا بعد (مشغّل واحد بهذه المرحلة) — أي مستخدم مسجَّل
+// بمشروع Supabase الخاص بهذا التطبيق مصرَّح له تلقائيًا.
+const PUBLIC_PATHS = ["/login"];
+
+export async function middleware(request: NextRequest) {
+  const { response, user } = await updateSupabaseSession(request);
+  const isPublicPath = PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
+
+  if (!user && !isPublicPath) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Basic ")) {
-    const decoded = atob(authHeader.slice("Basic ".length));
-    const separatorIndex = decoded.indexOf(":");
-    const providedPassword = separatorIndex === -1 ? decoded : decoded.slice(separatorIndex + 1);
-    if (providedPassword === password) {
-      return NextResponse.next();
-    }
+  if (user && isPublicPath) {
+    return NextResponse.redirect(new URL("/tenants", request.url));
   }
 
-  return new NextResponse("مطلوب تسجيل دخول", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="control-plane"' },
-  });
+  return response;
 }
 
 export const config = {
-  matcher: "/((?!_next/static|_next/image|favicon.ico).*)",
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge, Card, PageHeader } from "@system2026/ui";
-import { createControlPlaneClient } from "../../lib/provisioning/control-plane-db";
+import { createControlPlaneClient } from "../../../lib/provisioning/control-plane-db";
 
 // بيانات العملاء تتغيّر باستمرار (تزويد جديد، إعادة محاولة) — لا يجوز
 // تجميدها كصفحة ثابتة وقت البناء (لا توجد بيئة Supabase حقيقية وقت البناء أصلًا).
