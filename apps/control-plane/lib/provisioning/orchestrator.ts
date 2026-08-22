@@ -4,12 +4,13 @@ import {
   buildProvisionedProjectInfo,
   createSupabaseProject,
   getProjectApiKeys,
+  resetProjectDbPassword,
   waitForProjectReady,
 } from "./supabase-management";
 import { runTenantMigrations } from "./migration-runner";
 import { createFirstAdminUser } from "./first-admin";
 import { createTenantRailwayServices } from "./railway";
-import type { ProvisioningStepName, TenantSignupInput } from "./types";
+import type { ProvisioningStepName, ProvisionedRailwayServices, TenantSignupInput } from "./types";
 
 export type ProvisioningResult = {
   tenantId: string;
@@ -17,14 +18,30 @@ export type ProvisioningResult = {
   repAppUrl: string;
   storeAppUrl: string;
   adminEmail: string;
-  adminTemporaryPassword: string;
+  adminTemporaryPassword: string | null;
 };
 
-// المنسّق الكامل لتزويد عميل SaaS جديد من الصفر — ينفّذ كل خطوة، ويحفظ
-// حالتها بجدول tenant_provisioning_steps فور بدئها وانتهائها (نجاحًا أو
-// فشلًا) حتى يبقى الفشل مرئيًا وقابلًا للتشخيص بدل أن يكون صامتًا (راجع
-// الخطة المعتمدة، Phase 1).
-export async function provisionTenant(input: TenantSignupInput): Promise<ProvisioningResult> {
+type ControlPlaneClient = ReturnType<typeof createControlPlaneClient>;
+
+type TenantRow = { id: string; company_name: string; contact_name: string; contact_email: string };
+
+type InfrastructureRow = {
+  tenant_id: string;
+  supabase_project_ref: string | null;
+  supabase_project_url: string | null;
+  supabase_anon_key: string | null;
+  last_migration_applied: string | null;
+  railway_project_id: string | null;
+  railway_service_id_admin: string | null;
+  railway_service_id_rep: string | null;
+  railway_service_id_store: string | null;
+  admin_app_url: string | null;
+  rep_app_url: string | null;
+  store_app_url: string | null;
+};
+
+/** يزوّد عميل SaaS جديدًا بالكامل من الصفر. */
+export async function provisionNewTenant(input: TenantSignupInput): Promise<ProvisioningResult> {
   const db = createControlPlaneClient();
 
   const { data: tenant, error: tenantError } = await db
@@ -34,6 +51,30 @@ export async function provisionTenant(input: TenantSignupInput): Promise<Provisi
     .single();
   if (tenantError || !tenant) throw new Error(`فشل إنشاء صف tenants: ${tenantError?.message}`);
 
+  return runProvisioningPipeline(db, tenant as TenantRow, null);
+}
+
+/**
+ * يستأنف تزويد عميل سبق أن فشلت محاولة تزويده — يقرأ tenant_infrastructure
+ * الحالي ليتخطى كل ما نجح فعليًا (مشروع Supabase موجود؟ آخر migration
+ * نجحت؟ خدمات Railway أُنشئت؟) بدل إعادة كل شيء من الصفر وتكرار الموارد.
+ */
+export async function retryTenantProvisioning(tenantId: string): Promise<ProvisioningResult> {
+  const db = createControlPlaneClient();
+
+  const { data: tenant, error: tenantError } = await db.from("tenants").select().eq("id", tenantId).single();
+  if (tenantError || !tenant) throw new Error(`العميل غير موجود: ${tenantId}`);
+
+  const { data: infra } = await db.from("tenant_infrastructure").select().eq("tenant_id", tenantId).maybeSingle();
+
+  return runProvisioningPipeline(db, tenant as TenantRow, (infra as InfrastructureRow | null) ?? null);
+}
+
+async function runProvisioningPipeline(
+  db: ControlPlaneClient,
+  tenant: TenantRow,
+  existingInfra: InfrastructureRow | null,
+): Promise<ProvisioningResult> {
   const { data: run, error: runError } = await db
     .from("tenant_provisioning_runs")
     .insert({ tenant_id: tenant.id, current_step: "create_supabase_project" })
@@ -67,69 +108,113 @@ export async function provisionTenant(input: TenantSignupInput): Promise<Provisi
     }
   }
 
-  const tenantSlug = slugify(input.companyName, tenant.id);
+  async function skipStep(stepName: ProvisioningStepName): Promise<void> {
+    await db.from("tenant_provisioning_steps").insert({ run_id: run.id, step_name: stepName, status: "skipped" });
+  }
 
-  const { projectRef, dbPassword } = await runStep("create_supabase_project", () =>
-    createSupabaseProject({ tenantSlug }),
-  );
+  const tenantSlug = slugify(tenant.company_name, tenant.id);
 
-  await runStep("wait_project_ready", () => waitForProjectReady(projectRef));
+  // ========== مشروع Supabase ==========
+  let projectRef = existingInfra?.supabase_project_ref ?? null;
+  let dbPassword: string | null = null;
 
-  // قراءة صغيرة بعد جاهزية المشروع — ليست خطوة موثّقة منفصلة بجدول التتبع.
-  const apiKeys = await getProjectApiKeys(projectRef);
-  const project = buildProvisionedProjectInfo(projectRef, dbPassword, apiKeys);
+  if (projectRef) {
+    await skipStep("create_supabase_project");
+  } else {
+    const created = await runStep("create_supabase_project", () => createSupabaseProject({ tenantSlug }));
+    projectRef = created.projectRef;
+    dbPassword = created.dbPassword;
+    await upsertInfrastructure(db, tenant.id, { supabase_project_ref: projectRef });
+  }
 
-  await runStep("run_migrations", () => runTenantMigrations(project.directConnectionString));
+  await runStep("wait_project_ready", () => waitForProjectReady(projectRef!));
 
-  const { temporaryPassword } = await runStep("create_first_admin", () =>
-    createFirstAdminUser({
-      projectUrl: project.projectUrl,
-      serviceRoleKey: project.serviceRoleKey,
-      contactEmail: input.contactEmail,
-      contactName: input.contactName,
-    }),
-  );
+  const apiKeys = await getProjectApiKeys(projectRef!);
 
-  const railwayInfo = await runStep("create_railway_services", () =>
-    createTenantRailwayServices({
-      tenantSlug,
-      githubRepo: getGithubRepoSlug(),
-      gitBranch: getDeploymentBranch(),
-      supabaseUrl: project.projectUrl,
-      supabaseAnonKey: project.anonKey,
-      supabaseServiceRoleKey: project.serviceRoleKey,
-    }),
-  );
+  // إعادة محاولة = عملية جديدة تمامًا لا تملك dbPassword الأصلية بالذاكرة —
+  // تُستبدل بكلمة مرور جديدة عبر Management API بدل تخزين القديمة كسر دائم.
+  if (!dbPassword) {
+    dbPassword = await resetProjectDbPassword(projectRef!);
+  }
 
-  await runStep("trigger_deploys", async () => {
-    // النشر يحدث فعليًا داخل createTenantRailwayServices لكل خدمة على حدة —
-    // هذه الخطوة موجودة فقط لمطابقة قائمة PROVISIONING_STEPS الموثّقة
-    // بالخطة، بدون عمل إضافي حقيقي.
-  });
-
-  await db.from("tenant_infrastructure").insert({
-    tenant_id: tenant.id,
+  const project = buildProvisionedProjectInfo(projectRef!, dbPassword, apiKeys);
+  await upsertInfrastructure(db, tenant.id, {
     supabase_project_ref: project.projectRef,
     supabase_project_url: project.projectUrl,
     supabase_anon_key: project.anonKey,
-    railway_project_id: railwayInfo.railwayProjectId,
-    railway_service_id_admin: railwayInfo.railwayServiceIdAdmin,
-    railway_service_id_rep: railwayInfo.railwayServiceIdRep,
-    railway_service_id_store: railwayInfo.railwayServiceIdStore,
-    admin_app_url: railwayInfo.adminAppUrl,
-    rep_app_url: railwayInfo.repAppUrl,
-    store_app_url: railwayInfo.storeAppUrl,
   });
+
+  // ========== migrations (قابلة للاستئناف من آخر ملف نجح) ==========
+  await runStep("run_migrations", () =>
+    runTenantMigrations(project.directConnectionString, {
+      resumeAfter: existingInfra?.last_migration_applied ?? null,
+      onFileApplied: (fileName) => upsertInfrastructure(db, tenant.id, { last_migration_applied: fileName }),
+    }),
+  );
+
+  // ========== أول حساب أدمن ==========
+  const adminResult = await runStep("create_first_admin", () =>
+    createFirstAdminUser({
+      projectUrl: project.projectUrl,
+      serviceRoleKey: project.serviceRoleKey,
+      contactEmail: tenant.contact_email,
+      contactName: tenant.contact_name,
+    }),
+  );
+
+  // ========== خدمات Railway ==========
+  let railwayInfo: ProvisionedRailwayServices;
+
+  if (existingInfra?.railway_project_id) {
+    await skipStep("create_railway_services");
+    await skipStep("trigger_deploys");
+    railwayInfo = {
+      railwayProjectId: existingInfra.railway_project_id,
+      railwayServiceIdAdmin: existingInfra.railway_service_id_admin!,
+      railwayServiceIdRep: existingInfra.railway_service_id_rep!,
+      railwayServiceIdStore: existingInfra.railway_service_id_store!,
+      adminAppUrl: existingInfra.admin_app_url!,
+      repAppUrl: existingInfra.rep_app_url!,
+      storeAppUrl: existingInfra.store_app_url!,
+    };
+  } else {
+    railwayInfo = await runStep("create_railway_services", () =>
+      createTenantRailwayServices({
+        tenantSlug,
+        githubRepo: getGithubRepoSlug(),
+        gitBranch: getDeploymentBranch(),
+        supabaseUrl: project.projectUrl,
+        supabaseAnonKey: project.anonKey,
+        supabaseServiceRoleKey: project.serviceRoleKey,
+      }),
+    );
+
+    await runStep("trigger_deploys", async () => {
+      // النشر يحدث فعليًا داخل createTenantRailwayServices لكل خدمة على حدة —
+      // هذه الخطوة موجودة فقط لمطابقة قائمة PROVISIONING_STEPS الموثّقة
+      // بالخطة، بدون عمل إضافي حقيقي.
+    });
+
+    await upsertInfrastructure(db, tenant.id, {
+      railway_project_id: railwayInfo.railwayProjectId,
+      railway_service_id_admin: railwayInfo.railwayServiceIdAdmin,
+      railway_service_id_rep: railwayInfo.railwayServiceIdRep,
+      railway_service_id_store: railwayInfo.railwayServiceIdStore,
+      admin_app_url: railwayInfo.adminAppUrl,
+      rep_app_url: railwayInfo.repAppUrl,
+      store_app_url: railwayInfo.storeAppUrl,
+    });
+  }
 
   await runStep("send_welcome_email", async () => {
     // مزوّد البريد الإلكتروني لم يُختر بعد (Phase 3) — الـ CLI script نفسه
     // يطبع بيانات الدخول بدل إرسال بريد فعلي حاليًا.
   });
 
-  await db.from("tenant_provisioning_runs").update({ status: "succeeded", completed_at: new Date().toISOString() }).eq(
-    "id",
-    run.id,
-  );
+  await db
+    .from("tenant_provisioning_runs")
+    .update({ status: "succeeded", completed_at: new Date().toISOString() })
+    .eq("id", run.id);
   await db.from("tenants").update({ status: "active" }).eq("id", tenant.id);
 
   return {
@@ -137,9 +222,17 @@ export async function provisionTenant(input: TenantSignupInput): Promise<Provisi
     adminAppUrl: railwayInfo.adminAppUrl,
     repAppUrl: railwayInfo.repAppUrl,
     storeAppUrl: railwayInfo.storeAppUrl,
-    adminEmail: input.contactEmail,
-    adminTemporaryPassword: temporaryPassword,
+    adminEmail: tenant.contact_email,
+    adminTemporaryPassword: adminResult.temporaryPassword,
   };
+}
+
+async function upsertInfrastructure(
+  db: ControlPlaneClient,
+  tenantId: string,
+  fields: Partial<Omit<InfrastructureRow, "tenant_id">>,
+): Promise<void> {
+  await db.from("tenant_infrastructure").upsert({ tenant_id: tenantId, ...fields }, { onConflict: "tenant_id" });
 }
 
 function slugify(companyName: string, tenantId: string): string {

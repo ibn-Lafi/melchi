@@ -12,7 +12,7 @@ export async function createFirstAdminUser(input: {
   serviceRoleKey: string;
   contactEmail: string;
   contactName: string;
-}): Promise<{ temporaryPassword: string }> {
+}): Promise<{ temporaryPassword: string | null; alreadyExisted: boolean }> {
   const supabase = createClient(input.projectUrl, input.serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -27,8 +27,14 @@ export async function createFirstAdminUser(input: {
   });
 
   if (error) {
+    // إعادة محاولة بعد فشل بخطوة لاحقة قد تصل هنا مجددًا بمشروع سبق أن أُنشئ
+    // فيه هذا المستخدم فعليًا — هذا نجاح (idempotent) وليس فشلًا. لا يمكن
+    // استرجاع كلمة المرور الأصلية (لم تُخزَّن)، فتُعاد null صراحةً.
+    const alreadyExists = /already.*registered|already.*exists/i.test(error.message);
+    if (alreadyExists) return { temporaryPassword: null, alreadyExisted: true };
+
     throw new Error(`فشل إنشاء أول حساب أدمن بمشروع ${input.projectUrl}: ${error.message}`);
   }
 
-  return { temporaryPassword };
+  return { temporaryPassword, alreadyExisted: false };
 }

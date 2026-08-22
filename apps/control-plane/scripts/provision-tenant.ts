@@ -7,7 +7,7 @@
 // CONTROL_PLANE_SUPABASE_SERVICE_ROLE_KEY، CONTROL_PLANE_GITHUB_REPO) من ملف
 // .env.control-plane.local غير المُدار بـ git إن وُجد، أو من بيئة التشغيل
 // مباشرة.
-import { provisionTenant } from "../lib/provisioning/orchestrator";
+import { provisionNewTenant } from "../lib/provisioning/orchestrator";
 
 try {
   process.loadEnvFile(".env.control-plane.local");
@@ -40,14 +40,16 @@ async function main() {
   const input = parseArgs();
   console.log(`بدء تزويد عميل جديد: ${input.companyName} (${input.contactEmail})...`);
 
-  const result = await provisionTenant(input);
+  const result = await provisionNewTenant(input);
 
   console.log("تم التزويد بنجاح ✓");
   console.log(`  admin: ${result.adminAppUrl}`);
   console.log(`  rep:   ${result.repAppUrl}`);
   console.log(`  store: ${result.storeAppUrl}`);
   console.log(`  بريد الأدمن: ${result.adminEmail}`);
-  console.log(`  كلمة المرور المؤقتة: ${result.adminTemporaryPassword}`);
+  console.log(
+    `  كلمة المرور المؤقتة: ${result.adminTemporaryPassword ?? "(الحساب كان موجودًا مسبقًا — لا كلمة مرور جديدة)"}`,
+  );
 }
 
 main().catch((error) => {
