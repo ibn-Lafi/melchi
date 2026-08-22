@@ -160,13 +160,13 @@ export default async function StoreControlPanelPage() {
         </Card>
 
         <Card>
-          <h2 className="font-semibold">الثيم</h2>
+          <h2 className="font-semibold">تصميم المتجر</h2>
           <p className="mt-1 text-sm text-foreground/60">
-            الثيم الافتراضي بالمتجر، مع إمكانية تجاوزه بكود CSS مخصص، وإضافة قسم بمحتوى HTML حر
+            الثيم الافتراضي بالمتجر، مع إمكانية تفعيل تخصيص بكود CSS مخصص، وإضافة قسم بمحتوى HTML حر
           </p>
           <div className="mt-4">
             <Link href="/store/theme">
-              <Button variant="outline">فتح إعدادات الثيم</Button>
+              <Button variant="outline">فتح إعدادات تصميم المتجر</Button>
             </Link>
           </div>
         </Card>

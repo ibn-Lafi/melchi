@@ -33,6 +33,7 @@ export const updateStoreHomepageSectionsSchema = z.object({
 });
 
 export const updateStoreThemeSchema = z.object({
+  useDefaultTheme: z.boolean().default(true),
   customCss: z.string().optional(),
   customHtml: z.string().optional(),
 });

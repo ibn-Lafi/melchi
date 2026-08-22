@@ -10,6 +10,7 @@ export async function updateStoreThemeAction(
   formData: FormData,
 ): Promise<ActionState> {
   const parsed = updateStoreThemeSchema.safeParse({
+    useDefaultTheme: formData.get("useDefaultTheme") === "on",
     customCss: formData.get("customCss") || undefined,
     customHtml: formData.get("customHtml") || undefined,
   });
@@ -23,8 +24,8 @@ export async function updateStoreThemeAction(
   const { error } = await supabase
     .from("store_settings")
     .update({
-      custom_css: parsed.data.customCss || null,
-      custom_html: parsed.data.customHtml || null,
+      custom_css: parsed.data.useDefaultTheme ? null : parsed.data.customCss || null,
+      custom_html: parsed.data.useDefaultTheme ? null : parsed.data.customHtml || null,
       updated_by: user?.id,
     })
     .eq("id", 1);
@@ -32,18 +33,4 @@ export async function updateStoreThemeAction(
   if (error) return { error: error.message };
   revalidatePath("/store/theme");
   return { success: true };
-}
-
-export async function resetStoreThemeAction(): Promise<void> {
-  const supabase = createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  await supabase
-    .from("store_settings")
-    .update({ custom_css: null, custom_html: null, updated_by: user?.id })
-    .eq("id", 1);
-
-  revalidatePath("/store/theme");
 }
